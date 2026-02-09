@@ -558,6 +558,40 @@ final List<ChatMessage> _directMessages = [
     sender: _user2,
     imageUrls: const ['https://picsum.photos/1000/1000'],
   ),
+  // 複数画像（2枚）
+  ChatImagesMessage(
+    id: '8a',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user1,
+    imageUrls: const [
+      'https://picsum.photos/400/400',
+      'https://picsum.photos/401/400',
+    ],
+  ),
+  // 複数画像（3枚）
+  ChatImagesMessage(
+    id: '8b',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user2,
+    imageUrls: const [
+      'https://picsum.photos/402/400',
+      'https://picsum.photos/403/400',
+      'https://picsum.photos/404/400',
+    ],
+  ),
+  // 複数画像（5枚）
+  ChatImagesMessage(
+    id: '8c',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user1,
+    imageUrls: const [
+      'https://picsum.photos/405/400',
+      'https://picsum.photos/406/400',
+      'https://picsum.photos/407/400',
+      'https://picsum.photos/408/400',
+      'https://picsum.photos/409/400',
+    ],
+  ),
   // スタンプメッセージ。
   ChatStickerMessage(
     id: '9',

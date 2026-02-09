@@ -10,7 +10,6 @@
   - `ChatTextMessage`
   - `ChatImagesMessage`
   - `ChatStickerMessage`
-  - `ChatCollectionMessage`
   - `ChatVoiceCallMessage`
   - `ChatSystemMessage`
 - `AltiveChatRoomTheme` によるテーマカスタマイズ

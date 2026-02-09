@@ -11,7 +11,6 @@ import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
 import 'model.dart';
-import 'no_image_widget.dart';
 import 'popup_menu_overlay.dart';
 
 /// [ChatUserMessage]を表示するWidget。
@@ -26,12 +25,10 @@ class UserMessageBubble extends StatelessWidget {
     required this.selectableTextMessageId,
     required this.contextMenuBuilder,
     required this.onImageMessageTap,
-    required this.onCollectionMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.textMessagePopupMenuLayout,
     required this.imageMessagePopupMenuLayout,
-    required this.collectionMessagePopupMenuLayout,
     required this.stickerMessagePopupMenuLayout,
     required this.voiceCallMessagePopupMenuLayout,
     required this.popupMenuAccessoryBuilder,
@@ -53,9 +50,6 @@ class UserMessageBubble extends StatelessWidget {
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// コレクションメッセージタップ時のコールバック。
-  final ValueChanged<ChatCollectionMessage>? onCollectionMessageTap;
-
   /// スタンプメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
@@ -67,9 +61,6 @@ class UserMessageBubble extends StatelessWidget {
 
   /// 画像メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? imageMessagePopupMenuLayout;
-
-  /// コレクションメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? collectionMessagePopupMenuLayout;
 
   /// スタンプメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? stickerMessagePopupMenuLayout;
@@ -107,14 +98,6 @@ class UserMessageBubble extends StatelessWidget {
           message: message,
           onImageMessageTap: onImageMessageTap,
           popupMenuLayout: imageMessagePopupMenuLayout,
-          popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
-        ),
-        ChatCollectionMessage() => _ChatCollectionMessageBubble(
-          myUserId: myUserId,
-          message: message,
-          onCollectionMessageTap: onCollectionMessageTap,
-          popupMenuLayout: collectionMessagePopupMenuLayout,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           enablePopupMenu: enablePopupMenu,
         ),
@@ -666,7 +649,6 @@ class _OgpContents extends StatelessWidget {
                         imageUrl: ogpData.imageUrl!,
                         width: 40,
                         height: 40,
-                        errorWidget: const NoImageWidget.s(),
                       ),
                     ),
                 ],
@@ -1052,197 +1034,6 @@ class _ImageTile extends StatelessWidget {
           child: CommonCachedNetworkImage(imageUrl: imageUrl),
         ),
       ),
-    );
-  }
-}
-
-/// [ChatCollectionMessage]を表示するWidget。
-class _ChatCollectionMessageBubble extends StatelessWidget {
-  const _ChatCollectionMessageBubble({
-    required this.myUserId,
-    required this.message,
-    required this.onCollectionMessageTap,
-    required this.popupMenuLayout,
-    required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
-  });
-
-  final String myUserId;
-  final ChatCollectionMessage message;
-  final ValueChanged<ChatCollectionMessage>? onCollectionMessageTap;
-  final PopupMenuLayout? popupMenuLayout;
-  final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
-
-  @override
-  Widget build(BuildContext context) {
-    final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
-      return _CollectionMessageBubbleContents(
-        onCollectionMessageTap: onCollectionMessageTap,
-        message: message,
-      );
-    }
-
-    // ポップアップメニューを表示する為のキーを生成する。
-    final widgetKey = GlobalObjectKey(context);
-
-    final config = InheritedAltiveChatRoomTheme.of(
-      context,
-    ).theme.popupMenuConfig;
-
-    final isMine = message.isMine(myUserId);
-    final replyTo = message.replyTo;
-
-    return Column(
-      crossAxisAlignment: isMine
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
-      children: [
-        if (replyTo != null) ...[
-          _ReplyToMessageBubble(
-            replyTo: replyTo,
-            isMine: isMine,
-            isRepliedMine: replyTo.isMine(myUserId),
-            replyImageIndex: message.replyImageIndex,
-          ),
-          const SizedBox(height: 4),
-        ],
-        // ポップアップメニューが設定されている場合、表示する為の `GestureDetector` を追加する。
-        GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onLongPress: () => PopupMenuOverlay(
-            layout: popupMenuLayout,
-            userMessage: message,
-            config: config,
-            widgetKey: widgetKey,
-            popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          ).show(context: context),
-          child: _CollectionMessageBubbleContents(
-            widgetKey: widgetKey,
-            onCollectionMessageTap: onCollectionMessageTap,
-            message: message,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CollectionMessageBubbleContents extends StatelessWidget {
-  const _CollectionMessageBubbleContents({
-    this.widgetKey,
-    required this.onCollectionMessageTap,
-    required this.message,
-  });
-
-  final GlobalObjectKey? widgetKey;
-  final ValueChanged<ChatCollectionMessage>? onCollectionMessageTap;
-  final ChatCollectionMessage message;
-
-  @override
-  Widget build(BuildContext context) {
-    final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
-    final thumbnail = message.collection.thumbnailUrl;
-
-    return GestureDetector(
-      key: widgetKey,
-      onTap: () => onCollectionMessageTap?.call(message),
-      child: SizedBox(
-        width: 206,
-        child: Card(
-          color: altiveChatRoomTheme.favoriteCollectionBubbleBackgroundColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          clipBehavior: Clip.antiAlias,
-          elevation: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AspectRatio(
-                aspectRatio: 1.6,
-                child: thumbnail != null
-                    ? CommonCachedNetworkImage(
-                        imageUrl: thumbnail,
-                        errorWidget: const NoImageWidget.l(),
-                      )
-                    : _LatestLinkOgpImage(
-                        latestLinkUrl: message.collection.latestLinkUrl,
-                      ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
-                  vertical: altiveChatRoomTheme.messageInsetsVertical,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      message.collection.name,
-                      style: altiveChatRoomTheme.favoriteContentTitleTextStyle,
-                    ),
-                    const SizedBox(height: 4),
-                    if (message.collection.description
-                        case final String description
-                        when description.isNotEmpty)
-                      Text(
-                        description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: altiveChatRoomTheme
-                            .favoriteCollectionDetailTextStyle,
-                      ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${message.collection.linkCount} links',
-                      style:
-                          altiveChatRoomTheme.favoriteCollectionDetailTextStyle,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LatestLinkOgpImage extends StatelessWidget {
-  const _LatestLinkOgpImage({required this.latestLinkUrl});
-
-  final String? latestLinkUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final latestLinkUrl = this.latestLinkUrl;
-
-    if (latestLinkUrl == null) {
-      return const NoImageWidget.l();
-    }
-
-    return FutureBuilder(
-      future: cachedOgpData.get(latestLinkUrl),
-      builder: (context, snapshot) {
-        // OGPデータ取得中
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator.adaptive());
-        }
-
-        // OGPデータが取得できなかった場合
-        final ogpData = snapshot.data;
-        if (ogpData == null ||
-            !ogpData.isAvailable ||
-            ogpData.imageUrl == null) {
-          return const NoImageWidget.l();
-        }
-
-        return CommonCachedNetworkImage(
-          imageUrl: ogpData.imageUrl!,
-          errorWidget: const NoImageWidget.l(),
-        );
-      },
     );
   }
 }
@@ -1648,7 +1439,6 @@ class _ReplyToMessageContents extends StatelessWidget {
                 switch (replyTo) {
                   ChatTextMessage(:final text) => text,
                   ChatImagesMessage(:final label) => label,
-                  ChatCollectionMessage(:final collection) => collection.name,
                   ChatStickerMessage(:final label) => label,
                   ChatVoiceCallMessage(:final voiceCallType) =>
                     // 返信先のメッセージが自分のものかどうかで表示するテキストを変更する。
@@ -1679,11 +1469,9 @@ class _ReplyToMessageContents extends StatelessWidget {
                 imageUrl: _resolveReplyImageUrl(imageUrls),
                 width: 39,
                 height: 34,
-                errorWidget: const NoImageWidget.s(),
               ),
             ),
           ],
-          ChatCollectionMessage() => [const SizedBox.shrink()],
           ChatStickerMessage(:final sticker) => [
             const SizedBox(width: 70),
             ClipRRect(

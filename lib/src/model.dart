@@ -40,11 +40,6 @@ class AltiveChatRoomTheme {
     this.otherUserOgpTitleTextStyle,
     this.otherUserOgpDescriptionTextStyle,
     this.otherUserOgpDividerColor,
-    this.favoriteContentTitleTextStyle,
-    this.favoriteCollectionDetailTextStyle,
-    this.favoriteCollectionBubbleBackgroundColor,
-    this.favoriteCollectionNoImageBackgroundColor,
-    this.favoriteCollectionNoImageTextStyle,
     this.timeTextStyle,
     this.messageActionButtonStyle,
     this.inputDecorationTheme,
@@ -215,25 +210,6 @@ class AltiveChatRoomTheme {
   ///
   /// OGP 情報が表示される場合のみ使用される。
   final Color? otherUserOgpDividerColor;
-
-  /// お気に入りコンテンツのタイトルのテキストスタイル。
-  ///
-  /// お気に入りコレクション名やお気に入りリンクのタイトルに使用される。
-  final TextStyle? favoriteContentTitleTextStyle;
-
-  /// お気にコレクションの詳細情報のテキストスタイル。
-  ///
-  /// お気に入りコレクションの説明やリンク数の表示に使用される。
-  final TextStyle? favoriteCollectionDetailTextStyle;
-
-  /// お気に入りコレクションのカードの背景色。
-  final Color? favoriteCollectionBubbleBackgroundColor;
-
-  /// お気に入りコレクションの画像がない場合に表示するWidgetの背景色。
-  final Color? favoriteCollectionNoImageBackgroundColor;
-
-  /// お気に入りコレクションの画像がない場合に表示するWidgetのテキストスタイル。
-  final TextStyle? favoriteCollectionNoImageTextStyle;
 
   /// 時間を表示するテキストのテキストスタイル。
   ///
@@ -603,86 +579,6 @@ class ChatImagesMessage extends ChatUserMessage {
 /// 画像メッセージのタップコールバック。
 typedef ImageMessageTapCallback =
     void Function({required List<String> imageUrls, required int index});
-
-/// コレクションメッセージ。
-@immutable
-class ChatCollectionMessage extends ChatUserMessage {
-  /// インスタンスを生成する。
-  const ChatCollectionMessage({
-    required super.id,
-    required super.createdAt,
-    required super.sender,
-    required this.collection,
-    super.replyTo,
-    super.replyImageIndex,
-    super.label = 'Collection',
-  });
-
-  /// コレクション。
-  final Collection collection;
-
-  /// 値を置き換えた新しい [ChatCollectionMessage] を返する。
-  ChatCollectionMessage copyWith({
-    String? id,
-    DateTime? createdAt,
-    ChatUser? sender,
-    Collection? collection,
-    ChatTextMessage? replyTo,
-    int? replyImageIndex,
-    String? label,
-  }) {
-    return ChatCollectionMessage(
-      id: id ?? this.id,
-      createdAt: createdAt ?? this.createdAt,
-      sender: sender ?? this.sender,
-      collection: collection ?? this.collection,
-      replyTo: replyTo ?? this.replyTo,
-      replyImageIndex: replyImageIndex ?? this.replyImageIndex,
-      label: label ?? this.label,
-    );
-  }
-
-  @override
-  String toString() =>
-      'ChatCollectionMessage('
-      'id: $id, '
-      'createdAt: $createdAt, '
-      'sender: $sender, '
-      'collection: $collection, '
-      'replyTo: $replyTo, '
-      'replyImageIndex: $replyImageIndex, '
-      'label: $label'
-      ')';
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-                other is ChatCollectionMessage &&
-                (identical(other.id, id) || other.id == id) &&
-                (identical(other.createdAt, createdAt) ||
-                    other.createdAt == createdAt) &&
-                (identical(other.sender, sender) || other.sender == sender) &&
-                (identical(other.collection, collection) ||
-                    other.collection == collection) &&
-                (identical(other.replyTo, replyTo) ||
-                    other.replyTo == replyTo) &&
-                (identical(other.replyImageIndex, replyImageIndex) ||
-                    other.replyImageIndex == replyImageIndex)) &&
-            (identical(other.label, label) || other.label == label);
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    createdAt,
-    sender,
-    collection,
-    replyTo,
-    replyImageIndex,
-    label,
-  ]);
-}
 
 /// スタンプメッセージ。
 @immutable
@@ -1070,76 +966,6 @@ enum MessageInputType {
 
   /// スタンプメッセージ。
   sticker,
-}
-
-/// コレクション。
-@immutable
-class Collection {
-  /// インスタンスを生成する。
-  const Collection({
-    required this.id,
-    required this.name,
-    this.description,
-    this.thumbnailUrl,
-    required this.linkCount,
-    this.latestLinkUrl,
-  });
-
-  /// コレクションを一意に識別するID。
-  final int id;
-
-  /// コレクション名。
-  final String name;
-
-  /// コレクションの説明。
-  final String? description;
-
-  /// コレクションのサムネイル画像のURL。
-  final String? thumbnailUrl;
-
-  /// コレクションに登録されているリンクの数。
-  final int linkCount;
-
-  /// コレクションに登録されている最新のリンクのURL。
-  final String? latestLinkUrl;
-
-  @override
-  String toString() =>
-      'Collection('
-      'id: $id, '
-      'name: $name, '
-      'description: $description, '
-      'thumbnailUrl: $thumbnailUrl, '
-      'linkCount: $linkCount, '
-      'latestLinkUrl: $latestLinkUrl'
-      ')';
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is Collection &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
-            (identical(other.thumbnailUrl, thumbnailUrl) ||
-                other.thumbnailUrl == thumbnailUrl) &&
-            (identical(other.linkCount, linkCount) ||
-                other.linkCount == linkCount) &&
-            (identical(other.latestLinkUrl, latestLinkUrl) ||
-                other.latestLinkUrl == latestLinkUrl));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    name,
-    description,
-    thumbnailUrl,
-    linkCount,
-    latestLinkUrl,
-  ]);
 }
 
 /// スタンプパッケージ。

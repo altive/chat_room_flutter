@@ -35,7 +35,6 @@ class AltiveChatRoom extends StatefulWidget {
     this.dateTextBuilder,
     this.onAvatarTap,
     this.onImageMessageTap,
-    this.onCollectionMessageTap,
     this.onStickerMessageTap,
     this.onActionButtonTap,
     this.sendButtonIcon,
@@ -46,12 +45,10 @@ class AltiveChatRoom extends StatefulWidget {
     this.stickerPackages = const [],
     this.myTextMessagePopupMenuLayout,
     this.myImageMessagePopupMenuLayout,
-    this.myCollectionMessagePopupMenuLayout,
     this.myStickerMessagePopupMenuLayout,
     this.myVoiceCallMessagePopupMenuLayout,
     this.otherUserTextMessagePopupMenuLayout,
     this.otherUserImageMessagePopupMenuLayout,
-    this.otherUserCollectionMessagePopupMenuLayout,
     this.otherUserStickerMessagePopupMenuLayout,
     this.otherUserVoiceCallMessagePopupMenuLayout,
     this.pendingIndicator,
@@ -132,9 +129,6 @@ class AltiveChatRoom extends StatefulWidget {
   /// 画像メッセージをタップした時の処理。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// コレクションメッセージをタップした時の処理。
-  final ValueChanged<ChatCollectionMessage>? onCollectionMessageTap;
-
   /// スタンプメッセージをタップした時の処理。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
@@ -170,9 +164,6 @@ class AltiveChatRoom extends StatefulWidget {
   /// 自分が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
 
-  /// 自分が送信したコレクションメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? myCollectionMessagePopupMenuLayout;
-
   /// 自分が送信したスタンプメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;
 
@@ -186,9 +177,6 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// 自分以外が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
-
-  /// 自分以外が送信したコレクションメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? otherUserCollectionMessagePopupMenuLayout;
 
   /// 自分以外が送信したスタンプメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
@@ -245,13 +233,10 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         messageTypeNotifier: messageTypeNotifier,
         onAvatarTap: widget.onAvatarTap,
         onImageMessageTap: widget.onImageMessageTap,
-        onCollectionMessageTap: widget.onCollectionMessageTap,
         onStickerMessageTap: widget.onStickerMessageTap,
         onActionButtonTap: widget.onActionButtonTap,
         myTextMessagePopupMenuLayout: widget.myTextMessagePopupMenuLayout,
         myImageMessagePopupMenuLayout: widget.myImageMessagePopupMenuLayout,
-        myCollectionMessagePopupMenuLayout:
-            widget.myCollectionMessagePopupMenuLayout,
         myStickerMessagePopupMenuLayout: widget.myStickerMessagePopupMenuLayout,
         myVoiceCallMessagePopupMenuLayout:
             widget.myVoiceCallMessagePopupMenuLayout,
@@ -259,8 +244,6 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
             widget.otherUserTextMessagePopupMenuLayout,
         otherUserImageMessagePopupMenuLayout:
             widget.otherUserImageMessagePopupMenuLayout,
-        otherUserCollectionMessagePopupMenuLayout:
-            widget.otherUserCollectionMessagePopupMenuLayout,
         otherUserStickerMessagePopupMenuLayout:
             widget.otherUserStickerMessagePopupMenuLayout,
         otherUserVoiceCallMessagePopupMenuLayout:
@@ -441,17 +424,14 @@ class _MessageListView extends StatelessWidget {
     required this.messageTypeNotifier,
     required this.onAvatarTap,
     required this.onImageMessageTap,
-    required this.onCollectionMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.myTextMessagePopupMenuLayout,
     required this.myImageMessagePopupMenuLayout,
-    required this.myCollectionMessagePopupMenuLayout,
     required this.myStickerMessagePopupMenuLayout,
     required this.myVoiceCallMessagePopupMenuLayout,
     required this.otherUserTextMessagePopupMenuLayout,
     required this.otherUserImageMessagePopupMenuLayout,
-    required this.otherUserCollectionMessagePopupMenuLayout,
     required this.otherUserStickerMessagePopupMenuLayout,
     required this.otherUserVoiceCallMessagePopupMenuLayout,
     required this.pendingIndicator,
@@ -472,17 +452,14 @@ class _MessageListView extends StatelessWidget {
   final ValueNotifier<MessageInputType> messageTypeNotifier;
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
-  final ValueChanged<ChatCollectionMessage>? onCollectionMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<dynamic>? onActionButtonTap;
   final PopupMenuLayout? myTextMessagePopupMenuLayout;
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
-  final PopupMenuLayout? myCollectionMessagePopupMenuLayout;
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;
   final PopupMenuLayout? myVoiceCallMessagePopupMenuLayout;
   final PopupMenuLayout? otherUserTextMessagePopupMenuLayout;
   final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserCollectionMessagePopupMenuLayout;
   final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
   final PopupMenuLayout? otherUserVoiceCallMessagePopupMenuLayout;
   final Widget? pendingIndicator;
@@ -537,13 +514,10 @@ class _MessageListView extends StatelessWidget {
             popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
             onAvatarTap: onAvatarTap,
             onImageMessageTap: onImageMessageTap,
-            onCollectionMessageTap: onCollectionMessageTap,
             onStickerMessageTap: onStickerMessageTap,
             onActionButtonTap: onActionButtonTap,
             myTextMessagePopupMenuLayout: myTextMessagePopupMenuLayout,
             myImageMessagePopupMenuLayout: myImageMessagePopupMenuLayout,
-            myCollectionMessagePopupMenuLayout:
-                myCollectionMessagePopupMenuLayout,
             myStickerMessagePopupMenuLayout: myStickerMessagePopupMenuLayout,
             myVoiceCallMessagePopupMenuLayout:
                 myVoiceCallMessagePopupMenuLayout,
@@ -551,8 +525,6 @@ class _MessageListView extends StatelessWidget {
                 otherUserTextMessagePopupMenuLayout,
             otherUserImageMessagePopupMenuLayout:
                 otherUserImageMessagePopupMenuLayout,
-            otherUserCollectionMessagePopupMenuLayout:
-                otherUserCollectionMessagePopupMenuLayout,
             otherUserStickerMessagePopupMenuLayout:
                 otherUserStickerMessagePopupMenuLayout,
             otherUserVoiceCallMessagePopupMenuLayout:

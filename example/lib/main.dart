@@ -1,122 +1,1005 @@
+import 'dart:async';
+
+import 'package:altive_chat_room/altive_chat_room.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
-void main() {
-  runApp(const MyApp());
+Future<void> main() async {
+  runApp(
+    const MaterialApp(
+      home: _HomePage(),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+      ],
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class _HomePage extends StatelessWidget {
+  const _HomePage();
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(20),
+            child: TabBar(
+              tabs: [
+                Tab(
+                  icon: Icon(Icons.group),
+                  text: 'Direct',
+                ),
+                Tab(
+                  icon: Icon(Icons.group_add),
+                  text: 'Group',
+                ),
+              ],
+            ),
+          ),
+        ),
+        body: TabBarView(
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            AltiveChatRoom(
+              theme: const AltiveChatRoomTheme(),
+              myUserId: '1',
+              messages: _directMessages,
+              pendingMessageIds: [_directMessages.first.id],
+              onSendIconPressed: (value) {
+                if (value.text.isNotEmpty) {
+                  _showSnackBar(
+                    context: context,
+                    text: '${value.text} is sent',
+                  );
+                }
+                if (value.sticker != null) {
+                  _showSnackBar(
+                    context: context,
+                    text: 'Sticker is sent',
+                  );
+                }
+              },
+              onRefresh: () async {
+                _showSnackBar(context: context, text: 'onRefresh is called');
+              },
+              onScrollToTop: () {
+                _showSnackBar(
+                  context: context,
+                  text: 'onScrollToTop is called',
+                );
+              },
+              dateTextBuilder: ({required String dateText}) => Text(
+                dateText,
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 12,
+                ),
+              ),
+              onAvatarTap: (user) {
+                _showSnackBar(context: context, text: '${user.name} is tapped');
+              },
+              onImageMessageTap:
+                  ({
+                    required imageUrls,
+                    required index,
+                  }) {
+                    _showSnackBar(
+                      context: context,
+                      text:
+                          '''Image message is tapped (index: $index, urls: ${imageUrls.length})''',
+                    );
+                  },
+              onStickerMessageTap: (message) {
+                _showSnackBar(
+                  context: context,
+                  text: 'Sticker message is tapped',
+                );
+              },
+              onActionButtonTap: (value) {
+                _showSnackBar(
+                  context: context,
+                  text: 'Button is tapped: $value',
+                );
+              },
+              messageBottomWidgetBuilder: (message, {required isMine}) =>
+                  _MessageBottomWidgets(
+                    message: message,
+                    isMine: isMine,
+                  ),
+              popupMenuAccessoryBuilder:
+                  (
+                    message, {
+                    required closePopupMenu,
+                  }) {
+                    return _ReactionBar(
+                      emojis: const ['👍', '🎉', '👏', '❤️', '😂'],
+                      closePopupMenu: closePopupMenu,
+                    );
+                  },
+              sendButtonIcon: const Icon(Icons.send_sharp),
+              expandButtonIcon: const Icon(Icons.arrow_forward_ios_sharp),
+              textFieldSuffixBuilder: (type) {
+                return switch (type) {
+                  MessageInputType.text => const Icon(Icons.emoji_emotions),
+                  MessageInputType.sticker => const Icon(Icons.text_fields),
+                };
+              },
+              bottomLeadingWidgets: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    _showSnackBar(
+                      context: context,
+                      text: 'Add icon is pressed',
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt_outlined),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    _showSnackBar(
+                      context: context,
+                      text: 'Camera icon is pressed',
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.photo_outlined),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    _showSnackBar(
+                      context: context,
+                      text: 'Photo icon is pressed',
+                    );
+                  },
+                ),
+              ],
+              stickerPackages: _stickerPackages,
+              myTextMessagePopupMenuLayout: PopupMenuLayout(
+                // 2 * 2のレイアウトで表示する。
+                column: 2,
+                // 4つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Copy',
+                    iconWidget: const Icon(
+                      Icons.copy_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Copy button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Cancel',
+                    iconWidget: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Cancel button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              myImageMessagePopupMenuLayout: PopupMenuLayout(
+                // 1 * 3のレイアウトで表示する。
+                column: 3,
+                // 3つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Cancel',
+                    iconWidget: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Cancel button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              myStickerMessagePopupMenuLayout: PopupMenuLayout(
+                // 1 * 2のレイアウトで表示する。
+                column: 2,
+                // 2つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Cancel',
+                    iconWidget: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Cancel button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              myVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+                column: 1,
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              otherUserTextMessagePopupMenuLayout: PopupMenuLayout(
+                // 1 * 3のレイアウトで表示する。
+                column: 3,
+                // 3つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Copy',
+                    iconWidget: const Icon(
+                      Icons.copy_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Copy button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              otherUserImageMessagePopupMenuLayout: PopupMenuLayout(
+                // 1 * 2のレイアウトで表示する。
+                column: 2,
+                // 2つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              otherUserStickerMessagePopupMenuLayout: PopupMenuLayout(
+                // 1 * 2のレイアウトで表示する。
+                column: 2,
+                // 2つのボタンを表示する。
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Keep',
+                    iconWidget: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Keep button is tapped',
+                      );
+                    },
+                  ),
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+              otherUserVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+                column: 1,
+                buttonItems: [
+                  PopupMenuButtonItem(
+                    title: 'Reply',
+                    iconWidget: const Icon(
+                      Icons.reply_rounded,
+                      color: Colors.white,
+                    ),
+                    onTap: (userMessage) {
+                      _showSnackBar(
+                        context: context,
+                        text: 'Reply button is tapped',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            AltiveChatRoom(
+              isGroupChat: true,
+              theme: const AltiveChatRoomTheme(),
+              myUserId: '1',
+              messages: _groupMessages,
+              onSendIconPressed: (value) {
+                if (value.text.isNotEmpty) {
+                  _showSnackBar(
+                    context: context,
+                    text: '${value.text} is sent',
+                  );
+                }
+                if (value.sticker != null) {
+                  _showSnackBar(
+                    context: context,
+                    text: 'Sticker is sent',
+                  );
+                }
+              },
+              messageBottomWidgetBuilder: (message, {required isMine}) =>
+                  _MessageBottomWidgets(
+                    message: message,
+                    isMine: isMine,
+                  ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+const _user1 = ChatUser(
+  id: '1',
+  name: 'Andrew',
+  avatarImageUrl: 'https://i.pravatar.cc/150?img=11',
+);
+
+const _user2 = ChatUser(
+  id: '2',
+  name: 'Ben',
+  avatarImageUrl: 'https://i.pravatar.cc/150?img=12',
+);
+
+const _user3 = ChatUser(
+  id: '3',
+  name: 'Charlie',
+  defaultAvatarImageAssetPath: 'assets/avatar.png',
+);
+
+final List<ChatMessage> _directMessages = [
+  // 文章が短いテキストメッセージ。
+  ChatTextMessage(
+    id: '1',
+    createdAt: DateTime.now(),
+    sender: _user1,
+    text: 'Hello',
+  ),
+  // 文章が長いテキストメッセージ。
+  ChatTextMessage(
+    id: '2',
+    createdAt: DateTime.now(),
+    sender: _user2,
+    text:
+        'Hi. My name is Ben. I’m 20 years old. '
+        'I’m from Tokyo. I work at a restaurant. '
+        'And I like playing TV games. That’s all. Nice to meet you.',
+  ),
+  // リンク付きのテキストメッセージ。
+  ChatTextMessage(
+    id: '3',
+    createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    sender: _user2,
+    text: 'This is my X account. https://x.com/elonmusk',
+  ),
+  // ハイライトされたテキストメッセージ。
+  ChatTextMessage(
+    id: '4',
+    createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    sender: _user1,
+    text: 'Invitation accepted.',
+    highlight: true,
+  ),
+  // ハイライトされたテキストメッセージ。
+  ChatTextMessage(
+    id: '5',
+    createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    sender: _user2,
+    text: 'Invited to group chat.',
+    highlight: true,
+  ),
+  // 縦に長い画像
+  ChatImagesMessage(
+    id: '6',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user2,
+    imageUrls: const ['https://picsum.photos/100/300'],
+  ),
+  // 横に長い画像
+  ChatImagesMessage(
+    id: '7',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user1,
+    imageUrls: const ['https://picsum.photos/300/100'],
+  ),
+  // 大きい画像
+  ChatImagesMessage(
+    id: '8',
+    createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    sender: _user2,
+    imageUrls: const ['https://picsum.photos/1000/1000'],
+  ),
+  // スタンプメッセージ。
+  ChatStickerMessage(
+    id: '9',
+    createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    sender: _user1,
+    sticker: const Sticker(
+      id: 11,
+      imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
+    ),
+  ),
+  // スタンプメッセージ。
+  ChatStickerMessage(
+    id: '10',
+    createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    sender: _user2,
+    sticker: const Sticker(
+      id: 21,
+      imageUrl: 'https://img.skin/200x200/transparent?text=2_1',
+    ),
+  ),
+  // ボタン付きのテキストメッセージ。
+  ChatTextMessage(
+    id: '11',
+    createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    sender: _user2,
+    text: 'Please press the button.',
+    button: const MessageActionButton(
+      text: 'Button',
+      value: 'button_value',
+    ),
+  ),
+  // システムメッセージ。
+  ChatSystemMessage(
+    id: '12',
+    createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    text: 'Ben exited this room.',
+  ),
+  // リプライメッセージ。
+  // テキストメッセージに対してテキストメッセージを返信。
+  ChatTextMessage(
+    id: '13',
+    createdAt: DateTime.now().subtract(const Duration(days: 4)),
+    sender: _user1,
+    text: 'Hello',
+    replyTo: ChatTextMessage(
+      id: '1',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      sender: _user2,
+      text: 'Hi',
+    ),
+  ),
+  // リプライメッセージ。
+  // 画像メッセージに対してテキストメッセージを返信。
+  ChatTextMessage(
+    id: '14',
+    createdAt: DateTime.now().subtract(const Duration(days: 4)),
+    sender: _user2,
+    text: 'Hello',
+    replyTo: ChatImagesMessage(
+      id: '6',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      sender: _user1,
+      imageUrls: const ['https://picsum.photos/100/300'],
+    ),
+  ),
+  // リプライメッセージ。
+  // スタンプメッセージに対してテキストメッセージを返信。
+  ChatTextMessage(
+    id: '15',
+    createdAt: DateTime.now().subtract(const Duration(days: 4)),
+    sender: _user1,
+    text: 'Hello',
+    replyTo: ChatStickerMessage(
+      id: '9',
+      createdAt: DateTime.now().subtract(const Duration(days: 4)),
+      sender: _user2,
+      sticker: const Sticker(
+        id: 11,
+        imageUrl: 'https://img.skin/200x200/transparent/ffffff?text=1_1',
+      ),
+    ),
+  ),
+  // OGP データ付きのテキストメッセージ。
+  ChatTextMessage(
+    id: '16',
+    createdAt: DateTime.now().subtract(const Duration(days: 5)),
+    sender: _user2,
+    text: 'Look at this link! https://www.google.com/',
+  ),
+  ChatTextMessage(
+    id: '17',
+    createdAt: DateTime.now().subtract(const Duration(days: 5)),
+    sender: _user1,
+    text: 'Look at this link! https://www.yahoo.co.jp/',
+  ),
+];
+
+class _MessageBottomWidgets extends StatelessWidget {
+  const _MessageBottomWidgets({
+    required this.message,
+    required this.isMine,
+  });
+
+  final ChatUserMessage message;
+  final bool isMine;
+
+  static const _reactions = [
+    ('👍', 3, true),
+    ('🥹', 2, false),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Wrap(
+        alignment: isMine ? WrapAlignment.end : WrapAlignment.start,
+        children: [
+          for (final (emoji, count, reactedByMe) in _reactions)
+            InkWell(
+              customBorder: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              onTap: () {
+                _showSnackBar(
+                  context: context,
+                  text: 'Reaction button is tapped: $emoji',
+                );
+              },
+              // タップ範囲を広げるためにPaddingを追加
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: reactedByMe ? Colors.orange : Colors.grey[300]!,
+                    ),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('$emoji$count'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          InkWell(
+            customBorder: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            onTap: () {
+              _showSnackBar(
+                context: context,
+                text: 'Reaction add button is tapped',
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Icon(
+                  Icons.add_reaction_outlined,
+                  size: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
+class _ReactionBar extends StatelessWidget implements PreferredSizeWidget {
+  const _ReactionBar({
+    required this.emojis,
+    required this.closePopupMenu,
+  });
+
+  final List<String> emojis;
+  final VoidCallback closePopupMenu;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      child: Wrap(
+        spacing: 4,
+        children: [
+          for (final emoji in emojis)
+            _ReactionChip(
+              emoji: emoji,
+              closePopupMenu: closePopupMenu,
+            ),
+          _AddReactionButton(
+            closePopupMenu: closePopupMenu,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactionChip extends StatelessWidget {
+  const _ReactionChip({
+    required this.emoji,
+    required this.closePopupMenu,
+  });
+
+  final String emoji;
+  final VoidCallback closePopupMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReactionTile(
+      onTap: () {
+        _showSnackBar(
+          context: context,
+          text: 'Reaction bar tapped: $emoji',
+        );
+        closePopupMenu();
+      },
+      child: Padding(
+        // 絵文字の位置を調整する。
+        padding: const EdgeInsets.only(left: 3, bottom: 1),
+        child: Text(emoji),
+      ),
+    );
+  }
+}
+
+class _AddReactionButton extends StatelessWidget {
+  const _AddReactionButton({
+    required this.closePopupMenu,
+  });
+
+  final VoidCallback closePopupMenu;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReactionTile(
+      onTap: () {
+        _showSnackBar(
+          context: context,
+          text: 'Reaction added: 👍',
+        );
+        closePopupMenu();
+      },
+      child: const Icon(
+        Icons.add_reaction_outlined,
+        size: 16,
+        color: Colors.black54,
+      ),
+    );
+  }
+}
+
+/// リアクション用タイル。
+/// `Ink` を使いリップルが装飾上に描かれるように調整する。
+class _ReactionTile extends StatelessWidget {
+  const _ReactionTile({
+    required this.onTap,
+    required this.child,
+  });
+
+  final VoidCallback onTap;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    const borderRadius = BorderRadius.all(
+      Radius.circular(4),
+    );
+
+    return SizedBox.square(
+      dimension: 32,
+      child: Material(
+        color: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: borderRadius,
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: InkWell(
+          borderRadius: borderRadius,
+          onTap: onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: borderRadius,
+              border: Border.all(color: Colors.grey.shade400),
+            ),
+            child: Center(
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final _groupMessages = [
+  ChatTextMessage(
+    id: '1',
+    createdAt: DateTime.now(),
+    sender: _user1,
+    text: 'Hello',
+  ),
+  ChatTextMessage(
+    id: '2',
+    createdAt: DateTime.now(),
+    sender: _user2,
+    text: 'This is my X account. https://x.com/elonmusk',
+  ),
+  ChatTextMessage(
+    id: '3',
+    createdAt: DateTime.now(),
+    sender: _user3,
+    text: 'Hello',
+  ),
+];
+
+void _showSnackBar({
+  required BuildContext context,
+  required String text,
+}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(text),
+      duration: const Duration(seconds: 1),
+    ),
+  );
+}
+
+final _stickerPackages = [
+  const StickerPackage(
+    id: 1,
+    tabStickerImageUrl: 'https://img.skin/200x200/transparent?text=1_1',
+    stickers: [
+      Sticker(
+        id: 11,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
+      ),
+      Sticker(
+        id: 12,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_2',
+      ),
+      Sticker(
+        id: 13,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_3',
+      ),
+      Sticker(
+        id: 14,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_4',
+      ),
+      Sticker(
+        id: 15,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_5',
+      ),
+      Sticker(
+        id: 16,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_6',
+      ),
+      Sticker(
+        id: 17,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_7',
+      ),
+      Sticker(
+        id: 18,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_8',
+      ),
+      Sticker(
+        id: 19,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_9',
+      ),
+      Sticker(
+        id: 20,
+        imageUrl: 'https://img.skin/200x200/transparent?text=1_10',
+      ),
+    ],
+  ),
+  const StickerPackage(
+    id: 2,
+    tabStickerImageUrl: 'https://img.skin/200x200/transparent?text=2_1',
+    stickers: [
+      Sticker(
+        id: 21,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_1',
+      ),
+      Sticker(
+        id: 22,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_2',
+      ),
+      Sticker(
+        id: 23,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_3',
+      ),
+      Sticker(
+        id: 24,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_4',
+      ),
+      Sticker(
+        id: 25,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_5',
+      ),
+      Sticker(
+        id: 26,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_6',
+      ),
+      Sticker(
+        id: 27,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_7',
+      ),
+      Sticker(
+        id: 28,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_8',
+      ),
+      Sticker(
+        id: 29,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_9',
+      ),
+      Sticker(
+        id: 30,
+        imageUrl: 'https://img.skin/200x200/transparent?text=2_10',
+      ),
+    ],
+  ),
+];

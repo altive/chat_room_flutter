@@ -1,39 +1,98 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# altive_chat_room
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
+`altive_chat_room` は、チャット画面を構築するための Flutter UI パッケージです。
+ダイレクトチャット / グループチャットの表示に対応し、テキスト・画像・スタンプ・システムメッセージを扱えます。
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
+## 特徴
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+- すぐに利用できるチャット画面ウィジェット: `AltiveChatRoom`
+- 対応メッセージ種別:
+  - `ChatTextMessage`
+  - `ChatImagesMessage`
+  - `ChatStickerMessage`
+  - `ChatCollectionMessage`
+  - `ChatVoiceCallMessage`
+  - `ChatSystemMessage`
+- `AltiveChatRoomTheme` によるテーマカスタマイズ
+- メッセージバブル / ポップアップメニュー / アクションの拡張コールバック
 
-## Features
+## できること
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- チャット画面をそのまま導入できる
+- 1対1チャットとグループチャットの両方を表示できる
+- 文字・画像・スタンプ・お知らせメッセージを送受信画面に表示できる
+- スタンプ一覧から選んで送信できる
+- メッセージを長押ししたときのメニュー（返信・コピーなど）を設定できる
+- アバターや画像タップ時の動作を自由に設定できる
+- 色や文字サイズ、吹き出しデザインなど見た目を調整できる
+- 引っ張って更新、送信中表示、空状態表示などの基本UXに対応できる
 
-## Getting started
+## Getting Started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+本リポジトリの前提:
 
-## Usage
+- Dart SDK: `^3.10.4`
+- Flutter package 構成
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+未公開状態で別プロジェクトからローカル参照する場合:
 
-```dart
-const like = 'sample';
+```yaml
+dependencies:
+  altive_chat_room:
+    path: ../altive_chat_room
 ```
 
-## Additional information
+## 使い方
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+最小構成の例:
+
+```dart
+import 'package:altive_chat_room/altive_chat_room.dart';
+import 'package:flutter/material.dart';
+
+class ChatPage extends StatelessWidget {
+  const ChatPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const me = ChatUser(id: '1', name: 'Me');
+    const other = ChatUser(id: '2', name: 'Other');
+
+    final messages = <ChatMessage>[
+      ChatTextMessage(
+        id: 'm1',
+        createdAt: DateTime.now(),
+        sender: other,
+        text: 'Hello!',
+      ),
+    ];
+
+    return AltiveChatRoom(
+      theme: const AltiveChatRoomTheme(),
+      myUserId: me.id,
+      messages: messages,
+      onSendIconPressed: (value) {
+        // 送信処理
+      },
+    );
+  }
+}
+```
+
+詳細なサンプルは `example/lib/main.dart` を参照してください。
+
+## 開発
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
+```
+
+example の起動:
+
+```bash
+cd example
+flutter pub get
+flutter run
+```

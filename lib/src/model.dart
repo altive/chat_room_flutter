@@ -394,7 +394,7 @@ class ChatTextMessage extends ChatUserMessage {
     String? text,
     bool? highlight,
     MessageActionButton? button,
-    ChatTextMessage? replyTo,
+    ChatUserMessage? replyTo,
     int? replyImageIndex,
     String? label,
   }) {
@@ -615,7 +615,7 @@ class ChatStickerMessage extends ChatUserMessage {
     DateTime? createdAt,
     ChatUser? sender,
     Sticker? sticker,
-    ChatTextMessage? replyTo,
+    ChatUserMessage? replyTo,
     int? replyImageIndex,
     String? label,
   }) {
@@ -728,7 +728,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     ChatUser? sender,
     VoiceCallType? voiceCallType,
     int? durationSeconds,
-    ChatTextMessage? replyTo,
+    ChatUserMessage? replyTo,
     int? replyImageIndex,
     String? label,
   }) {

@@ -369,8 +369,6 @@ class _TextMessageBubbleContents extends StatelessWidget {
                       ),
                       child: SelectableText.rich(
                         textSpan,
-                        autofocus: true,
-                        showCursor: true,
                         contextMenuBuilder: contextMenuBuilder,
                       ),
                     )

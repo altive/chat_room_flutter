@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 /// {@template altive_chat_room.AdaptiveCachedNetworkSVGImage}
 /// Web用のSVG画像表示Widget。
@@ -55,6 +56,21 @@ class AdaptiveCachedNetworkSVGImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return errorWidget;
+    return SvgPicture.network(
+      imageUrl,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (_, _, _) => errorWidget,
+      placeholderBuilder: (_) {
+        return SizedBox(
+          width: progressIndicatorWidth,
+          height: progressIndicatorHeight,
+          child: const Center(
+            child: CircularProgressIndicator.adaptive(),
+          ),
+        );
+      },
+    );
   }
 }

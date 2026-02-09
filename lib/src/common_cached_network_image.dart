@@ -90,7 +90,7 @@ class CommonCachedNetworkImage extends StatelessWidget {
     }
 
     // SVG画像の場合
-    if (imageUrl.endsWith('.svg')) {
+    if (uri.path.toLowerCase().endsWith('.svg')) {
       return AdaptiveCachedNetworkSVGImage(
         imageUrl: imageUrl,
         fit: fit,

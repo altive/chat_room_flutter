@@ -653,6 +653,21 @@ final List<ChatMessage> _directMessages = [
     sender: _user1,
     text: 'Look at this link! https://www.yahoo.co.jp/',
   ),
+  // 音声通話メッセージ（通話成立）。
+  ChatVoiceCallMessage(
+    id: '18',
+    createdAt: DateTime.now().subtract(const Duration(days: 6)),
+    sender: _user1,
+    voiceCallType: VoiceCallType.connected,
+    durationSeconds: 210,
+  ),
+  // 音声通話メッセージ（不在着信）。
+  ChatVoiceCallMessage(
+    id: '19',
+    createdAt: DateTime.now().subtract(const Duration(days: 6)),
+    sender: _user2,
+    voiceCallType: VoiceCallType.unanswered,
+  ),
 ];
 
 class _MessageBottomWidgets extends StatelessWidget {

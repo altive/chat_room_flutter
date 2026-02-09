@@ -5,11 +5,13 @@ import 'common_cached_network_image.dart';
 import 'inherited_altive_chat_room_theme.dart';
 import 'model.dart';
 
+/// {@template altive_chat_room.BottomWidget}
 /// ボトムに配置するWidget。
 ///
 /// テキストフィールドとメッセージの送信ボタンを表示する。
+/// {@endtemplate}
 class BottomWidget extends StatefulWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.BottomWidget}
   const BottomWidget({
     super.key,
     this.textEditingController,

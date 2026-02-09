@@ -30,9 +30,11 @@ class CachedOgpData {
   }
 }
 
-/// OGP 情報を表すクラス。
+/// {@template altive_chat_room.OgpData}
+/// URL から取得した OGP 情報を表すデータクラス。
+/// {@endtemplate}
 class OgpData {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.OgpData}
   OgpData({
     this.title,
     this.description,

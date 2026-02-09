@@ -2,9 +2,13 @@ import 'package:cached_network_svg_image/cached_network_svg_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
+/// {@template altive_chat_room.AdaptiveCachedNetworkSVGImage}
 /// アプリ用のSVG画像表示Widget。
+///
+/// モバイル向けに SVG をキャッシュ表示するWidget。
+/// {@endtemplate}
 class AdaptiveCachedNetworkSVGImage extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.AdaptiveCachedNetworkSVGImage}
   const AdaptiveCachedNetworkSVGImage({
     super.key,
     required this.imageUrl,

@@ -6,9 +6,11 @@ import 'inherited_altive_chat_room_theme.dart';
 import 'model.dart';
 import 'user_message_bubble.dart';
 
-/// MessageItem を表すクラス。
+/// {@template altive_chat_room.MessageItem}
+/// メッセージを表示をするWidget。
+/// {@endtemplate}
 class MessageItem extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.MessageItem}
   const MessageItem({
     super.key,
     required this.myUserId,

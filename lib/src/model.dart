@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 
 import 'altive_chat_room.dart';
 
+/// {@template altive_chat_room.AltiveChatRoomTheme}
 /// [AltiveChatRoom]のテーマ。
 ///
 /// [ThemeData.light]をベースに上書きして使用する。
+/// {@endtemplate}
 @immutable
 class AltiveChatRoomTheme {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.AltiveChatRoomTheme}
   const AltiveChatRoomTheme({
     this.primaryColor,
     this.backgroundColor,
@@ -249,10 +251,12 @@ typedef PopupMenuAccessoryBuilder =
       required VoidCallback closePopupMenu,
     });
 
+/// {@template altive_chat_room.PopupMenuConfig}
 /// ポップアップメニューの設定。
+/// {@endtemplate}
 @immutable
 class PopupMenuConfig {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.PopupMenuConfig}
   const PopupMenuConfig({
     this.itemWidth = 72,
     this.itemHeight = 65,
@@ -351,10 +355,12 @@ sealed class ChatUserMessage implements ChatMessage {
   }
 }
 
+/// {@template altive_chat_room.ChatTextMessage}
 /// テキストメッセージ。
+/// {@endtemplate}
 @immutable
 class ChatTextMessage extends ChatUserMessage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatTextMessage}
   const ChatTextMessage({
     required super.id,
     required super.createdAt,
@@ -452,10 +458,12 @@ class ChatTextMessage extends ChatUserMessage {
   ]);
 }
 
+/// {@template altive_chat_room.MessageActionButton}
 /// メッセージ下部に表示するボタン。
+/// {@endtemplate}
 @immutable
 class MessageActionButton {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.MessageActionButton}
   const MessageActionButton({required this.text, required this.value});
 
   /// ボタンに表示するテキスト。
@@ -484,10 +492,12 @@ class MessageActionButton {
   int get hashCode => Object.hashAll([text, value]);
 }
 
+/// {@template altive_chat_room.ChatImagesMessage}
 /// 複数画像メッセージ。
+/// {@endtemplate}
 @immutable
 class ChatImagesMessage extends ChatUserMessage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatImagesMessage}
   ChatImagesMessage({
     required super.id,
     required super.createdAt,
@@ -580,10 +590,12 @@ class ChatImagesMessage extends ChatUserMessage {
 typedef ImageMessageTapCallback =
     void Function({required List<String> imageUrls, required int index});
 
+/// {@template altive_chat_room.ChatStickerMessage}
 /// スタンプメッセージ。
+/// {@endtemplate}
 @immutable
 class ChatStickerMessage extends ChatUserMessage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatStickerMessage}
   const ChatStickerMessage({
     required super.id,
     required super.createdAt,
@@ -680,10 +692,12 @@ enum VoiceCallType {
   };
 }
 
+/// {@template altive_chat_room.ChatVoiceCallMessage}
+/// 音声通話メッセージ。
+/// {@endtemplate}
 @immutable
-/// ChatVoiceCallMessage を表すクラス。
 class ChatVoiceCallMessage extends ChatUserMessage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatVoiceCallMessage}
   const ChatVoiceCallMessage({
     required super.id,
     required super.createdAt,
@@ -776,12 +790,14 @@ class ChatVoiceCallMessage extends ChatUserMessage {
   ]);
 }
 
+/// {@template altive_chat_room.ChatSystemMessage}
 /// システムメッセージ。
 ///
 /// 入室退室のメッセージ等で使用する。
+/// {@endtemplate}
 @immutable
 class ChatSystemMessage implements ChatMessage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatSystemMessage}
   const ChatSystemMessage({
     required this.id,
     required this.createdAt,
@@ -831,10 +847,12 @@ class ChatSystemMessage implements ChatMessage {
   int get hashCode => Object.hashAll([id, createdAt, text]);
 }
 
+/// {@template altive_chat_room.ChatUser}
+/// チャットで利用するユーザー情報。
+/// {@endtemplate}
 @immutable
-/// ChatUser を表すクラス。
 class ChatUser {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.ChatUser}
   const ChatUser({
     required this.id,
     this.isOwner = false,
@@ -920,10 +938,12 @@ class ChatUser {
   ]);
 }
 
+/// {@template altive_chat_room.PopupMenuLayout}
 /// ポップアップメニューで使用するレイアウト。
+/// {@endtemplate}
 @immutable
 class PopupMenuLayout {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.PopupMenuLayout}
   PopupMenuLayout({required this.column, required this.buttonItems})
     : assert(buttonItems.isNotEmpty, 'Popup button items must not be empty.'),
       assert(
@@ -938,10 +958,12 @@ class PopupMenuLayout {
   final List<PopupMenuButtonItem> buttonItems;
 }
 
+/// {@template altive_chat_room.PopupMenuButtonItem}
 /// ポップアップメニューで使用するタップ可能なアイテム。
+/// {@endtemplate}
 @immutable
 class PopupMenuButtonItem {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.PopupMenuButtonItem}
   const PopupMenuButtonItem({
     this.title,
     required this.iconWidget,
@@ -968,10 +990,12 @@ enum MessageInputType {
   sticker,
 }
 
+/// {@template altive_chat_room.StickerPackage}
 /// スタンプパッケージ。
+/// {@endtemplate}
 @immutable
 class StickerPackage {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.StickerPackage}
   const StickerPackage({
     required this.id,
     required this.tabStickerImageUrl,
@@ -1011,10 +1035,12 @@ class StickerPackage {
   int get hashCode => Object.hashAll([id, tabStickerImageUrl, stickers]);
 }
 
+/// {@template altive_chat_room.Sticker}
 /// スタンプ。
+/// {@endtemplate}
 @immutable
 class Sticker {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.Sticker}
   const Sticker({required this.id, required this.imageUrl});
 
   /// スタンプID。

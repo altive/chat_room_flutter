@@ -6,10 +6,14 @@ import 'adaptive_cached_network_svg_image_wrapper.dart';
 import 'cached_local_image.dart';
 import 'common_cache_manager.dart';
 
+/// {@template altive_chat_room.CommonCachedNetworkImage}
 /// [CachedNetworkImage] のラッパー Widget。
+///
 /// SVG画像の場合は [AdaptiveCachedNetworkSVGImage] を使用する。
+/// ネットワーク画像を共通設定で表示する。
+/// {@endtemplate}
 class CommonCachedNetworkImage extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.CommonCachedNetworkImage}
   const CommonCachedNetworkImage({
     super.key,
     required this.imageUrl,
@@ -153,9 +157,13 @@ class _ErrorIcon extends StatelessWidget {
   }
 }
 
+/// {@template altive_chat_room.CommonCachedNetworkImageProvider}
 /// [CachedNetworkImageProvider] のラッパークラス。
+///
+/// 共通キャッシュ設定を使う [CachedNetworkImageProvider]。
+/// {@endtemplate}
 class CommonCachedNetworkImageProvider extends CachedNetworkImageProvider {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.CommonCachedNetworkImageProvider}
   CommonCachedNetworkImageProvider(super.url)
     : super(cacheManager: commonCacheManager);
 

@@ -1,8 +1,10 @@
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-/// CommonCacheManager を表すクラス。
+/// {@template altive_chat_room.CommonCacheManager}
+/// 画像キャッシュの共通設定を提供するキャッシュマネージャー。
+/// {@endtemplate}
 class CommonCacheManager extends CacheManager {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.CommonCacheManager}
   CommonCacheManager()
     : super(
         Config(

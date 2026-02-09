@@ -2,9 +2,11 @@ import 'package:flutter/widgets.dart';
 
 import 'model.dart';
 
-/// [AltiveChatRoomTheme]クラスをパッケージ全体を通して利用可能にするために使用されます。
-class InheritedAltiveChatRoomTheme extends InheritedWidget {
-  /// インスタンスを生成する。
+/// {@template altive_chat_room.InheritedAltiveChatRoomTheme}
+/// [AltiveChatRoomTheme] をツリー全体へ共有する [InheritedWidget]。
+/// {@endtemplate}
+  class InheritedAltiveChatRoomTheme extends InheritedWidget {
+  /// {@macro altive_chat_room.InheritedAltiveChatRoomTheme}
   const InheritedAltiveChatRoomTheme({
     super.key,
     required this.theme,

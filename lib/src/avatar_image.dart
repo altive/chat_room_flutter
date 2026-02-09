@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'common_cached_network_image.dart';
 import 'model.dart';
 
-/// AvatarImage を表すクラス。
+/// {@template altive_chat_room.AvatarImage}
+/// ユーザーのアバター画像を表示するWidget。
+/// {@endtemplate}
 class AvatarImage extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.AvatarImage}
   const AvatarImage({
     super.key,
     required this.user,

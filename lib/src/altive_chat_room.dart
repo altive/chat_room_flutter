@@ -9,11 +9,13 @@ import 'inherited_altive_chat_room_theme.dart';
 import 'message_item.dart';
 import 'model.dart';
 
+/// {@template altive_chat_room.AltiveChatRoom}
 /// チャットルームを表示するWidget。
 ///
 /// メッセージバブルの長押しでポップアップメニューを表示する。
+/// {@endtemplate}
 class AltiveChatRoom extends StatefulWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.AltiveChatRoom}
   const AltiveChatRoom({
     super.key,
     required this.theme,

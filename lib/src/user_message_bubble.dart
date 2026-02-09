@@ -13,11 +13,13 @@ import 'inherited_altive_chat_room_theme.dart';
 import 'model.dart';
 import 'popup_menu_overlay.dart';
 
+/// {@template altive_chat_room.UserMessageBubble}
 /// [ChatUserMessage]を表示するWidget。
 ///
-/// [ChatTextMessage]と[ChatImagesMessage]、[ChatStickerMessage]を表示する。
+/// ユーザーメッセージの内容に応じてバブル表示を切り替える。
+/// {@endtemplate}
 class UserMessageBubble extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.UserMessageBubble}
   const UserMessageBubble({
     super.key,
     required this.myUserId,
@@ -1036,9 +1038,13 @@ class _ImageTile extends StatelessWidget {
   }
 }
 
+/// {@template altive_chat_room.StickerMessageBubble}
 /// [ChatStickerMessage]を表示するWidget。
+///
+/// スタンプメッセージのバブルを表示する。
+/// {@endtemplate}
 class StickerMessageBubble extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.StickerMessageBubble}
   const StickerMessageBubble({
     super.key,
     required this.myUserId,

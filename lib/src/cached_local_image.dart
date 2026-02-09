@@ -3,9 +3,11 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-/// CachedLocalImage を表すクラス。
+/// {@template altive_chat_room.CachedLocalImage}
+/// data URI 形式のローカル画像を表示するWidget。
+/// {@endtemplate}
 class CachedLocalImage extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.CachedLocalImage}
   const CachedLocalImage({
     super.key,
     required this.dataUri,

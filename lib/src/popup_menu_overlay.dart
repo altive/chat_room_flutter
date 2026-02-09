@@ -7,9 +7,11 @@ import 'package:flutter/scheduler.dart';
 import 'inherited_altive_chat_room_theme.dart';
 import 'model.dart';
 
-/// グリッドで構成されるメニューをオーバーレイで表示する。
+/// {@template altive_chat_room.PopupMenuOverlay}
+/// メッセージ長押し時のポップアップメニューを表示するオーバーレイ。
+/// {@endtemplate}
 class PopupMenuOverlay {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.PopupMenuOverlay}
   PopupMenuOverlay({
     required this.layout,
     required this.config,
@@ -386,9 +388,11 @@ class _AccessorySizeRenderObject extends RenderProxyBox {
   }
 }
 
-/// BubbleArrow を表すクラス。
+/// {@template altive_chat_room.BubbleArrow}
+/// ポップアップメニューの矢印を描画するWidget。
+/// {@endtemplate}
 class BubbleArrow extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.BubbleArrow}
   const BubbleArrow({
     super.key,
     required this.triangleLength,

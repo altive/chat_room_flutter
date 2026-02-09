@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
+/// {@template altive_chat_room.AdaptiveCachedNetworkSVGImage}
 /// Web用のSVG画像表示Widget。
-/// cached_network_svg_imageパッケージはWebで使用できないので、エラーメッセージを表示する。
+///
+/// `cached_network_svg_image` パッケージは Web で使用できないため、
+/// Web向けに SVG を表示する。
+/// {@endtemplate}
 class AdaptiveCachedNetworkSVGImage extends StatelessWidget {
-  /// インスタンスを生成する。
+  /// {@macro altive_chat_room.AdaptiveCachedNetworkSVGImage}
   const AdaptiveCachedNetworkSVGImage({
     super.key,
     required this.imageUrl,

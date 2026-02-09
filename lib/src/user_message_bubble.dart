@@ -1252,6 +1252,11 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
     // テキストスタイルに太字を適用する。
     final textStyle = (isMine ? myMessageTextStyle : otherUserMessageTextStyle)!
         .copyWith(fontWeight: FontWeight.bold);
+    final defaultTimeTextStyle = theme.textTheme.labelSmall?.copyWith(
+      color: isMine ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+    );
+    final timeTextStyle =
+        altiveChatRoomTheme.timeTextStyle ?? defaultTimeTextStyle;
 
     final durationSeconds = message.durationSeconds;
     return Container(
@@ -1285,7 +1290,7 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
               if (durationSeconds != null)
                 Text(
                   Duration(seconds: durationSeconds).hmmssText,
-                  style: altiveChatRoomTheme.timeTextStyle,
+                  style: timeTextStyle,
                 ),
             ],
           ),

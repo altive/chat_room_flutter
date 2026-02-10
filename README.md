@@ -38,8 +38,16 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const me = ChatUser(id: '1', name: 'Me');
-    const other = ChatUser(id: '2', name: 'Other');
+    const me = ChatUser(
+      id: '1',
+      name: 'Me',
+      avatarImageUrl: 'https://example.com/avatar_me.png',
+    );
+    const other = ChatUser(
+      id: '2',
+      name: 'Other',
+      avatarImageUrl: 'https://example.com/avatar_other.png',
+    );
 
     final messages = <ChatMessage>[
       ChatTextMessage(

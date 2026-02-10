@@ -85,6 +85,7 @@ class _BottomWidgetState extends State<BottomWidget> {
   @override
   void dispose() {
     _controller?.dispose();
+    focusNode.dispose();
     super.dispose();
   }
 

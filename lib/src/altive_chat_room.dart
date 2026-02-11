@@ -207,6 +207,12 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
   Sticker? _selectedSticker;
 
   @override
+  void dispose() {
+    messageTypeNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final lightThemeData = ThemeData.light();
     // メッセージリストの高さを計算するために使用するキー。

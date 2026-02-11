@@ -305,12 +305,13 @@ class _TextMessageBubbleContents extends StatelessWidget {
     final hasPopupMenu = widgetKey != null;
     final replyTo = message.replyTo;
 
+    final linkifiedElements = linkify(message.text);
     // OGP情報を表示するためにメッセージ内のURLを抽出する。
-    final urlElements = linkify(message.text).whereType<UrlElement>();
+    final urlElements = linkifiedElements.whereType<UrlElement>();
 
     // Linkifyを利用しInlineSpanのリストを生成する。
     final linkifyInlineSpans = buildTextSpanChildren(
-      linkify(message.text),
+      linkifiedElements,
       style: textStyle,
       linkStyle: linkStyle,
       onOpen: onOpen,

@@ -76,17 +76,19 @@ class AltiveChatRoomTheme {
 
   /// 自分が送信したメッセージバブルのハイライトされた場合の装飾。
   ///
-  /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し枠線に`Colors.grey[700]`が使用される。
+  /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
+  /// 枠線に[ColorScheme.outline]が使用される。
   final BoxDecoration? myMessageHighlightBoxDecoration;
 
   /// 自分以外が送信したメッセージバブルの装飾。
   ///
-  /// `null`の場合は、背景色に`Colors.grey[200]`が使用される。
+  /// `null`の場合は、背景色に[ColorScheme.surfaceContainerHighest]が使用される。
   final BoxDecoration? otherUserMessageBoxDecoration;
 
   /// 自分以外が送信したメッセージバブルのハイライトされた場合の装飾。
   ///
-  /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し枠線に`Colors.grey[700]`が使用される。
+  /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
+  /// 枠線に[ColorScheme.outline]が使用される。
   final BoxDecoration? otherUserMessageHighlightBoxDecoration;
 
   /// 自分が送信したテキストメッセージのテキストスタイル。

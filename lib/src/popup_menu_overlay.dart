@@ -47,6 +47,8 @@ class PopupMenuOverlay {
   ///
   /// [widgetKey] はメニューを表示する元の[Widget]に設定された[GlobalKey]。
   void show({required BuildContext context}) {
+    dismiss();
+
     // 行数。
     final row = _calculateRowCount(
       itemCount: layout.buttonItems.length,
@@ -151,13 +153,24 @@ class PopupMenuOverlay {
         );
       },
     );
-
-    Overlay.of(context).insert(_entry!);
+    // オーバーレイに挿入する。
+    final overlayState = Overlay.maybeOf(context);
+    if (overlayState == null) {
+      _entry = null;
+      return;
+    }
+    overlayState.insert(_entry!);
   }
 
   /// dismiss を実行する。
   void dismiss() {
-    _entry?.remove();
+    final entry = _entry;
+    // オーバーレイから削除する。
+    if (entry != null && entry.mounted) {
+      entry.remove();
+    }
+    // 削除後の古い参照を残さないために null を代入する。
+    _entry = null;
   }
 
   /// アクセサリー領域の配置情報を求め、メニューとの相対位置を計算する。

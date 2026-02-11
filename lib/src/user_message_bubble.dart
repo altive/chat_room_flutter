@@ -286,10 +286,19 @@ class _TextMessageBubbleContents extends StatelessWidget {
         theme.colorScheme.secondary;
 
     Future<void> onOpen(LinkableElement link) async {
-      final url = Uri.parse(link.url);
-      if (!await launchUrl(url)) {
-        throw Exception('Could not launch $url');
+      final uri = Uri.tryParse(link.url);
+      final scheme = uri?.scheme.toLowerCase();
+      const allowedSchemes = <String>{
+        'http',
+        'https',
+        'mailto',
+        'tel',
+        'sms',
+      };
+      if (uri == null || scheme == null || !allowedSchemes.contains(scheme)) {
+        return;
       }
+      await launchUrl(uri);
     }
 
     final messageButton = message.button;

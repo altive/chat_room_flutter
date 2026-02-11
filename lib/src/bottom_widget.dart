@@ -186,7 +186,9 @@ class _BottomWidgetState extends State<BottomWidget> {
                           text: _effectiveController.text,
                           sticker: widget.selectedSticker,
                         ));
-                        _effectiveController.text = '';
+                        setState(() {
+                          _effectiveController.clear();
+                        });
                       },
                     ),
                   const SizedBox(width: 8),

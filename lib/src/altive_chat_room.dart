@@ -471,16 +471,6 @@ class _MessageListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
 
-    // 同じ日付ごとにリストをまとめてMap化
-    final messagesByCreatedAt = <String, List<ChatMessage>>{};
-    for (final message in messages) {
-      messagesByCreatedAt.update(
-        message.createdAt.dateText,
-        (value) => [message, ...value],
-        ifAbsent: () => [message],
-      );
-    }
-
     return GestureDetector(
       // Padding等でも反応させるために追加する。
       behavior: HitTestBehavior.opaque,
@@ -501,10 +491,9 @@ class _MessageListView extends StatelessWidget {
 
           // 同じ日付の中で先頭の要素かどうか
           final isFirstInGroup =
-              messagesByCreatedAt[message.createdAt.dateText]?.indexOf(
-                message,
-              ) ==
-              0;
+              index == 0 ||
+              messages[index - 1].createdAt.dateText !=
+                  message.createdAt.dateText;
 
           final messageItem = MessageItem(
             myUserId: myUserId,

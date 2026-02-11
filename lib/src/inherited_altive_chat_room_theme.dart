@@ -5,7 +5,7 @@ import 'model.dart';
 /// {@template altive_chat_room.InheritedAltiveChatRoomTheme}
 /// [AltiveChatRoomTheme] をツリー全体へ共有する [InheritedWidget]。
 /// {@endtemplate}
-  class InheritedAltiveChatRoomTheme extends InheritedWidget {
+class InheritedAltiveChatRoomTheme extends InheritedWidget {
   /// {@macro altive_chat_room.InheritedAltiveChatRoomTheme}
   const InheritedAltiveChatRoomTheme({
     super.key,
@@ -28,5 +28,5 @@ import 'model.dart';
 
   @override
   bool updateShouldNotify(InheritedAltiveChatRoomTheme oldWidget) =>
-      theme.hashCode != oldWidget.theme.hashCode;
+      theme != oldWidget.theme;
 }

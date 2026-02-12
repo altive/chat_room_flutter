@@ -180,12 +180,13 @@ class ChatImagesMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
-    required this.imageUrls,
+    required List<String> imageUrls,
     this.selectedImageIndex,
     super.replyTo,
     super.replyImageIndex,
     super.label = 'Images',
-  }) : assert(imageUrls.isNotEmpty);
+  }) : imageUrls = List.unmodifiable(imageUrls),
+       assert(imageUrls.isNotEmpty);
 
   /// 画像のURL一覧。
   final List<String> imageUrls;

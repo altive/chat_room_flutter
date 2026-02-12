@@ -1,7 +1,9 @@
 export 'models/altive_chat_room_theme.dart';
 export 'models/chat_message.dart';
 export 'models/chat_user.dart';
+export 'models/message_bottom_widget_builder.dart';
 export 'models/message_input_type.dart';
+export 'models/popup_menu_accessory_builder.dart';
 export 'models/popup_menu_button_item.dart';
 export 'models/popup_menu_config.dart';
 export 'models/popup_menu_layout.dart';

@@ -554,10 +554,9 @@ bool _isEmoji(String char) {
 /// 文字が英数字または日本語かどうかを判定する。
 bool _isNormalChar(String char) {
   final normalCharRegExp = RegExp(
-    // NOTE: [a-zA-Z0-9ａ-ｚＡ-Ｚ０-９ぁ-んァ-ヶー一-龠々ｦ-ﾟ]と同じ内容
-    // ignore: avoid_hardcoded_japanese が機能しない為、Unicodeで記述している。
-    r'[a-zA-Z0-9\uFF41-\uFF5A\uFF21-\uFF3A\uFF10-\uFF19'
-    r'\u3041-\u3093\u30A1-\u30F6\u30FC\u4E00-\u9FA0\u3005\uFF66-\uFF9F]',
+    // 日本語判定のため、正規表現内で日本語文字を明示的に扱う。
+    // ignore: altive_lints/avoid_hardcoded_japanese
+    '[a-zA-Z0-9ａ-ｚＡ-Ｚ０-９ぁ-んァ-ヶー一-龠々ｦ-ﾟ]',
   );
   return normalCharRegExp.hasMatch(char);
 }

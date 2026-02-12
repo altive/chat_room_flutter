@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import 'chat_message.dart';
@@ -6,7 +7,7 @@ import 'chat_message.dart';
 /// ポップアップメニューで使用するタップ可能なアイテム。
 /// {@endtemplate}
 @immutable
-class PopupMenuButtonItem {
+class PopupMenuButtonItem extends Equatable {
   /// {@macro altive_chat_room.PopupMenuButtonItem}
   const PopupMenuButtonItem({
     this.title,
@@ -22,4 +23,7 @@ class PopupMenuButtonItem {
 
   /// タップされた時の処理。
   final ValueChanged<ChatUserMessage> onTap;
+
+  @override
+  List<Object?> get props => [title, iconWidget, onTap];
 }

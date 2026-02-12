@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 import 'popup_menu_button_item.dart';
@@ -6,7 +7,7 @@ import 'popup_menu_button_item.dart';
 /// ポップアップメニューで使用するレイアウト。
 /// {@endtemplate}
 @immutable
-class PopupMenuLayout {
+class PopupMenuLayout extends Equatable {
   /// {@macro altive_chat_room.PopupMenuLayout}
   PopupMenuLayout({required this.column, required this.buttonItems})
     : assert(buttonItems.isNotEmpty, 'Popup button items must not be empty.'),
@@ -20,4 +21,7 @@ class PopupMenuLayout {
 
   /// メニューアイテムの配列。
   final List<PopupMenuButtonItem> buttonItems;
+
+  @override
+  List<Object?> get props => [column, buttonItems];
 }

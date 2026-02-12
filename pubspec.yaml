@@ -17,6 +17,7 @@ dependencies:
   clock: ^1.1.2
   collection: ^1.19.1
   custom_refresh_indicator: ^4.0.1
+  equatable: ^2.0.8
   flutter:
     sdk: flutter
   flutter_cache_manager: ^3.4.1

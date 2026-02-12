@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import 'popup_menu_button_item.dart';
@@ -6,7 +7,7 @@ import 'popup_menu_button_item.dart';
 /// ポップアップメニューの設定。
 /// {@endtemplate}
 @immutable
-class PopupMenuConfig {
+class PopupMenuConfig extends Equatable {
   /// {@macro altive_chat_room.PopupMenuConfig}
   const PopupMenuConfig({
     this.itemWidth = 72,
@@ -47,4 +48,15 @@ class PopupMenuConfig {
   ///
   /// `null`の場合は、[ColorScheme.onPrimary]が使用される。
   final Color? dividerColor;
+
+  @override
+  List<Object?> get props => [
+    itemWidth,
+    itemHeight,
+    arrowHeight,
+    buttonItemTextStyle,
+    backgroundColor,
+    highlightColor,
+    dividerColor,
+  ];
 }

@@ -1,4 +1,4 @@
-import 'package:collection/collection.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
 import 'chat_user.dart';
@@ -6,7 +6,7 @@ import 'sticker.dart';
 
 @immutable
 /// ChatMessage を表すクラス。
-sealed class ChatMessage {
+sealed class ChatMessage extends Equatable {
   const ChatMessage({required this.id, required this.createdAt});
 
   /// メッセージID。
@@ -14,28 +14,23 @@ sealed class ChatMessage {
 
   /// 作成日時。
   final DateTime createdAt;
+
+  @override
+  List<Object?> get props => [id, createdAt];
 }
 
 /// ユーザーが送信するメッセージ。
 @immutable
-sealed class ChatUserMessage implements ChatMessage {
+sealed class ChatUserMessage extends ChatMessage {
   const ChatUserMessage({
-    required this.id,
-    required this.createdAt,
+    required super.id,
+    required super.createdAt,
     required this.sender,
     this.unsent = false,
     this.replyTo,
     this.replyImageIndex,
     required this.label,
   });
-
-  /// メッセージID。
-  @override
-  final String id;
-
-  /// 作成日時。
-  @override
-  final DateTime createdAt;
 
   /// 送信者。
   final ChatUser sender;
@@ -59,6 +54,16 @@ sealed class ChatUserMessage implements ChatMessage {
   bool isSentByCurrentUser(String currentUserId) {
     return sender.id == currentUserId;
   }
+
+  @override
+  List<Object?> get props => [
+    ...super.props,
+    sender,
+    unsent,
+    replyTo,
+    replyImageIndex,
+    label,
+  ];
 }
 
 /// メッセージバブル直下に表示するWidgetを構築するビルダーの型定義。
@@ -149,43 +154,19 @@ class ChatTextMessage extends ChatUserMessage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is ChatTextMessage &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.sender, sender) || other.sender == sender) &&
-            (identical(other.text, text) || other.text == text) &&
-            (identical(other.highlight, highlight) ||
-                other.highlight == highlight) &&
-            (identical(other.button, button) || other.button == button) &&
-            (identical(other.replyTo, replyTo) || other.replyTo == replyTo) &&
-            (identical(other.replyImageIndex, replyImageIndex) ||
-                other.replyImageIndex == replyImageIndex) &&
-            (identical(other.label, label) || other.label == label));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    createdAt,
-    sender,
+  List<Object?> get props => [
+    ...super.props,
     text,
     highlight,
     button,
-    replyTo,
-    replyImageIndex,
-    label,
-  ]);
+  ];
 }
 
 /// {@template altive_chat_room.MessageActionButton}
 /// メッセージ下部に表示するボタン。
 /// {@endtemplate}
 @immutable
-class MessageActionButton {
+class MessageActionButton extends Equatable {
   /// {@macro altive_chat_room.MessageActionButton}
   const MessageActionButton({required this.text, required this.value});
 
@@ -203,16 +184,7 @@ class MessageActionButton {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is MessageActionButton &&
-            (identical(other.text, text) || other.text == text) &&
-            (identical(other.value, value) || other.value == value));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([text, value]);
+  List<Object?> get props => [text, value];
 }
 
 /// {@template altive_chat_room.ChatImagesMessage}
@@ -275,38 +247,11 @@ class ChatImagesMessage extends ChatUserMessage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-                other is ChatImagesMessage &&
-                (identical(other.id, id) || other.id == id) &&
-                (identical(other.createdAt, createdAt) ||
-                    other.createdAt == createdAt) &&
-                (identical(other.sender, sender) || other.sender == sender) &&
-                const ListEquality<String>().equals(
-                  other.imageUrls,
-                  imageUrls,
-                ) &&
-                (identical(other.selectedImageIndex, selectedImageIndex) ||
-                    other.selectedImageIndex == selectedImageIndex) &&
-                (identical(other.replyTo, replyTo) ||
-                    other.replyTo == replyTo) &&
-                (identical(other.replyImageIndex, replyImageIndex) ||
-                    other.replyImageIndex == replyImageIndex)) &&
-            (identical(other.label, label) || other.label == label);
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    createdAt,
-    sender,
-    const ListEquality<String>().hash(imageUrls),
+  List<Object?> get props => [
+    ...super.props,
+    imageUrls,
     selectedImageIndex,
-    replyTo,
-    replyImageIndex,
-    label,
-  ]);
+  ];
 }
 
 /// 画像メッセージのタップコールバック。
@@ -366,33 +311,10 @@ class ChatStickerMessage extends ChatUserMessage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-                other is ChatStickerMessage &&
-                (identical(other.id, id) || other.id == id) &&
-                (identical(other.createdAt, createdAt) ||
-                    other.createdAt == createdAt) &&
-                (identical(other.sender, sender) || other.sender == sender) &&
-                (identical(other.sticker, sticker) ||
-                    other.sticker == sticker) &&
-                (identical(other.replyTo, replyTo) ||
-                    other.replyTo == replyTo) &&
-                (identical(other.replyImageIndex, replyImageIndex) ||
-                    other.replyImageIndex == replyImageIndex)) &&
-            (identical(other.label, label) || other.label == label);
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    createdAt,
-    sender,
+  List<Object?> get props => [
+    ...super.props,
     sticker,
-    replyTo,
-    replyImageIndex,
-    label,
-  ]);
+  ];
 }
 
 /// 音声通話の種類。
@@ -482,36 +404,11 @@ class ChatVoiceCallMessage extends ChatUserMessage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-                other is ChatVoiceCallMessage &&
-                (identical(other.id, id) || other.id == id) &&
-                (identical(other.createdAt, createdAt) ||
-                    other.createdAt == createdAt) &&
-                (identical(other.sender, sender) || other.sender == sender) &&
-                (identical(other.voiceCallType, voiceCallType) ||
-                    other.voiceCallType == voiceCallType) &&
-                (identical(other.durationSeconds, durationSeconds) ||
-                    other.durationSeconds == durationSeconds) &&
-                (identical(other.replyTo, replyTo) ||
-                    other.replyTo == replyTo) &&
-                (identical(other.replyImageIndex, replyImageIndex) ||
-                    other.replyImageIndex == replyImageIndex)) &&
-            (identical(other.label, label) || other.label == label);
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-    id,
-    createdAt,
-    sender,
+  List<Object?> get props => [
+    ...super.props,
     voiceCallType,
     durationSeconds,
-    replyTo,
-    replyImageIndex,
-    label,
-  ]);
+  ];
 }
 
 /// {@template altive_chat_room.ChatSystemMessage}
@@ -520,21 +417,13 @@ class ChatVoiceCallMessage extends ChatUserMessage {
 /// 入室退室のメッセージ等で使用する。
 /// {@endtemplate}
 @immutable
-class ChatSystemMessage implements ChatMessage {
+class ChatSystemMessage extends ChatMessage {
   /// {@macro altive_chat_room.ChatSystemMessage}
   const ChatSystemMessage({
-    required this.id,
-    required this.createdAt,
+    required super.id,
+    required super.createdAt,
     required this.text,
   });
-
-  /// メッセージID。
-  @override
-  final String id;
-
-  /// 作成日時。
-  @override
-  final DateTime createdAt;
 
   /// テキスト。
   final String text;
@@ -557,16 +446,5 @@ class ChatSystemMessage implements ChatMessage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is ChatSystemMessage &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.text, text) || other.text == text));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([id, createdAt, text]);
+  List<Object?> get props => [...super.props, text];
 }

@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 import 'sticker.dart';
@@ -6,7 +7,7 @@ import 'sticker.dart';
 /// ステッカーパッケージ。
 /// {@endtemplate}
 @immutable
-class StickerPackage {
+class StickerPackage extends Equatable {
   /// {@macro altive_chat_room.StickerPackage}
   const StickerPackage({
     required this.id,
@@ -32,17 +33,5 @@ class StickerPackage {
       ')';
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is StickerPackage &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.tabStickerImageUrl, tabStickerImageUrl) ||
-                other.tabStickerImageUrl == tabStickerImageUrl) &&
-            (identical(other.stickers, stickers) ||
-                other.stickers == stickers));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([id, tabStickerImageUrl, stickers]);
+  List<Object?> get props => [id, tabStickerImageUrl, stickers];
 }

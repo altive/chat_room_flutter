@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
 import '../altive_chat_room.dart';
@@ -10,7 +11,7 @@ import 'popup_menu_config.dart';
 /// [ThemeData.light]をベースに上書きして使用する。
 /// {@endtemplate}
 @immutable
-class AltiveChatRoomTheme {
+class AltiveChatRoomTheme extends Equatable {
   /// {@macro altive_chat_room.AltiveChatRoomTheme}
   const AltiveChatRoomTheme({
     this.primaryColor,
@@ -238,4 +239,43 @@ class AltiveChatRoomTheme {
 
   /// ポップアップメニューの設定
   final PopupMenuConfig popupMenuConfig;
+
+  @override
+  List<Object?> get props => [
+    primaryColor,
+    backgroundColor,
+    messageInsetsHorizontal,
+    messageInsetsVertical,
+    voiceCallMessageInsetsHorizontal,
+    voiceCallMessageInsetsVertical,
+    myMessageBoxDecoration,
+    myMessageHighlightBoxDecoration,
+    otherUserMessageBoxDecoration,
+    otherUserMessageHighlightBoxDecoration,
+    myMessageTextStyle,
+    myMessageHighlightTextStyle,
+    myEmojiMessageTextStyle,
+    mySpecialMessageTextStyle,
+    otherUserMessageTextStyle,
+    otherUserHighlightMessageTextStyle,
+    otherUserEmojiMessageTextStyle,
+    otherUserSpecialMessageTextStyle,
+    myReplyToMessageTextStyle,
+    myReplyToUserNameTextStyle,
+    myReplyToDividerColor,
+    otherUserReplyToMessageTextStyle,
+    otherUserReplyToUserNameTextStyle,
+    otherUserReplyToDividerColor,
+    myOgpTitleTextStyle,
+    myOgpDescriptionTextStyle,
+    myOgpDividerColor,
+    otherUserOgpTitleTextStyle,
+    otherUserOgpDescriptionTextStyle,
+    otherUserOgpDividerColor,
+    timeTextStyle,
+    messageActionButtonStyle,
+    inputDecorationTheme,
+    inputBackgroundColor,
+    popupMenuConfig,
+  ];
 }

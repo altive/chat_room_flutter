@@ -1,10 +1,11 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 /// {@template altive_chat_room.ChatUser}
 /// チャットで利用するユーザー情報。
 /// {@endtemplate}
 @immutable
-class ChatUser {
+class ChatUser extends Equatable {
   /// {@macro altive_chat_room.ChatUser}
   const ChatUser({
     required this.id,
@@ -64,29 +65,11 @@ class ChatUser {
   }
 
   @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is ChatUser &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.isOwner, isOwner) || other.isOwner == isOwner) &&
-            (identical(other.name, name) || other.name == name) &&
-            (identical(other.avatarImageUrl, avatarImageUrl) ||
-                other.avatarImageUrl == avatarImageUrl) &&
-            (identical(
-                  other.defaultAvatarImageAssetPath,
-                  defaultAvatarImageAssetPath,
-                ) ||
-                other.defaultAvatarImageAssetPath ==
-                    defaultAvatarImageAssetPath));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
+  List<Object?> get props => [
     id,
     isOwner,
     name,
     avatarImageUrl,
     defaultAvatarImageAssetPath,
-  ]);
+  ];
 }

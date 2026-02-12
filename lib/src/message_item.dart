@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'avatar_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 import 'user_message_bubble.dart';
 
 /// {@template altive_chat_room.MessageItem}

@@ -1,4 +1,4 @@
-import 'package:altive_chat_room/src/model.dart';
+import 'package:altive_chat_room/src/models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -7,7 +7,7 @@ import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
 import 'message_item.dart';
-import 'model.dart';
+import 'models.dart';
 
 /// {@template altive_chat_room.AltiveChatRoom}
 /// チャットルームを表示するWidget。

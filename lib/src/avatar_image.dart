@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'common_cached_network_image.dart';
-import 'model.dart';
+import 'models.dart';
 
 /// {@template altive_chat_room.AvatarImage}
 /// ユーザーのアバター画像を表示するWidget。

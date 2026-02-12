@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 
 /// {@template altive_chat_room.PopupMenuOverlay}
 /// メッセージ長押し時のポップアップメニューを表示するオーバーレイ。

@@ -10,7 +10,7 @@ import 'cached_ogp_data.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 import 'popup_menu_overlay.dart';
 
 /// {@template altive_chat_room.UserMessageBubble}

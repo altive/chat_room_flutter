@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'common_cached_network_image.dart';
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 
 /// {@template altive_chat_room.BottomWidget}
 /// ボトムに配置するWidget。

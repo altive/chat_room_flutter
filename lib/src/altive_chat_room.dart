@@ -135,7 +135,7 @@ class AltiveChatRoom extends StatefulWidget {
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// メッセージのアクションボタンをタップした時の処理。
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   /// 送信ボタンのアイコン。
   final Icon? sendButtonIcon;
@@ -461,7 +461,7 @@ class _MessageListView extends StatelessWidget {
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
   final PopupMenuLayout? myTextMessagePopupMenuLayout;
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;

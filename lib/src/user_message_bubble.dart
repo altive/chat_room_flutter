@@ -56,7 +56,7 @@ class UserMessageBubble extends StatelessWidget {
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   /// テキストメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? popupMenuLayoutForText;
@@ -140,7 +140,7 @@ class _TextMessageBubble extends StatelessWidget {
   final ChatTextMessage message;
   final bool canSelect;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
   final bool popupMenuEnabled;
@@ -201,7 +201,7 @@ class _TextMessageBubbleContents extends StatelessWidget {
   final ChatTextMessage message;
   final bool canSelect;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   @override
   Widget build(BuildContext context) {

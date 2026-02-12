@@ -67,7 +67,7 @@ class MessageItem extends StatelessWidget {
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   /// 自分のテキストメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? myTextMessagePopupMenuLayout;
@@ -171,7 +171,7 @@ class _UserMessageItem extends StatelessWidget {
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
   final PopupMenuLayout? myTextMessagePopupMenuLayout;
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;

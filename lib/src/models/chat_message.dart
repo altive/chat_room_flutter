@@ -174,7 +174,7 @@ class MessageActionButton extends Equatable {
   final String text;
 
   /// ボタンがタップされた際に送信される値。
-  final dynamic value;
+  final Object? value;
 
   @override
   String toString() =>

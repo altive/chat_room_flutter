@@ -207,7 +207,7 @@ class _UserMessageItem extends StatelessWidget {
         : _TimeText.userMessage(dateTime: message.createdAt);
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
-    final enablePopupMenu = !isPending;
+    final popupMenuEnabled = !isPending;
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
@@ -237,7 +237,7 @@ class _UserMessageItem extends StatelessWidget {
                         popupMenuLayoutForVoiceCall:
                             myVoiceCallMessagePopupMenuLayout,
                         popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-                        enablePopupMenu: enablePopupMenu,
+                        popupMenuEnabled: popupMenuEnabled,
                       ),
                     ),
                   ],
@@ -293,7 +293,7 @@ class _UserMessageItem extends StatelessWidget {
                                   otherUserVoiceCallMessagePopupMenuLayout,
                               popupMenuAccessoryBuilder:
                                   popupMenuAccessoryBuilder,
-                              enablePopupMenu: enablePopupMenu,
+                              popupMenuEnabled: popupMenuEnabled,
                             ),
                           ),
                           const SizedBox(width: 6),

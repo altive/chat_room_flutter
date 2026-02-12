@@ -34,7 +34,7 @@ class UserMessageBubble extends StatelessWidget {
     required this.popupMenuLayoutForSticker,
     required this.popupMenuLayoutForVoiceCall,
     required this.popupMenuAccessoryBuilder,
-    this.enablePopupMenu = true,
+    this.popupMenuEnabled = true,
   });
 
   /// ログイン中ユーザーの ID。
@@ -74,7 +74,7 @@ class UserMessageBubble extends StatelessWidget {
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
 
   /// ポップアップメニューを有効化するかどうか。
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +93,7 @@ class UserMessageBubble extends StatelessWidget {
           onActionButtonTap: onActionButtonTap,
           popupMenuLayout: popupMenuLayoutForText,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatImagesMessage() => _ImagesMessageBubble(
           currentUserId: currentUserId,
@@ -101,7 +101,7 @@ class UserMessageBubble extends StatelessWidget {
           onImageMessageTap: onImageMessageTap,
           popupMenuLayout: popupMenuLayoutForImage,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatStickerMessage() => StickerMessageBubble(
           currentUserId: currentUserId,
@@ -109,14 +109,14 @@ class UserMessageBubble extends StatelessWidget {
           onStickerMessageTap: onStickerMessageTap,
           popupMenuLayout: popupMenuLayoutForSticker,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatVoiceCallMessage() => _VoiceCallMessageBubble(
           currentUserId: currentUserId,
           message: message,
           popupMenuLayout: popupMenuLayoutForVoiceCall,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
       },
     );
@@ -133,7 +133,7 @@ class _TextMessageBubble extends StatelessWidget {
     required this.onActionButtonTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   final String currentUserId;
@@ -143,12 +143,12 @@ class _TextMessageBubble extends StatelessWidget {
   final ValueChanged<dynamic>? onActionButtonTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _TextMessageBubbleContents(
         currentUserId: currentUserId,
         message: message,
@@ -686,7 +686,7 @@ class _ImagesMessageBubble extends StatelessWidget {
     required this.onImageMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   final String currentUserId;
@@ -694,7 +694,7 @@ class _ImagesMessageBubble extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -721,7 +721,7 @@ class _ImagesMessageBubble extends StatelessWidget {
           onImageMessageTap: onImageMessageTap,
           popupMenuLayout: popupMenuLayout,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
       ],
     );
@@ -734,7 +734,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
     required this.onImageMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   /// 画像同士の間隔。
@@ -744,7 +744,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -766,7 +766,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
           int index,
         ) {
           final popupMenuLayout = this.popupMenuLayout;
-          if (!enablePopupMenu || popupMenuLayout == null) {
+          if (!popupMenuEnabled || popupMenuLayout == null) {
             return null;
           }
 
@@ -1070,7 +1070,7 @@ class StickerMessageBubble extends StatelessWidget {
     required this.onStickerMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   /// ログイン中ユーザーの ID。
@@ -1089,12 +1089,12 @@ class StickerMessageBubble extends StatelessWidget {
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
 
   /// ポップアップメニューを有効化するかどうか。
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _StickerMessageBubbleContents(
         onStickerMessageTap: onStickerMessageTap,
         message: message,
@@ -1180,19 +1180,19 @@ class _VoiceCallMessageBubble extends StatelessWidget {
     required this.message,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   final String currentUserId;
   final ChatVoiceCallMessage message;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _VoiceCallMessageBubbleContents(
         currentUserId: currentUserId,
         message: message,

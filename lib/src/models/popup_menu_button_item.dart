@@ -25,5 +25,5 @@ class PopupMenuButtonItem extends Equatable {
   final ValueChanged<ChatUserMessage> onTap;
 
   @override
-  List<Object?> get props => [title, iconWidget, onTap];
+  List<Object?> get props => [title];
 }

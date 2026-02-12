@@ -1,3 +1,6 @@
+// NOTE: example は利用例を優先し、可読性のため簡潔な記述を採用する。
+// ignore_for_file: altive_lints/avoid_hardcoded_color, altive_lints/prefer_clock_now
+
 import 'dart:async';
 
 import 'package:altive_chat_room/altive_chat_room.dart';
@@ -754,13 +757,7 @@ class _MessageBottomWidgets extends StatelessWidget {
                     ),
                     color: Colors.white,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('$emoji$count'),
-                    ],
-                  ),
+                  child: Text('$emoji$count'),
                 ),
               ),
             ),
@@ -898,6 +895,7 @@ class _ReactionTile extends StatelessWidget {
 
   final VoidCallback onTap;
   final Widget child;
+
   @override
   Widget build(BuildContext context) {
     const borderRadius = BorderRadius.all(

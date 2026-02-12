@@ -19,7 +19,7 @@ class AltiveChatRoom extends StatefulWidget {
   const AltiveChatRoom({
     super.key,
     required this.theme,
-    required this.myUserId,
+    required this.currentUserId,
     required this.messages,
     required this.onSendIconPressed,
     this.textEditingController,
@@ -60,10 +60,10 @@ class AltiveChatRoom extends StatefulWidget {
   /// AltiveChatRoomのテーマ。
   final AltiveChatRoomTheme theme;
 
-  /// 自分のユーザーID。
+  /// ログインユーザーのID。
   ///
-  /// 自分自身が送信したメッセージかどうか判別するために使用する。
-  final String myUserId;
+  /// ログインユーザーが送信したメッセージかどうか判別するために使用する。
+  final String currentUserId;
 
   /// メッセージの配列。
   final List<ChatMessage> messages;
@@ -228,7 +228,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
       },
       child: _MessageListView(
         key: messageListViewKey,
-        myUserId: widget.myUserId,
+        currentUserId: widget.currentUserId,
         messages: widget.messages,
         isGroupChat: widget.isGroupChat,
         scrollController: widget.scrollController,
@@ -419,7 +419,7 @@ class _StickerPreview extends StatelessWidget {
 class _MessageListView extends StatelessWidget {
   const _MessageListView({
     super.key,
-    required this.myUserId,
+    required this.currentUserId,
     required this.messages,
     required this.isGroupChat,
     required this.scrollController,
@@ -446,7 +446,7 @@ class _MessageListView extends StatelessWidget {
     required this.pendingMessageIds,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final List<ChatMessage> messages;
   final bool isGroupChat;
   final ScrollController? scrollController;
@@ -502,7 +502,7 @@ class _MessageListView extends StatelessWidget {
                   message.createdAt.dateText;
 
           final messageItem = MessageItem(
-            myUserId: myUserId,
+            currentUserId: currentUserId,
             message: message,
             isGroupChat: isGroupChat,
             selectableTextMessageId: selectableTextMessageId,

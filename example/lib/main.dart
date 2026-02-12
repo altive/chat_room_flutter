@@ -44,7 +44,7 @@ class _HomePage extends StatelessWidget {
           children: [
             AltiveChatRoom(
               theme: const AltiveChatRoomTheme(),
-              myUserId: '1',
+              currentUserId: '1',
               messages: _directMessages,
               pendingMessageIds: [_directMessages.first.id],
               onSendIconPressed: (value) {
@@ -103,11 +103,12 @@ class _HomePage extends StatelessWidget {
                   text: 'Button is tapped: $value',
                 );
               },
-              messageBottomWidgetBuilder: (message, {required isMine}) =>
-                  _MessageBottomWidgets(
-                    message: message,
-                    isMine: isMine,
-                  ),
+              messageBottomWidgetBuilder:
+                  (message, {required isSentByCurrentUser}) =>
+                      _MessageBottomWidgets(
+                        message: message,
+                        isSentByCurrentUser: isSentByCurrentUser,
+                      ),
               popupMenuAccessoryBuilder:
                   (
                     message, {
@@ -449,7 +450,7 @@ class _HomePage extends StatelessWidget {
             AltiveChatRoom(
               isGroupChat: true,
               theme: const AltiveChatRoomTheme(),
-              myUserId: '1',
+              currentUserId: '1',
               messages: _groupMessages,
               onSendIconPressed: (value) {
                 if (value.text.isNotEmpty) {
@@ -465,11 +466,12 @@ class _HomePage extends StatelessWidget {
                   );
                 }
               },
-              messageBottomWidgetBuilder: (message, {required isMine}) =>
-                  _MessageBottomWidgets(
-                    message: message,
-                    isMine: isMine,
-                  ),
+              messageBottomWidgetBuilder:
+                  (message, {required isSentByCurrentUser}) =>
+                      _MessageBottomWidgets(
+                        message: message,
+                        isSentByCurrentUser: isSentByCurrentUser,
+                      ),
             ),
           ],
         ),
@@ -707,11 +709,11 @@ final List<ChatMessage> _directMessages = [
 class _MessageBottomWidgets extends StatelessWidget {
   const _MessageBottomWidgets({
     required this.message,
-    required this.isMine,
+    required this.isSentByCurrentUser,
   });
 
   final ChatUserMessage message;
-  final bool isMine;
+  final bool isSentByCurrentUser;
 
   static const _reactions = [
     ('👍', 3, true),
@@ -721,9 +723,13 @@ class _MessageBottomWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isSentByCurrentUser
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
       child: Wrap(
-        alignment: isMine ? WrapAlignment.end : WrapAlignment.start,
+        alignment: isSentByCurrentUser
+            ? WrapAlignment.end
+            : WrapAlignment.start,
         children: [
           for (final (emoji, count, reactedByMe) in _reactions)
             InkWell(

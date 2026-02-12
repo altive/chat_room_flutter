@@ -13,7 +13,7 @@ class MessageItem extends StatelessWidget {
   /// {@macro altive_chat_room.MessageItem}
   const MessageItem({
     super.key,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.isGroupChat,
     required this.selectableTextMessageId,
@@ -37,7 +37,7 @@ class MessageItem extends StatelessWidget {
   });
 
   /// ログイン中ユーザーの ID。
-  final String myUserId;
+  final String currentUserId;
 
   /// 表示対象のメッセージ。
   final ChatMessage message;
@@ -104,7 +104,7 @@ class MessageItem extends StatelessWidget {
     final message = this.message;
     return switch (message) {
       ChatUserMessage() => _UserMessageItem(
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
         isGroupChat: isGroupChat,
         selectableTextMessageId: selectableTextMessageId,
@@ -138,7 +138,7 @@ class MessageItem extends StatelessWidget {
 /// [ChatUserMessage]を表示するWidget。
 class _UserMessageItem extends StatelessWidget {
   const _UserMessageItem({
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.isGroupChat,
     required this.selectableTextMessageId,
@@ -161,7 +161,7 @@ class _UserMessageItem extends StatelessWidget {
     required this.pendingMessageIds,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final ChatUserMessage message;
   final bool isGroupChat;
   final String? selectableTextMessageId;
@@ -188,11 +188,12 @@ class _UserMessageItem extends StatelessWidget {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isMine = message.isMine(myUserId);
-    final isPending = isMine && pendingMessageIds.contains(message.id);
+    final isSentByCurrentUser = message.isSentByCurrentUser(currentUserId);
+    final isPending =
+        isSentByCurrentUser && pendingMessageIds.contains(message.id);
     final bottomWidget = messageBottomWidgetBuilder?.call(
       message,
-      isMine: isMine,
+      isSentByCurrentUser: isSentByCurrentUser,
     );
     final timeSection = isPending
         ? pendingIndicator ??
@@ -211,7 +212,7 @@ class _UserMessageItem extends StatelessWidget {
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
       ),
-      child: isMine
+      child: isSentByCurrentUser
           ? Column(
               children: [
                 Row(
@@ -222,7 +223,7 @@ class _UserMessageItem extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: UserMessageBubble(
-                        myUserId: myUserId,
+                        currentUserId: currentUserId,
                         message: message,
                         selectableTextMessageId: selectableTextMessageId,
                         contextMenuBuilder: contextMenuBuilder,
@@ -277,7 +278,7 @@ class _UserMessageItem extends StatelessWidget {
                         children: [
                           Flexible(
                             child: UserMessageBubble(
-                              myUserId: myUserId,
+                              currentUserId: currentUserId,
                               message: message,
                               selectableTextMessageId: selectableTextMessageId,
                               contextMenuBuilder: contextMenuBuilder,

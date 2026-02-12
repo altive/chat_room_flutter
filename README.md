@@ -60,7 +60,7 @@ class ChatPage extends StatelessWidget {
 
     return AltiveChatRoom(
       theme: const AltiveChatRoomTheme(),
-      myUserId: me.id,
+      currentUserId: me.id,
       messages: messages,
       onSendIconPressed: (value) {
         // 送信処理

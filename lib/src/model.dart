@@ -241,7 +241,10 @@ class AltiveChatRoomTheme {
 
 /// メッセージバブル直下に表示するWidgetを構築するビルダーの型定義。
 typedef MessageBottomWidgetBuilder =
-    Widget? Function(ChatUserMessage message, {required bool isMine});
+    Widget? Function(
+      ChatUserMessage message, {
+      required bool isSentByCurrentUser,
+    });
 
 /// ポップアップメニュー周辺の付属Widgetを構築するビルダーの型定義。
 /// [PreferredSizeWidget]を利用し、オーバーレイの幅・高さを安定して算出する。
@@ -351,9 +354,9 @@ sealed class ChatUserMessage implements ChatMessage {
   /// リプライ先のメッセージの種類の表示に使用する。
   final String label;
 
-  /// 自分自身が送信したメッセージかどうか。
-  bool isMine(String myUserId) {
-    return sender.id == myUserId;
+  /// ログインユーザーが送信したメッセージかどうか。
+  bool isSentByCurrentUser(String currentUserId) {
+    return sender.id == currentUserId;
   }
 }
 
@@ -688,9 +691,10 @@ enum VoiceCallType {
   ;
 
   /// text を実行する。
-  String text({required bool isMine}) => switch (this) {
+  String text({required bool isSentByCurrentUser}) => switch (this) {
     VoiceCallType.connected => 'Voice call',
-    VoiceCallType.unanswered => isMine ? 'No answer' : 'Missed call',
+    VoiceCallType.unanswered =>
+      isSentByCurrentUser ? 'No answer' : 'Missed call',
   };
 }
 

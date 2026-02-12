@@ -29,10 +29,10 @@ class UserMessageBubble extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
-    required this.textMessagePopupMenuLayout,
-    required this.imageMessagePopupMenuLayout,
-    required this.stickerMessagePopupMenuLayout,
-    required this.voiceCallMessagePopupMenuLayout,
+    required this.popupMenuLayoutForText,
+    required this.popupMenuLayoutForImage,
+    required this.popupMenuLayoutForSticker,
+    required this.popupMenuLayoutForVoiceCall,
     required this.popupMenuAccessoryBuilder,
     this.enablePopupMenu = true,
   });
@@ -59,16 +59,16 @@ class UserMessageBubble extends StatelessWidget {
   final ValueChanged<dynamic>? onActionButtonTap;
 
   /// テキストメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? textMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForText;
 
   /// 画像メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? imageMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForImage;
 
   /// ステッカーメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? stickerMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForSticker;
 
   /// 通話メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? voiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForVoiceCall;
 
   /// ポップアップメニュー付属領域の構築処理。
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
@@ -91,7 +91,7 @@ class UserMessageBubble extends StatelessWidget {
           canSelect: message.id == selectableTextMessageId,
           contextMenuBuilder: contextMenuBuilder,
           onActionButtonTap: onActionButtonTap,
-          popupMenuLayout: textMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForText,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           enablePopupMenu: enablePopupMenu,
         ),
@@ -99,7 +99,7 @@ class UserMessageBubble extends StatelessWidget {
           currentUserId: currentUserId,
           message: message,
           onImageMessageTap: onImageMessageTap,
-          popupMenuLayout: imageMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForImage,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           enablePopupMenu: enablePopupMenu,
         ),
@@ -107,14 +107,14 @@ class UserMessageBubble extends StatelessWidget {
           currentUserId: currentUserId,
           message: message,
           onStickerMessageTap: onStickerMessageTap,
-          popupMenuLayout: stickerMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForSticker,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           enablePopupMenu: enablePopupMenu,
         ),
         ChatVoiceCallMessage() => _VoiceCallMessageBubble(
           currentUserId: currentUserId,
           message: message,
-          popupMenuLayout: voiceCallMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForVoiceCall,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           enablePopupMenu: enablePopupMenu,
         ),

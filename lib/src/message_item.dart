@@ -230,13 +230,11 @@ class _UserMessageItem extends StatelessWidget {
                         onImageMessageTap: onImageMessageTap,
                         onStickerMessageTap: onStickerMessageTap,
                         onActionButtonTap: onActionButtonTap,
-                        textMessagePopupMenuLayout:
-                            myTextMessagePopupMenuLayout,
-                        imageMessagePopupMenuLayout:
-                            myImageMessagePopupMenuLayout,
-                        stickerMessagePopupMenuLayout:
+                        popupMenuLayoutForText: myTextMessagePopupMenuLayout,
+                        popupMenuLayoutForImage: myImageMessagePopupMenuLayout,
+                        popupMenuLayoutForSticker:
                             myStickerMessagePopupMenuLayout,
-                        voiceCallMessagePopupMenuLayout:
+                        popupMenuLayoutForVoiceCall:
                             myVoiceCallMessagePopupMenuLayout,
                         popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
                         enablePopupMenu: enablePopupMenu,
@@ -285,13 +283,13 @@ class _UserMessageItem extends StatelessWidget {
                               onImageMessageTap: onImageMessageTap,
                               onStickerMessageTap: onStickerMessageTap,
                               onActionButtonTap: onActionButtonTap,
-                              textMessagePopupMenuLayout:
+                              popupMenuLayoutForText:
                                   otherUserTextMessagePopupMenuLayout,
-                              imageMessagePopupMenuLayout:
+                              popupMenuLayoutForImage:
                                   otherUserImageMessagePopupMenuLayout,
-                              stickerMessagePopupMenuLayout:
+                              popupMenuLayoutForSticker:
                                   otherUserStickerMessagePopupMenuLayout,
-                              voiceCallMessagePopupMenuLayout:
+                              popupMenuLayoutForVoiceCall:
                                   otherUserVoiceCallMessagePopupMenuLayout,
                               popupMenuAccessoryBuilder:
                                   popupMenuAccessoryBuilder,

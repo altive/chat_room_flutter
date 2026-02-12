@@ -4,8 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'chat_user.dart';
 import 'sticker.dart';
 
-@immutable
 /// ChatMessage を表すクラス。
+@immutable
 sealed class ChatMessage extends Equatable {
   const ChatMessage({required this.id, required this.createdAt});
 

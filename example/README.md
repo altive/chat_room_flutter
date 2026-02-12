@@ -1,16 +1,34 @@
-# example
+# altive_chat_room_example
 
-A new Flutter project.
+`altive_chat_room` パッケージの利用例を確認するためのサンプルアプリです。
+Direct / Group の2タブで、主要なチャットUI機能を動作確認できます。
 
-## Getting Started
+## 確認できる内容
 
-This project is a starting point for a Flutter application.
+- テキスト / 画像 / スタンプ / システムメッセージの表示
+- 送信アクション (`onSendIconPressed`)
+- 長押しポップアップメニュー (`PopupMenuLayout`)
+- スタンプ選択UI (`stickerPackages`)
+- Pull-to-Refresh / スクロール最上部検知
+- 各種コールバック（アバタータップ、画像タップ、スタンプタップなど）
 
-A few resources to get you started if this is your first Flutter project:
+## 起動方法
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+cd example
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Web で確認する場合:
+
+```bash
+cd example
+flutter run -d chrome
+```
+
+## 主要ファイル
+
+- `example/lib/main.dart`: サンプル画面本体
+- `example/assets/avatar.png`: サンプル用アバター画像
+- `example/pubspec.yaml`: 依存関係・アセット定義

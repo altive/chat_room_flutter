@@ -35,7 +35,7 @@ class ChatUser extends Equatable {
   /// デフォルトで使用するアバター画像のアセットパス。
   final String? defaultAvatarImageAssetPath;
 
-  /// 値を置き換えた新しい [ChatUser] を返する。
+  /// 値を置き換えた新しい [ChatUser] を返す。
   ChatUser copyWith({
     String? id,
     bool? isOwner,

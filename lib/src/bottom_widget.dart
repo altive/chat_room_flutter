@@ -42,7 +42,7 @@ class BottomWidget extends StatefulWidget {
   /// 入力欄サフィックスの構築処理。
   final Widget Function(MessageInputType type)? textFieldSuffixBuilder;
 
-  /// 入力種別（テキスト/スタンプ）を管理する Notifier。
+  /// 入力種別（テキスト/ステッカー）を管理する Notifier。
   final ValueNotifier<MessageInputType> messageTypeNotifier;
 
   /// 入力欄先頭に表示するウィジェット一覧。
@@ -51,13 +51,13 @@ class BottomWidget extends StatefulWidget {
   /// 返信先メッセージ表示バー。
   final Widget? replyToMessageBar;
 
-  /// 利用可能なスタンプパッケージ一覧。
+  /// 利用可能なステッカーパッケージ一覧。
   final List<StickerPackage> stickerPackages;
 
-  /// 現在選択中のスタンプ。
+  /// 現在選択中のステッカー。
   final Sticker? selectedSticker;
 
-  /// スタンプ選択時のコールバック。
+  /// ステッカー選択時のコールバック。
   final ValueChanged<Sticker> onStickerSelected;
 
   @override
@@ -67,7 +67,7 @@ class BottomWidget extends StatefulWidget {
 class _BottomWidgetState extends State<BottomWidget> {
   var _showLeadingWidgets = true;
 
-  // スタンプからテキストに切り替えたときにテキストフィールドにフォーカスを当てるために使用する。
+  // ステッカーからテキストに切り替えたときにテキストフィールドにフォーカスを当てるために使用する。
   final focusNode = FocusNode();
 
   TextEditingController? _controller;
@@ -196,7 +196,7 @@ class _BottomWidgetState extends State<BottomWidget> {
               ),
             ),
             if (messageType == MessageInputType.sticker)
-              // スタンプ選択View。
+              // ステッカー選択View。
               _StickerSelectionView(
                 stickerPackages: widget.stickerPackages,
                 onStickerSelected: widget.onStickerSelected,
@@ -208,7 +208,7 @@ class _BottomWidgetState extends State<BottomWidget> {
   }
 }
 
-/// スタンプ選択View。
+/// ステッカー選択View。
 class _StickerSelectionView extends StatefulWidget {
   const _StickerSelectionView({
     required this.stickerPackages,
@@ -223,7 +223,7 @@ class _StickerSelectionView extends StatefulWidget {
 }
 
 class _StickerSelectionViewState extends State<_StickerSelectionView> {
-  // 選択中のスタンプパッケージ。
+  // 選択中のステッカーパッケージ。
   StickerPackage? _selectedStickerPackage;
 
   @override
@@ -240,7 +240,7 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
         children: [
-          // スタンプパッケージ一覧。
+          // ステッカーパッケージ一覧。
           SizedBox(
             height: 32,
             child: ListView.separated(
@@ -274,7 +274,7 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
           ),
           const SizedBox(height: 10),
 
-          // 選択中のスタンプパッケージのスタンプ一覧。
+          // 選択中のステッカーパッケージのステッカー一覧。
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

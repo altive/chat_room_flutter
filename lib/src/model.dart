@@ -596,7 +596,7 @@ typedef ImageMessageTapCallback =
     void Function({required List<String> imageUrls, required int index});
 
 /// {@template altive_chat_room.ChatStickerMessage}
-/// スタンプメッセージ。
+/// ステッカーメッセージ。
 /// {@endtemplate}
 @immutable
 class ChatStickerMessage extends ChatUserMessage {
@@ -611,7 +611,7 @@ class ChatStickerMessage extends ChatUserMessage {
     super.label = 'Sticker',
   });
 
-  /// スタンプ。
+  /// ステッカー。
   final Sticker sticker;
 
   /// 値を置き換えた新しい [ChatStickerMessage] を返する。
@@ -992,12 +992,12 @@ enum MessageInputType {
   /// テキストメッセージ。
   text,
 
-  /// スタンプメッセージ。
+  /// ステッカーメッセージ。
   sticker,
 }
 
 /// {@template altive_chat_room.StickerPackage}
-/// スタンプパッケージ。
+/// ステッカーパッケージ。
 /// {@endtemplate}
 @immutable
 class StickerPackage {
@@ -1011,10 +1011,10 @@ class StickerPackage {
   /// パッケージを一意に識別するID。
   final int id;
 
-  /// スタンプ選択のタブで使用する画像のURL。
+  /// ステッカー選択のタブで使用する画像のURL。
   final String tabStickerImageUrl;
 
-  /// スタンプ一覧。
+  /// ステッカー一覧。
   final List<Sticker> stickers;
 
   @override
@@ -1042,17 +1042,17 @@ class StickerPackage {
 }
 
 /// {@template altive_chat_room.Sticker}
-/// スタンプ。
+/// ステッカー。
 /// {@endtemplate}
 @immutable
 class Sticker {
   /// {@macro altive_chat_room.Sticker}
   const Sticker({required this.id, required this.imageUrl});
 
-  /// スタンプID。
+  /// ステッカーID。
   final int id;
 
-  /// スタンプ画像のURL。
+  /// ステッカー画像のURL。
   final String imageUrl;
 
   @override

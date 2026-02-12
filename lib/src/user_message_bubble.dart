@@ -52,7 +52,7 @@ class UserMessageBubble extends StatelessWidget {
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
@@ -64,7 +64,7 @@ class UserMessageBubble extends StatelessWidget {
   /// 画像メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? imageMessagePopupMenuLayout;
 
-  /// スタンプメッセージ用ポップアップメニューレイアウト。
+  /// ステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? stickerMessagePopupMenuLayout;
 
   /// 通話メッセージ用ポップアップメニューレイアウト。
@@ -1059,7 +1059,7 @@ class _ImageTile extends StatelessWidget {
 /// {@template altive_chat_room.StickerMessageBubble}
 /// [ChatStickerMessage]を表示するWidget。
 ///
-/// スタンプメッセージのバブルを表示する。
+/// ステッカーメッセージのバブルを表示する。
 /// {@endtemplate}
 class StickerMessageBubble extends StatelessWidget {
   /// {@macro altive_chat_room.StickerMessageBubble}
@@ -1076,13 +1076,13 @@ class StickerMessageBubble extends StatelessWidget {
   /// ログイン中ユーザーの ID。
   final String currentUserId;
 
-  /// 表示対象のスタンプメッセージ。
+  /// 表示対象のステッカーメッセージ。
   final ChatStickerMessage message;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
-  /// スタンプメッセージ用ポップアップメニューレイアウト。
+  /// ステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? popupMenuLayout;
 
   /// ポップアップメニュー付属領域の構築処理。

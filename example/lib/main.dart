@@ -594,7 +594,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/409/400',
     ],
   ),
-  // スタンプメッセージ。
+  // ステッカーメッセージ。
   ChatStickerMessage(
     id: '9',
     createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -604,7 +604,7 @@ final List<ChatMessage> _directMessages = [
       imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
     ),
   ),
-  // スタンプメッセージ。
+  // ステッカーメッセージ。
   ChatStickerMessage(
     id: '10',
     createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -660,7 +660,7 @@ final List<ChatMessage> _directMessages = [
     ),
   ),
   // リプライメッセージ。
-  // スタンプメッセージに対してテキストメッセージを返信。
+  // ステッカーメッセージに対してテキストメッセージを返信。
   ChatTextMessage(
     id: '15',
     createdAt: DateTime.now().subtract(const Duration(days: 4)),

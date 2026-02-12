@@ -63,7 +63,7 @@ class MessageItem extends StatelessWidget {
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
@@ -75,7 +75,7 @@ class MessageItem extends StatelessWidget {
   /// 自分の画像メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
 
-  /// 自分のスタンプメッセージ用ポップアップメニューレイアウト。
+  /// 自分のステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;
 
   /// 自分の通話メッセージ用ポップアップメニューレイアウト。
@@ -87,7 +87,7 @@ class MessageItem extends StatelessWidget {
   /// 相手の画像メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
 
-  /// 相手のスタンプメッセージ用ポップアップメニューレイアウト。
+  /// 相手のステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
 
   /// 相手の通話メッセージ用ポップアップメニューレイアウト。

@@ -71,7 +71,7 @@ class AltiveChatRoom extends StatefulWidget {
   /// 送信ボタンを押した時の処理。
   ///
   /// テキストメッセージを送信する際に使用する。
-  /// スタンプが選択されている場合はスタンプメッセージも送信する。
+  /// ステッカーが選択されている場合はステッカーメッセージも送信する。
   final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
 
   /// グループチャットかどうか。
@@ -131,7 +131,7 @@ class AltiveChatRoom extends StatefulWidget {
   /// 画像メッセージをタップした時の処理。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// スタンプメッセージをタップした時の処理。
+  /// ステッカーメッセージをタップした時の処理。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// メッセージのアクションボタンをタップした時の処理。
@@ -155,7 +155,7 @@ class AltiveChatRoom extends StatefulWidget {
   /// リプライ先のメッセージを表示するWidget。
   final Widget? replyToMessageBar;
 
-  /// スタンプパッケージの配列。
+  /// ステッカーパッケージの配列。
   final List<StickerPackage> stickerPackages;
 
   /// 自分が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
@@ -166,7 +166,7 @@ class AltiveChatRoom extends StatefulWidget {
   /// 自分が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? myImageMessagePopupMenuLayout;
 
-  /// 自分が送信したスタンプメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 自分が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? myStickerMessagePopupMenuLayout;
 
   /// 自分が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
@@ -180,7 +180,7 @@ class AltiveChatRoom extends StatefulWidget {
   /// 自分以外が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
 
-  /// 自分以外が送信したスタンプメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 自分以外が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
 
   /// 自分以外が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
@@ -203,7 +203,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
     MessageInputType.text,
   );
 
-  /// 選択中のスタンプ。
+  /// 選択中のステッカー。
   Sticker? _selectedSticker;
 
   @override
@@ -369,7 +369,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
   }
 }
 
-/// スタンプ送信プレビュー。
+/// ステッカー送信プレビュー。
 class _StickerPreview extends StatelessWidget {
   const _StickerPreview({
     required this.backgroundColor,
@@ -392,7 +392,7 @@ class _StickerPreview extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // スタンプ画像。
+          // ステッカー画像。
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: GestureDetector(

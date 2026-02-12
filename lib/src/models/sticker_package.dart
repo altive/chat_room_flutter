@@ -12,8 +12,8 @@ class StickerPackage extends Equatable {
   const StickerPackage({
     required this.id,
     required this.tabStickerImageUrl,
-    required List<Sticker> stickers,
-  }) : stickers = List.unmodifiable(stickers);
+    required this.stickers,
+  });
 
   /// パッケージを一意に識別するID。
   final int id;

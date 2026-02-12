@@ -10,7 +10,8 @@ import 'popup_menu_button_item.dart';
 class PopupMenuLayout extends Equatable {
   /// {@macro altive_chat_room.PopupMenuLayout}
   PopupMenuLayout({required this.column, required this.buttonItems})
-    : assert(buttonItems.isNotEmpty, 'Popup button items must not be empty.'),
+    : assert(column > 0, 'Popup column must be greater than 0.'),
+      assert(buttonItems.isNotEmpty, 'Popup button items must not be empty.'),
       assert(
         buttonItems.length % column == 0,
         'Popup items must be divisible by column. ',

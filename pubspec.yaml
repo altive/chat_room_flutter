@@ -5,6 +5,8 @@ description: |
   Text and image messages can also be sent.
 version: 0.0.1
 publish_to: none
+workspace:
+  - example
 
 environment:
   sdk: ^3.10.4

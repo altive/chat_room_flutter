@@ -2,6 +2,7 @@ name: altive_chat_room_example
 description: "Demonstrates how to use the altive_chat_room package. "
 publish_to: "none"
 version: 1.0.0
+resolution: workspace
 
 environment:
   sdk: ^3.10.4

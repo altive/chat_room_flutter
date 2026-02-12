@@ -353,7 +353,9 @@ class _TextMessageBubbleContents extends StatelessWidget {
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
                   isSentByCurrentUser: isSentByCurrentUser,
-                  isRepliedMine: replyTo.isSentByCurrentUser(currentUserId),
+                  isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
+                    currentUserId,
+                  ),
                   replyImageIndex: message.replyImageIndex,
                 ),
               ),
@@ -711,7 +713,9 @@ class _ImagesMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isSentByCurrentUser: isSentByCurrentUser,
-            isRepliedMine: replyTo.isSentByCurrentUser(currentUserId),
+            isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
+              currentUserId,
+            ),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -1120,7 +1124,9 @@ class StickerMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isSentByCurrentUser: isSentByCurrentUser,
-            isRepliedMine: replyTo.isSentByCurrentUser(currentUserId),
+            isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
+              currentUserId,
+            ),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -1329,18 +1335,18 @@ class _ReplyToMessageBubble extends StatelessWidget {
   const _ReplyToMessageBubble({
     required this.replyTo,
     required this.isSentByCurrentUser,
-    required this.isRepliedMine,
+    required this.isRepliedSentByCurrentUser,
     required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
   final ChatUserMessage replyTo;
 
-  /// 返信するメッセージが自分のものかどうか。
+  /// 返信するメッセージがログインユーザーのものかどうか。
   final bool isSentByCurrentUser;
 
-  /// 返信先のメッセージが自分のものかどうか。
-  final bool isRepliedMine;
+  /// 返信先のメッセージがログインユーザーのものかどうか。
+  final bool isRepliedSentByCurrentUser;
 
   /// 複数画像の何枚目に対する返信かを示すインデックス。
   final int? replyImageIndex;
@@ -1382,7 +1388,7 @@ class _ReplyToMessageBubble extends StatelessWidget {
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
                   isSentByCurrentUser: isSentByCurrentUser,
-                  isRepliedMine: isRepliedMine,
+                  isRepliedSentByCurrentUser: isRepliedSentByCurrentUser,
                   replyImageIndex: replyImageIndex,
                 ),
               ),
@@ -1411,18 +1417,18 @@ class _ReplyToMessageContents extends StatelessWidget {
   const _ReplyToMessageContents({
     required this.replyTo,
     required this.isSentByCurrentUser,
-    required this.isRepliedMine,
+    required this.isRepliedSentByCurrentUser,
     required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
   final ChatUserMessage replyTo;
 
-  /// 返信するメッセージが自分のものかどうか。
+  /// 返信するメッセージがログインユーザーのものかどうか。
   final bool isSentByCurrentUser;
 
-  /// 返信先のメッセージが自分のものかどうか。
-  final bool isRepliedMine;
+  /// 返信先のメッセージがログインユーザーのものかどうか。
+  final bool isRepliedSentByCurrentUser;
 
   /// 複数画像に対する返信のインデックス。
   final int? replyImageIndex;
@@ -1475,8 +1481,10 @@ class _ReplyToMessageContents extends StatelessWidget {
                   ChatImagesMessage(:final label) => label,
                   ChatStickerMessage(:final label) => label,
                   ChatVoiceCallMessage(:final voiceCallType) =>
-                    // 返信先のメッセージが自分のものかどうかで表示するテキストを変更する。
-                    voiceCallType.text(isSentByCurrentUser: isRepliedMine),
+                    // 返信先のメッセージがログインユーザーのものかどうかで表示するテキストを変更する。
+                    voiceCallType.text(
+                      isSentByCurrentUser: isRepliedSentByCurrentUser,
+                    ),
                 },
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

@@ -71,148 +71,148 @@ class AltiveChatRoomTheme extends Equatable {
   /// 音声通話メッセージバブルの垂直方向の余白。
   final double voiceCallMessageInsetsVertical;
 
-  /// 自分が送信したメッセージバブルの装飾。
+  /// ログインユーザーが送信したメッセージバブルの装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.primaryColor]が使用される。
   final BoxDecoration? outgoingMessageBoxDecoration;
 
-  /// 自分が送信したメッセージバブルのハイライトされた場合の装飾。
+  /// ログインユーザーが送信したメッセージバブルのハイライトされた場合の装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
   /// 枠線に[ColorScheme.outline]が使用される。
   final BoxDecoration? outgoingMessageHighlightBoxDecoration;
 
-  /// 自分以外が送信したメッセージバブルの装飾。
+  /// 相手が送信したメッセージバブルの装飾。
   ///
   /// `null`の場合は、背景色に[ColorScheme.surfaceContainerHighest]が使用される。
   final BoxDecoration? incomingMessageBoxDecoration;
 
-  /// 自分以外が送信したメッセージバブルのハイライトされた場合の装飾。
+  /// 相手が送信したメッセージバブルのハイライトされた場合の装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
   /// 枠線に[ColorScheme.outline]が使用される。
   final BoxDecoration? incomingMessageHighlightBoxDecoration;
 
-  /// 自分が送信したテキストメッセージのテキストスタイル。
+  /// ログインユーザーが送信したテキストメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
   final TextStyle? outgoingMessageTextStyle;
 
-  /// 自分が送信したテキストメッセージのハイライトされた場合のテキストスタイル。
+  /// ログインユーザーが送信したテキストメッセージのハイライトされた場合のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[700]`で上書きしたものが使用される。
   final TextStyle? outgoingMessageHighlightTextStyle;
 
-  /// 自分が送信した絵文字メッセージのテキストスタイル。
+  /// ログインユーザーが送信した絵文字メッセージのテキストスタイル。
   ///
   /// `null`の場合は、[outgoingMessageTextStyle]を使用する。
   /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
   /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
   final TextStyle? outgoingEmojiMessageTextStyle;
 
-  /// 自分が送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
+  /// ログインユーザーが送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
   ///
   /// `null`の場合は、[outgoingMessageTextStyle]を使用する。
   /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
   /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
   final TextStyle? outgoingSpecialMessageTextStyle;
 
-  /// 自分以外が送信したテキストメッセージのテキストスタイル。
+  /// 相手が送信したテキストメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
   final TextStyle? incomingMessageTextStyle;
 
-  /// 自分以外が送信したテキストメッセージのハイライトされた場合のテキストスタイル。
+  /// 相手が送信したテキストメッセージのハイライトされた場合のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[700]`で上書きしたものが使用される。
   final TextStyle? incomingHighlightMessageTextStyle;
 
-  /// 自分以外が送信した絵文字メッセージのテキストスタイル。
+  /// 相手が送信した絵文字メッセージのテキストスタイル。
   ///
   /// `null`の場合は、[incomingMessageTextStyle]を使用する。
   /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
   /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
   final TextStyle? incomingEmojiMessageTextStyle;
 
-  /// 自分以外が送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
+  /// 相手が送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
   ///
   /// `null`の場合は、[incomingMessageTextStyle]を使用する。
   /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
   /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
   final TextStyle? incomingSpecialMessageTextStyle;
 
-  /// 自分が送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
+  /// ログインユーザーが送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
   final TextStyle? outgoingReplyToMessageTextStyle;
 
-  /// 自分が送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
+  /// ログインユーザーが送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
   final TextStyle? outgoingReplyToUserNameTextStyle;
 
-  /// 自分が送信したメッセージに対するリプライ先の仕切り線の色。
+  /// ログインユーザーが送信したメッセージに対するリプライ先の仕切り線の色。
   ///
   /// リプライ先に対してテキストメッセージを送信する場合のみ使用される。
   final Color? outgoingReplyToDividerColor;
 
-  /// 自分以外が送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
+  /// 相手が送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
   final TextStyle? incomingReplyToMessageTextStyle;
 
-  /// 自分以外が送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
+  /// 相手が送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
   final TextStyle? incomingReplyToUserNameTextStyle;
 
-  /// 自分以外が送信したメッセージに対するリプライ先の仕切り線の色。
+  /// 相手が送信したメッセージに対するリプライ先の仕切り線の色。
   ///
   /// リプライ先に対してテキストメッセージを送信する場合のみ使用される。
   final Color? incomingReplyToDividerColor;
 
-  /// 自分が送信したメッセージの OGP タイトルのテキストスタイル。
+  /// ログインユーザーが送信したメッセージの OGP タイトルのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodySmall]のテキストテーマを使用し
   /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
   /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
   final TextStyle? outgoingOgpTitleTextStyle;
 
-  /// 自分が送信したメッセージの OGP 説明のテキストスタイル。
+  /// ログインユーザーが送信したメッセージの OGP 説明のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.labelSmall]のテキストテーマを使用し
   /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
   /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
   final TextStyle? outgoingOgpDescriptionTextStyle;
 
-  /// 自分が送信したメッセージの OGP 情報の仕切り線の色。
+  /// ログインユーザーが送信したメッセージの OGP 情報の仕切り線の色。
   ///
   /// OGP 情報が表示される場合のみ使用される。
   final Color? outgoingOgpDividerColor;
 
-  /// 自分以外が送信したメッセージの OGP タイトルのテキストスタイル。
+  /// 相手が送信したメッセージの OGP タイトルのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodySmall]のテキストテーマを使用し
   /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
   /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
   final TextStyle? incomingOgpTitleTextStyle;
 
-  /// 自分以外が送信したメッセージの OGP 説明のテキストスタイル。
+  /// 相手が送信したメッセージの OGP 説明のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.labelSmall]のテキストテーマを使用し
   /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
   /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
   final TextStyle? incomingOgpDescriptionTextStyle;
 
-  /// 自分以外が送信したメッセージの OGP 情報の仕切り線の色。
+  /// 相手が送信したメッセージの OGP 情報の仕切り線の色。
   ///
   /// OGP 情報が表示される場合のみ使用される。
   final Color? incomingOgpDividerColor;

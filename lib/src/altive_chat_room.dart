@@ -158,32 +158,32 @@ class AltiveChatRoom extends StatefulWidget {
   /// ステッカーパッケージの配列。
   final List<StickerPackage> stickerPackages;
 
-  /// 自分が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// ログインユーザーが送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
   /// `null`の場合はポップアップメニューが表示されず、テキストが選択可能になる。
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
 
-  /// 自分が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// ログインユーザーが送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
 
-  /// 自分が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// ログインユーザーが送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
 
-  /// 自分が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// ログインユーザーが送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
 
-  /// 自分以外が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 相手が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
   /// `null`の場合はポップアップメニューが表示されず、テキストが選択可能になる。
   final PopupMenuLayout? incomingTextMessagePopupMenuLayout;
 
-  /// 自分以外が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 相手が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
 
-  /// 自分以外が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 相手が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
 
-  /// 自分以外が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
+  /// 相手が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
   /// 送信保留中メッセージのインジケーター。

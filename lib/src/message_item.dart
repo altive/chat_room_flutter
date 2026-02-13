@@ -69,16 +69,16 @@ class MessageItem extends StatelessWidget {
   /// テキスト内アクションボタンタップ時のコールバック。
   final ValueChanged<Object?>? onActionButtonTap;
 
-  /// 自分のテキストメッセージ用ポップアップメニューレイアウト。
+  /// ログインユーザーのテキストメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
 
-  /// 自分の画像メッセージ用ポップアップメニューレイアウト。
+  /// ログインユーザーの画像メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
 
-  /// 自分のステッカーメッセージ用ポップアップメニューレイアウト。
+  /// ログインユーザーのステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
 
-  /// 自分の通話メッセージ用ポップアップメニューレイアウト。
+  /// ログインユーザーの通話メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
 
   /// 相手のテキストメッセージ用ポップアップメニューレイアウト。

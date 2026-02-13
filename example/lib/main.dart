@@ -1,3 +1,6 @@
+// NOTE: example は利用例を優先し、可読性のため簡潔な記述を採用する。
+// ignore_for_file: altive_lints/avoid_hardcoded_color, altive_lints/prefer_clock_now
+
 import 'dart:async';
 
 import 'package:altive_chat_room/altive_chat_room.dart';
@@ -44,7 +47,7 @@ class _HomePage extends StatelessWidget {
           children: [
             AltiveChatRoom(
               theme: const AltiveChatRoomTheme(),
-              myUserId: '1',
+              currentUserId: '1',
               messages: _directMessages,
               pendingMessageIds: [_directMessages.first.id],
               onSendIconPressed: (value) {
@@ -103,11 +106,12 @@ class _HomePage extends StatelessWidget {
                   text: 'Button is tapped: $value',
                 );
               },
-              messageBottomWidgetBuilder: (message, {required isMine}) =>
-                  _MessageBottomWidgets(
-                    message: message,
-                    isMine: isMine,
-                  ),
+              messageBottomWidgetBuilder:
+                  (message, {required bool isOutgoing}) =>
+                      _MessageBottomWidgets(
+                        message: message,
+                        isOutgoing: isOutgoing,
+                      ),
               popupMenuAccessoryBuilder:
                   (
                     message, {
@@ -159,7 +163,7 @@ class _HomePage extends StatelessWidget {
                 ),
               ],
               stickerPackages: _stickerPackages,
-              myTextMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingTextMessagePopupMenuLayout: PopupMenuLayout(
                 // 2 * 2のレイアウトで表示する。
                 column: 2,
                 // 4つのボタンを表示する。
@@ -218,7 +222,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myImageMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingImageMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 3のレイアウトで表示する。
                 column: 3,
                 // 3つのボタンを表示する。
@@ -264,7 +268,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myStickerMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingStickerMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -297,7 +301,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
                 column: 1,
                 buttonItems: [
                   PopupMenuButtonItem(
@@ -315,7 +319,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserTextMessagePopupMenuLayout: PopupMenuLayout(
+              incomingTextMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 3のレイアウトで表示する。
                 column: 3,
                 // 3つのボタンを表示する。
@@ -361,7 +365,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserImageMessagePopupMenuLayout: PopupMenuLayout(
+              incomingImageMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -394,7 +398,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserStickerMessagePopupMenuLayout: PopupMenuLayout(
+              incomingStickerMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -427,7 +431,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+              incomingVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
                 column: 1,
                 buttonItems: [
                   PopupMenuButtonItem(
@@ -449,7 +453,7 @@ class _HomePage extends StatelessWidget {
             AltiveChatRoom(
               isGroupChat: true,
               theme: const AltiveChatRoomTheme(),
-              myUserId: '1',
+              currentUserId: '1',
               messages: _groupMessages,
               onSendIconPressed: (value) {
                 if (value.text.isNotEmpty) {
@@ -465,11 +469,12 @@ class _HomePage extends StatelessWidget {
                   );
                 }
               },
-              messageBottomWidgetBuilder: (message, {required isMine}) =>
-                  _MessageBottomWidgets(
-                    message: message,
-                    isMine: isMine,
-                  ),
+              messageBottomWidgetBuilder:
+                  (message, {required bool isOutgoing}) =>
+                      _MessageBottomWidgets(
+                        message: message,
+                        isOutgoing: isOutgoing,
+                      ),
             ),
           ],
         ),
@@ -592,7 +597,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/409/400',
     ],
   ),
-  // スタンプメッセージ。
+  // ステッカーメッセージ。
   ChatStickerMessage(
     id: '9',
     createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -602,7 +607,7 @@ final List<ChatMessage> _directMessages = [
       imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
     ),
   ),
-  // スタンプメッセージ。
+  // ステッカーメッセージ。
   ChatStickerMessage(
     id: '10',
     createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -658,7 +663,7 @@ final List<ChatMessage> _directMessages = [
     ),
   ),
   // リプライメッセージ。
-  // スタンプメッセージに対してテキストメッセージを返信。
+  // ステッカーメッセージに対してテキストメッセージを返信。
   ChatTextMessage(
     id: '15',
     createdAt: DateTime.now().subtract(const Duration(days: 4)),
@@ -707,11 +712,11 @@ final List<ChatMessage> _directMessages = [
 class _MessageBottomWidgets extends StatelessWidget {
   const _MessageBottomWidgets({
     required this.message,
-    required this.isMine,
+    required this.isOutgoing,
   });
 
   final ChatUserMessage message;
-  final bool isMine;
+  final bool isOutgoing;
 
   static const _reactions = [
     ('👍', 3, true),
@@ -721,9 +726,9 @@ class _MessageBottomWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
       child: Wrap(
-        alignment: isMine ? WrapAlignment.end : WrapAlignment.start,
+        alignment: isOutgoing ? WrapAlignment.end : WrapAlignment.start,
         children: [
           for (final (emoji, count, reactedByMe) in _reactions)
             InkWell(
@@ -748,13 +753,7 @@ class _MessageBottomWidgets extends StatelessWidget {
                     ),
                     color: Colors.white,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('$emoji$count'),
-                    ],
-                  ),
+                  child: Text('$emoji$count'),
                 ),
               ),
             ),
@@ -892,6 +891,7 @@ class _ReactionTile extends StatelessWidget {
 
   final VoidCallback onTap;
   final Widget child;
+
   @override
   Widget build(BuildContext context) {
     const borderRadius = BorderRadius.all(

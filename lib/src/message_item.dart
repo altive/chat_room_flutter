@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'avatar_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 import 'user_message_bubble.dart';
 
 /// {@template altive_chat_room.MessageItem}
@@ -13,7 +13,7 @@ class MessageItem extends StatelessWidget {
   /// {@macro altive_chat_room.MessageItem}
   const MessageItem({
     super.key,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.isGroupChat,
     required this.selectableTextMessageId,
@@ -24,20 +24,20 @@ class MessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
-    required this.myTextMessagePopupMenuLayout,
-    required this.myImageMessagePopupMenuLayout,
-    required this.myStickerMessagePopupMenuLayout,
-    required this.myVoiceCallMessagePopupMenuLayout,
-    required this.otherUserTextMessagePopupMenuLayout,
-    required this.otherUserImageMessagePopupMenuLayout,
-    required this.otherUserStickerMessagePopupMenuLayout,
-    required this.otherUserVoiceCallMessagePopupMenuLayout,
+    required this.outgoingTextMessagePopupMenuLayout,
+    required this.outgoingImageMessagePopupMenuLayout,
+    required this.outgoingStickerMessagePopupMenuLayout,
+    required this.outgoingVoiceCallMessagePopupMenuLayout,
+    required this.incomingTextMessagePopupMenuLayout,
+    required this.incomingImageMessagePopupMenuLayout,
+    required this.incomingStickerMessagePopupMenuLayout,
+    required this.incomingVoiceCallMessagePopupMenuLayout,
     required this.pendingMessageIds,
     required this.pendingIndicator,
   });
 
   /// ログイン中ユーザーの ID。
-  final String myUserId;
+  final String currentUserId;
 
   /// 表示対象のメッセージ。
   final ChatMessage message;
@@ -63,35 +63,35 @@ class MessageItem extends StatelessWidget {
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
-  /// 自分のテキストメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? myTextMessagePopupMenuLayout;
+  /// ログインユーザーのテキストメッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
 
-  /// 自分の画像メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? myImageMessagePopupMenuLayout;
+  /// ログインユーザーの画像メッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
 
-  /// 自分のスタンプメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? myStickerMessagePopupMenuLayout;
+  /// ログインユーザーのステッカーメッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
 
-  /// 自分の通話メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? myVoiceCallMessagePopupMenuLayout;
+  /// ログインユーザーの通話メッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
 
   /// 相手のテキストメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? otherUserTextMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingTextMessagePopupMenuLayout;
 
   /// 相手の画像メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
 
-  /// 相手のスタンプメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
+  /// 相手のステッカーメッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
 
   /// 相手の通話メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? otherUserVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
   /// 送信待ち中に表示するインジケーター。
   final Widget? pendingIndicator;
@@ -104,7 +104,7 @@ class MessageItem extends StatelessWidget {
     final message = this.message;
     return switch (message) {
       ChatUserMessage() => _UserMessageItem(
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
         isGroupChat: isGroupChat,
         selectableTextMessageId: selectableTextMessageId,
@@ -115,18 +115,20 @@ class MessageItem extends StatelessWidget {
         onImageMessageTap: onImageMessageTap,
         onStickerMessageTap: onStickerMessageTap,
         onActionButtonTap: onActionButtonTap,
-        myTextMessagePopupMenuLayout: myTextMessagePopupMenuLayout,
-        myImageMessagePopupMenuLayout: myImageMessagePopupMenuLayout,
-        myStickerMessagePopupMenuLayout: myStickerMessagePopupMenuLayout,
-        myVoiceCallMessagePopupMenuLayout: myVoiceCallMessagePopupMenuLayout,
-        otherUserTextMessagePopupMenuLayout:
-            otherUserTextMessagePopupMenuLayout,
-        otherUserImageMessagePopupMenuLayout:
-            otherUserImageMessagePopupMenuLayout,
-        otherUserStickerMessagePopupMenuLayout:
-            otherUserStickerMessagePopupMenuLayout,
-        otherUserVoiceCallMessagePopupMenuLayout:
-            otherUserVoiceCallMessagePopupMenuLayout,
+        outgoingTextMessagePopupMenuLayout: outgoingTextMessagePopupMenuLayout,
+        outgoingImageMessagePopupMenuLayout:
+            outgoingImageMessagePopupMenuLayout,
+        outgoingStickerMessagePopupMenuLayout:
+            outgoingStickerMessagePopupMenuLayout,
+        outgoingVoiceCallMessagePopupMenuLayout:
+            outgoingVoiceCallMessagePopupMenuLayout,
+        incomingTextMessagePopupMenuLayout: incomingTextMessagePopupMenuLayout,
+        incomingImageMessagePopupMenuLayout:
+            incomingImageMessagePopupMenuLayout,
+        incomingStickerMessagePopupMenuLayout:
+            incomingStickerMessagePopupMenuLayout,
+        incomingVoiceCallMessagePopupMenuLayout:
+            incomingVoiceCallMessagePopupMenuLayout,
         pendingIndicator: pendingIndicator,
         pendingMessageIds: pendingMessageIds,
       ),
@@ -138,7 +140,7 @@ class MessageItem extends StatelessWidget {
 /// [ChatUserMessage]を表示するWidget。
 class _UserMessageItem extends StatelessWidget {
   const _UserMessageItem({
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.isGroupChat,
     required this.selectableTextMessageId,
@@ -149,19 +151,19 @@ class _UserMessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
-    required this.myTextMessagePopupMenuLayout,
-    required this.myImageMessagePopupMenuLayout,
-    required this.myStickerMessagePopupMenuLayout,
-    required this.myVoiceCallMessagePopupMenuLayout,
-    required this.otherUserTextMessagePopupMenuLayout,
-    required this.otherUserImageMessagePopupMenuLayout,
-    required this.otherUserStickerMessagePopupMenuLayout,
-    required this.otherUserVoiceCallMessagePopupMenuLayout,
+    required this.outgoingTextMessagePopupMenuLayout,
+    required this.outgoingImageMessagePopupMenuLayout,
+    required this.outgoingStickerMessagePopupMenuLayout,
+    required this.outgoingVoiceCallMessagePopupMenuLayout,
+    required this.incomingTextMessagePopupMenuLayout,
+    required this.incomingImageMessagePopupMenuLayout,
+    required this.incomingStickerMessagePopupMenuLayout,
+    required this.incomingVoiceCallMessagePopupMenuLayout,
     required this.pendingIndicator,
     required this.pendingMessageIds,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final ChatUserMessage message;
   final bool isGroupChat;
   final String? selectableTextMessageId;
@@ -171,15 +173,15 @@ class _UserMessageItem extends StatelessWidget {
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
-  final ValueChanged<dynamic>? onActionButtonTap;
-  final PopupMenuLayout? myTextMessagePopupMenuLayout;
-  final PopupMenuLayout? myImageMessagePopupMenuLayout;
-  final PopupMenuLayout? myStickerMessagePopupMenuLayout;
-  final PopupMenuLayout? myVoiceCallMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserTextMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserVoiceCallMessagePopupMenuLayout;
+  final ValueChanged<Object?>? onActionButtonTap;
+  final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingTextMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
 
@@ -188,11 +190,11 @@ class _UserMessageItem extends StatelessWidget {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isMine = message.isMine(myUserId);
-    final isPending = isMine && pendingMessageIds.contains(message.id);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
+    final isPending = isOutgoing && pendingMessageIds.contains(message.id);
     final bottomWidget = messageBottomWidgetBuilder?.call(
       message,
-      isMine: isMine,
+      isOutgoing: isOutgoing,
     );
     final timeSection = isPending
         ? pendingIndicator ??
@@ -206,12 +208,12 @@ class _UserMessageItem extends StatelessWidget {
         : _TimeText.userMessage(dateTime: message.createdAt);
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
-    final enablePopupMenu = !isPending;
+    final popupMenuEnabled = !isPending;
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
       ),
-      child: isMine
+      child: isOutgoing
           ? Column(
               children: [
                 Row(
@@ -222,23 +224,23 @@ class _UserMessageItem extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: UserMessageBubble(
-                        myUserId: myUserId,
+                        currentUserId: currentUserId,
                         message: message,
                         selectableTextMessageId: selectableTextMessageId,
                         contextMenuBuilder: contextMenuBuilder,
                         onImageMessageTap: onImageMessageTap,
                         onStickerMessageTap: onStickerMessageTap,
                         onActionButtonTap: onActionButtonTap,
-                        textMessagePopupMenuLayout:
-                            myTextMessagePopupMenuLayout,
-                        imageMessagePopupMenuLayout:
-                            myImageMessagePopupMenuLayout,
-                        stickerMessagePopupMenuLayout:
-                            myStickerMessagePopupMenuLayout,
-                        voiceCallMessagePopupMenuLayout:
-                            myVoiceCallMessagePopupMenuLayout,
+                        popupMenuLayoutForText:
+                            outgoingTextMessagePopupMenuLayout,
+                        popupMenuLayoutForImage:
+                            outgoingImageMessagePopupMenuLayout,
+                        popupMenuLayoutForSticker:
+                            outgoingStickerMessagePopupMenuLayout,
+                        popupMenuLayoutForVoiceCall:
+                            outgoingVoiceCallMessagePopupMenuLayout,
                         popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-                        enablePopupMenu: enablePopupMenu,
+                        popupMenuEnabled: popupMenuEnabled,
                       ),
                     ),
                   ],
@@ -277,24 +279,24 @@ class _UserMessageItem extends StatelessWidget {
                         children: [
                           Flexible(
                             child: UserMessageBubble(
-                              myUserId: myUserId,
+                              currentUserId: currentUserId,
                               message: message,
                               selectableTextMessageId: selectableTextMessageId,
                               contextMenuBuilder: contextMenuBuilder,
                               onImageMessageTap: onImageMessageTap,
                               onStickerMessageTap: onStickerMessageTap,
                               onActionButtonTap: onActionButtonTap,
-                              textMessagePopupMenuLayout:
-                                  otherUserTextMessagePopupMenuLayout,
-                              imageMessagePopupMenuLayout:
-                                  otherUserImageMessagePopupMenuLayout,
-                              stickerMessagePopupMenuLayout:
-                                  otherUserStickerMessagePopupMenuLayout,
-                              voiceCallMessagePopupMenuLayout:
-                                  otherUserVoiceCallMessagePopupMenuLayout,
+                              popupMenuLayoutForText:
+                                  incomingTextMessagePopupMenuLayout,
+                              popupMenuLayoutForImage:
+                                  incomingImageMessagePopupMenuLayout,
+                              popupMenuLayoutForSticker:
+                                  incomingStickerMessagePopupMenuLayout,
+                              popupMenuLayoutForVoiceCall:
+                                  incomingVoiceCallMessagePopupMenuLayout,
                               popupMenuAccessoryBuilder:
                                   popupMenuAccessoryBuilder,
-                              enablePopupMenu: enablePopupMenu,
+                              popupMenuEnabled: popupMenuEnabled,
                             ),
                           ),
                           const SizedBox(width: 6),

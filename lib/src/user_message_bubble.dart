@@ -10,7 +10,7 @@ import 'cached_ogp_data.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
-import 'model.dart';
+import 'models.dart';
 import 'popup_menu_overlay.dart';
 
 /// {@template altive_chat_room.UserMessageBubble}
@@ -22,23 +22,23 @@ class UserMessageBubble extends StatelessWidget {
   /// {@macro altive_chat_room.UserMessageBubble}
   const UserMessageBubble({
     super.key,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.selectableTextMessageId,
     required this.contextMenuBuilder,
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
-    required this.textMessagePopupMenuLayout,
-    required this.imageMessagePopupMenuLayout,
-    required this.stickerMessagePopupMenuLayout,
-    required this.voiceCallMessagePopupMenuLayout,
+    required this.popupMenuLayoutForText,
+    required this.popupMenuLayoutForImage,
+    required this.popupMenuLayoutForSticker,
+    required this.popupMenuLayoutForVoiceCall,
     required this.popupMenuAccessoryBuilder,
-    this.enablePopupMenu = true,
+    this.popupMenuEnabled = true,
   });
 
   /// ログイン中ユーザーの ID。
-  final String myUserId;
+  final String currentUserId;
 
   /// 表示対象のユーザーメッセージ。
   final ChatUserMessage message;
@@ -52,29 +52,29 @@ class UserMessageBubble extends StatelessWidget {
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
   /// テキスト内アクションボタンタップ時のコールバック。
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   /// テキストメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? textMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForText;
 
   /// 画像メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? imageMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForImage;
 
-  /// スタンプメッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? stickerMessagePopupMenuLayout;
+  /// ステッカーメッセージ用ポップアップメニューレイアウト。
+  final PopupMenuLayout? popupMenuLayoutForSticker;
 
   /// 通話メッセージ用ポップアップメニューレイアウト。
-  final PopupMenuLayout? voiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? popupMenuLayoutForVoiceCall;
 
   /// ポップアップメニュー付属領域の構築処理。
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
 
   /// ポップアップメニューを有効化するかどうか。
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -86,37 +86,37 @@ class UserMessageBubble extends StatelessWidget {
       ),
       child: switch (message) {
         ChatTextMessage() => _TextMessageBubble(
-          myUserId: myUserId,
+          currentUserId: currentUserId,
           message: message,
           canSelect: message.id == selectableTextMessageId,
           contextMenuBuilder: contextMenuBuilder,
           onActionButtonTap: onActionButtonTap,
-          popupMenuLayout: textMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForText,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatImagesMessage() => _ImagesMessageBubble(
-          myUserId: myUserId,
+          currentUserId: currentUserId,
           message: message,
           onImageMessageTap: onImageMessageTap,
-          popupMenuLayout: imageMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForImage,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatStickerMessage() => StickerMessageBubble(
-          myUserId: myUserId,
+          currentUserId: currentUserId,
           message: message,
           onStickerMessageTap: onStickerMessageTap,
-          popupMenuLayout: stickerMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForSticker,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
         ChatVoiceCallMessage() => _VoiceCallMessageBubble(
-          myUserId: myUserId,
+          currentUserId: currentUserId,
           message: message,
-          popupMenuLayout: voiceCallMessagePopupMenuLayout,
+          popupMenuLayout: popupMenuLayoutForVoiceCall,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
       },
     );
@@ -126,31 +126,31 @@ class UserMessageBubble extends StatelessWidget {
 /// [ChatTextMessage]を表示するWidget。
 class _TextMessageBubble extends StatelessWidget {
   const _TextMessageBubble({
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.canSelect,
     required this.contextMenuBuilder,
     required this.onActionButtonTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final ChatTextMessage message;
   final bool canSelect;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _TextMessageBubbleContents(
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
         canSelect: canSelect,
         contextMenuBuilder: contextMenuBuilder,
@@ -176,7 +176,7 @@ class _TextMessageBubble extends StatelessWidget {
       ).show(context: context),
       child: _TextMessageBubbleContents(
         widgetKey: widgetKey,
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
         canSelect: canSelect,
         contextMenuBuilder: contextMenuBuilder,
@@ -189,7 +189,7 @@ class _TextMessageBubble extends StatelessWidget {
 class _TextMessageBubbleContents extends StatelessWidget {
   const _TextMessageBubbleContents({
     this.widgetKey,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.canSelect,
     required this.contextMenuBuilder,
@@ -197,11 +197,11 @@ class _TextMessageBubbleContents extends StatelessWidget {
   });
 
   final GlobalObjectKey? widgetKey;
-  final String myUserId;
+  final String currentUserId;
   final ChatTextMessage message;
   final bool canSelect;
   final EditableTextContextMenuBuilder? contextMenuBuilder;
-  final ValueChanged<dynamic>? onActionButtonTap;
+  final ValueChanged<Object?>? onActionButtonTap;
 
   @override
   Widget build(BuildContext context) {
@@ -210,69 +210,75 @@ class _TextMessageBubbleContents extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final borderRadius = BorderRadius.circular(10);
 
-    final isMine = message.isMine(myUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
 
-    final myMessageBoxDecoration = message.highlight
-        ? altiveChatRoomTheme.myMessageHighlightBoxDecoration ??
+    final outgoingMessageBoxDecoration = message.highlight
+        ? altiveChatRoomTheme.outgoingMessageHighlightBoxDecoration ??
               BoxDecoration(
                 border: Border.all(color: colorScheme.outline),
                 borderRadius: borderRadius,
                 color: theme.highlightColor,
               )
-        : altiveChatRoomTheme.myMessageBoxDecoration ??
+        : altiveChatRoomTheme.outgoingMessageBoxDecoration ??
               BoxDecoration(
                 borderRadius: borderRadius,
                 color: theme.primaryColor,
               );
-    final otherUserMessageBoxDecoration = message.highlight
-        ? altiveChatRoomTheme.otherUserMessageHighlightBoxDecoration ??
+    final incomingMessageBoxDecoration = message.highlight
+        ? altiveChatRoomTheme.incomingMessageHighlightBoxDecoration ??
               BoxDecoration(
                 border: Border.all(color: colorScheme.outline),
                 borderRadius: borderRadius,
                 color: theme.highlightColor,
               )
-        : altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+        : altiveChatRoomTheme.incomingMessageBoxDecoration ??
               BoxDecoration(
                 borderRadius: borderRadius,
                 color: colorScheme.surfaceContainerHighest,
               );
-    final decoration = isMine
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
-    final myMessageTextStyle = message.highlight
-        ? altiveChatRoomTheme.myMessageHighlightTextStyle ??
+    final outgoingMessageTextStyle = message.highlight
+        ? altiveChatRoomTheme.outgoingMessageHighlightTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)
-        : altiveChatRoomTheme.myMessageTextStyle ??
+        : altiveChatRoomTheme.outgoingMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onPrimary,
               );
-    final otherUserMessageTextStyle = message.highlight
-        ? altiveChatRoomTheme.otherUserHighlightMessageTextStyle ??
+    final incomingMessageTextStyle = message.highlight
+        ? altiveChatRoomTheme.incomingHighlightMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)
-        : altiveChatRoomTheme.otherUserMessageTextStyle ??
+        : altiveChatRoomTheme.incomingMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               );
-    final textStyle = isMine ? myMessageTextStyle : otherUserMessageTextStyle;
+    final textStyle = isOutgoing
+        ? outgoingMessageTextStyle
+        : incomingMessageTextStyle;
     final textStyleColor = textStyle?.color;
 
-    final myEmojiMessageTextStyle =
-        altiveChatRoomTheme.myEmojiMessageTextStyle ?? textStyle;
-    final otherUserEmojiMessageTextStyle =
-        altiveChatRoomTheme.otherUserEmojiMessageTextStyle ?? textStyle;
+    final outgoingEmojiMessageTextStyle =
+        altiveChatRoomTheme.outgoingEmojiMessageTextStyle ?? textStyle;
+    final incomingEmojiMessageTextStyle =
+        altiveChatRoomTheme.incomingEmojiMessageTextStyle ?? textStyle;
     // 配色を統一するため、絵文字の配色は`textStyle`の配色を適用する。
     final emojiTextStyle =
-        (isMine ? myEmojiMessageTextStyle : otherUserEmojiMessageTextStyle)
+        (isOutgoing
+                ? outgoingEmojiMessageTextStyle
+                : incomingEmojiMessageTextStyle)
             ?.copyWith(color: textStyleColor);
 
-    final mySpecialMessageTextStyle =
-        altiveChatRoomTheme.mySpecialMessageTextStyle ?? textStyle;
-    final otherUserSpecialMessageTextStyle =
-        altiveChatRoomTheme.otherUserSpecialMessageTextStyle ?? textStyle;
+    final outgoingSpecialMessageTextStyle =
+        altiveChatRoomTheme.outgoingSpecialMessageTextStyle ?? textStyle;
+    final incomingSpecialMessageTextStyle =
+        altiveChatRoomTheme.incomingSpecialMessageTextStyle ?? textStyle;
     // 配色を統一するため、特殊文字の配色は`textStyle`の配色を適用する。
     final specialTextStyle =
-        (isMine ? mySpecialMessageTextStyle : otherUserSpecialMessageTextStyle)
+        (isOutgoing
+                ? outgoingSpecialMessageTextStyle
+                : incomingSpecialMessageTextStyle)
             ?.copyWith(color: textStyleColor);
 
     final linkStyle = TextStyle(
@@ -346,16 +352,18 @@ class _TextMessageBubbleContents extends StatelessWidget {
                 ),
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
-                  isMine: isMine,
-                  isRepliedMine: replyTo.isMine(myUserId),
+                  isOutgoing: isOutgoing,
+                  isReplyOutgoing: replyTo.isOutgoing(
+                    currentUserId: currentUserId,
+                  ),
                   replyImageIndex: message.replyImageIndex,
                 ),
               ),
               Divider(
                 height: 1,
-                color: isMine
-                    ? altiveChatRoomTheme.myReplyToDividerColor
-                    : altiveChatRoomTheme.otherUserReplyToDividerColor,
+                color: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToDividerColor
+                    : altiveChatRoomTheme.incomingReplyToDividerColor,
               ),
             ],
             Padding(
@@ -403,7 +411,7 @@ class _TextMessageBubbleContents extends StatelessWidget {
                     _OgpContents(
                       urlElement: e,
                       onOpen: onOpen,
-                      isMine: isMine,
+                      isOutgoing: isOutgoing,
                       textStyleColor: textStyleColor,
                     ),
                 ],
@@ -554,10 +562,9 @@ bool _isEmoji(String char) {
 /// 文字が英数字または日本語かどうかを判定する。
 bool _isNormalChar(String char) {
   final normalCharRegExp = RegExp(
-    // NOTE: [a-zA-Z0-9ａ-ｚＡ-Ｚ０-９ぁ-んァ-ヶー一-龠々ｦ-ﾟ]と同じ内容
-    // ignore: avoid_hardcoded_japanese が機能しない為、Unicodeで記述している。
-    r'[a-zA-Z0-9\uFF41-\uFF5A\uFF21-\uFF3A\uFF10-\uFF19'
-    r'\u3041-\u3093\u30A1-\u30F6\u30FC\u4E00-\u9FA0\u3005\uFF66-\uFF9F]',
+    // 日本語判定のため、正規表現内で日本語文字を明示的に扱う。
+    // ignore: altive_lints/avoid_hardcoded_japanese
+    '[a-zA-Z0-9ａ-ｚＡ-Ｚ０-９ぁ-んァ-ヶー一-龠々ｦ-ﾟ]',
   );
   return normalCharRegExp.hasMatch(char);
 }
@@ -567,13 +574,13 @@ class _OgpContents extends StatelessWidget {
   const _OgpContents({
     required this.urlElement,
     required this.onOpen,
-    required this.isMine,
+    required this.isOutgoing,
     required this.textStyleColor,
   });
 
   final UrlElement urlElement;
   final ValueChanged<UrlElement> onOpen;
-  final bool isMine;
+  final bool isOutgoing;
   final Color? textStyleColor;
 
   @override
@@ -585,12 +592,12 @@ class _OgpContents extends StatelessWidget {
       future: cachedOgpData.get(urlElement.url),
       builder: (context, snapshot) {
         final ogpTitleTextStyle =
-            (isMine
-                    ? altiveChatRoomTheme.myOgpTitleTextStyle ??
+            (isOutgoing
+                    ? altiveChatRoomTheme.outgoingOgpTitleTextStyle ??
                           theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           )
-                    : altiveChatRoomTheme.otherUserOgpTitleTextStyle?.copyWith(
+                    : altiveChatRoomTheme.incomingOgpTitleTextStyle?.copyWith(
                             color: textStyleColor,
                           ) ??
                           theme.textTheme.bodySmall?.copyWith(
@@ -598,10 +605,10 @@ class _OgpContents extends StatelessWidget {
                           ))
                 ?.copyWith(color: textStyleColor);
         final ogpDescriptionTextStyle =
-            (isMine
-                    ? altiveChatRoomTheme.myOgpDescriptionTextStyle ??
+            (isOutgoing
+                    ? altiveChatRoomTheme.outgoingOgpDescriptionTextStyle ??
                           theme.textTheme.labelSmall
-                    : altiveChatRoomTheme.otherUserOgpDescriptionTextStyle ??
+                    : altiveChatRoomTheme.incomingOgpDescriptionTextStyle ??
                           theme.textTheme.labelSmall)
                 ?.copyWith(color: textStyleColor);
         if (snapshot.connectionState != ConnectionState.done) {
@@ -627,9 +634,9 @@ class _OgpContents extends StatelessWidget {
                   VerticalDivider(
                     width: 2,
                     thickness: 2,
-                    color: isMine
-                        ? altiveChatRoomTheme.myOgpDividerColor
-                        : altiveChatRoomTheme.otherUserOgpDividerColor,
+                    color: isOutgoing
+                        ? altiveChatRoomTheme.outgoingOgpDividerColor
+                        : altiveChatRoomTheme.incomingOgpDividerColor,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -676,37 +683,39 @@ class _OgpContents extends StatelessWidget {
 
 class _ImagesMessageBubble extends StatelessWidget {
   const _ImagesMessageBubble({
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.onImageMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final ChatImagesMessage message;
   final ImageMessageTapCallback? onImageMessageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    final isMine = message.isMine(myUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
     final replyTo = message.replyTo;
 
     return Column(
-      crossAxisAlignment: isMine
+      crossAxisAlignment: isOutgoing
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
         if (replyTo != null) ...[
           _ReplyToMessageBubble(
             replyTo: replyTo,
-            isMine: isMine,
-            isRepliedMine: replyTo.isMine(myUserId),
+            isOutgoing: isOutgoing,
+            isReplyOutgoing: replyTo.isOutgoing(
+              currentUserId: currentUserId,
+            ),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -716,7 +725,7 @@ class _ImagesMessageBubble extends StatelessWidget {
           onImageMessageTap: onImageMessageTap,
           popupMenuLayout: popupMenuLayout,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-          enablePopupMenu: enablePopupMenu,
+          popupMenuEnabled: popupMenuEnabled,
         ),
       ],
     );
@@ -729,7 +738,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
     required this.onImageMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   /// 画像同士の間隔。
@@ -739,7 +748,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -761,7 +770,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
           int index,
         ) {
           final popupMenuLayout = this.popupMenuLayout;
-          if (!enablePopupMenu || popupMenuLayout == null) {
+          if (!popupMenuEnabled || popupMenuLayout == null) {
             return null;
           }
 
@@ -1054,42 +1063,42 @@ class _ImageTile extends StatelessWidget {
 /// {@template altive_chat_room.StickerMessageBubble}
 /// [ChatStickerMessage]を表示するWidget。
 ///
-/// スタンプメッセージのバブルを表示する。
+/// ステッカーメッセージのバブルを表示する。
 /// {@endtemplate}
 class StickerMessageBubble extends StatelessWidget {
   /// {@macro altive_chat_room.StickerMessageBubble}
   const StickerMessageBubble({
     super.key,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.onStickerMessageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
   /// ログイン中ユーザーの ID。
-  final String myUserId;
+  final String currentUserId;
 
-  /// 表示対象のスタンプメッセージ。
+  /// 表示対象のステッカーメッセージ。
   final ChatStickerMessage message;
 
-  /// スタンプメッセージタップ時のコールバック。
+  /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
 
-  /// スタンプメッセージ用ポップアップメニューレイアウト。
+  /// ステッカーメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? popupMenuLayout;
 
   /// ポップアップメニュー付属領域の構築処理。
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
 
   /// ポップアップメニューを有効化するかどうか。
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _StickerMessageBubbleContents(
         onStickerMessageTap: onStickerMessageTap,
         message: message,
@@ -1103,19 +1112,21 @@ class StickerMessageBubble extends StatelessWidget {
       context,
     ).theme.popupMenuConfig;
 
-    final isMine = message.isMine(myUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
     final replyTo = message.replyTo;
 
     return Column(
-      crossAxisAlignment: isMine
+      crossAxisAlignment: isOutgoing
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
         if (replyTo != null) ...[
           _ReplyToMessageBubble(
             replyTo: replyTo,
-            isMine: isMine,
-            isRepliedMine: replyTo.isMine(myUserId),
+            isOutgoing: isOutgoing,
+            isReplyOutgoing: replyTo.isOutgoing(
+              currentUserId: currentUserId,
+            ),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -1171,25 +1182,25 @@ class _StickerMessageBubbleContents extends StatelessWidget {
 /// [ChatVoiceCallMessage]を表示するWidget。
 class _VoiceCallMessageBubble extends StatelessWidget {
   const _VoiceCallMessageBubble({
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
-    required this.enablePopupMenu,
+    required this.popupMenuEnabled,
   });
 
-  final String myUserId;
+  final String currentUserId;
   final ChatVoiceCallMessage message;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
-  final bool enablePopupMenu;
+  final bool popupMenuEnabled;
 
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    if (!enablePopupMenu || popupMenuLayout == null) {
+    if (!popupMenuEnabled || popupMenuLayout == null) {
       return _VoiceCallMessageBubbleContents(
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
       );
     }
@@ -1212,7 +1223,7 @@ class _VoiceCallMessageBubble extends StatelessWidget {
       ).show(context: context),
       child: _VoiceCallMessageBubbleContents(
         widgetKey: widgetKey,
-        myUserId: myUserId,
+        currentUserId: currentUserId,
         message: message,
       ),
     );
@@ -1222,12 +1233,12 @@ class _VoiceCallMessageBubble extends StatelessWidget {
 class _VoiceCallMessageBubbleContents extends StatelessWidget {
   const _VoiceCallMessageBubbleContents({
     this.widgetKey,
-    required this.myUserId,
+    required this.currentUserId,
     required this.message,
   });
 
   final GlobalObjectKey? widgetKey;
-  final String myUserId;
+  final String currentUserId;
   final ChatVoiceCallMessage message;
 
   @override
@@ -1237,36 +1248,37 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final borderRadius = BorderRadius.circular(10);
-    final myMessageBoxDecoration =
-        altiveChatRoomTheme.myMessageBoxDecoration ??
+    final outgoingMessageBoxDecoration =
+        altiveChatRoomTheme.outgoingMessageBoxDecoration ??
         BoxDecoration(borderRadius: borderRadius, color: theme.primaryColor);
-    final otherUserMessageBoxDecoration =
-        altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+    final incomingMessageBoxDecoration =
+        altiveChatRoomTheme.incomingMessageBoxDecoration ??
         BoxDecoration(
           borderRadius: borderRadius,
           color: colorScheme.surfaceContainerHighest,
         );
 
-    final isMine = message.isMine(myUserId);
-    final decoration = isMine
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
-    final myMessageTextStyle =
-        altiveChatRoomTheme.myMessageTextStyle ??
+    final outgoingMessageTextStyle =
+        altiveChatRoomTheme.outgoingMessageTextStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onPrimary,
         );
-    final otherUserMessageTextStyle =
-        altiveChatRoomTheme.otherUserMessageTextStyle ??
+    final incomingMessageTextStyle =
+        altiveChatRoomTheme.incomingMessageTextStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: colorScheme.onSurfaceVariant,
         );
     // テキストスタイルに太字を適用する。
-    final textStyle = (isMine ? myMessageTextStyle : otherUserMessageTextStyle)!
-        .copyWith(fontWeight: FontWeight.bold);
+    final textStyle =
+        (isOutgoing ? outgoingMessageTextStyle : incomingMessageTextStyle)!
+            .copyWith(fontWeight: FontWeight.bold);
     final defaultTimeTextStyle = theme.textTheme.labelSmall?.copyWith(
-      color: isMine ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+      color: isOutgoing ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
     );
     final timeTextStyle =
         altiveChatRoomTheme.timeTextStyle ?? defaultTimeTextStyle;
@@ -1297,7 +1309,9 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
           Column(
             children: [
               Text(
-                message.voiceCallType.text(isMine: isMine),
+                message.voiceCallType.text(
+                  isOutgoing: isOutgoing,
+                ),
                 style: textStyle,
               ),
               if (durationSeconds != null)
@@ -1318,19 +1332,19 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
 class _ReplyToMessageBubble extends StatelessWidget {
   const _ReplyToMessageBubble({
     required this.replyTo,
-    required this.isMine,
-    required this.isRepliedMine,
+    required this.isOutgoing,
+    required this.isReplyOutgoing,
     required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
   final ChatUserMessage replyTo;
 
-  /// 返信するメッセージが自分のものかどうか。
-  final bool isMine;
+  /// 返信するメッセージがログインユーザーのものかどうか。
+  final bool isOutgoing;
 
-  /// 返信先のメッセージが自分のものかどうか。
-  final bool isRepliedMine;
+  /// 返信先のメッセージがログインユーザーのものかどうか。
+  final bool isReplyOutgoing;
 
   /// 複数画像の何枚目に対する返信かを示すインデックス。
   final int? replyImageIndex;
@@ -1342,24 +1356,26 @@ class _ReplyToMessageBubble extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final borderRadius = BorderRadius.circular(10);
 
-    final myMessageBoxDecoration =
-        altiveChatRoomTheme.myMessageBoxDecoration ??
+    final outgoingMessageBoxDecoration =
+        altiveChatRoomTheme.outgoingMessageBoxDecoration ??
         BoxDecoration(borderRadius: borderRadius, color: theme.primaryColor);
-    final otherUserMessageBoxDecoration =
-        altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+    final incomingMessageBoxDecoration =
+        altiveChatRoomTheme.incomingMessageBoxDecoration ??
         BoxDecoration(
           borderRadius: borderRadius,
           color: colorScheme.surfaceContainerHighest,
         );
-    final decoration = isMine
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
     return IntrinsicWidth(
       child: Column(
         children: [
           Align(
-            alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: isOutgoing
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
             child: DecoratedBox(
               decoration: decoration,
               child: Padding(
@@ -1369,8 +1385,8 @@ class _ReplyToMessageBubble extends StatelessWidget {
                 ),
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
-                  isMine: isMine,
-                  isRepliedMine: isRepliedMine,
+                  isOutgoing: isOutgoing,
+                  isReplyOutgoing: isReplyOutgoing,
                   replyImageIndex: replyImageIndex,
                 ),
               ),
@@ -1398,19 +1414,19 @@ class _ReplyToMessageBubble extends StatelessWidget {
 class _ReplyToMessageContents extends StatelessWidget {
   const _ReplyToMessageContents({
     required this.replyTo,
-    required this.isMine,
-    required this.isRepliedMine,
+    required this.isOutgoing,
+    required this.isReplyOutgoing,
     required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
   final ChatUserMessage replyTo;
 
-  /// 返信するメッセージが自分のものかどうか。
-  final bool isMine;
+  /// 返信するメッセージがログインユーザーのものかどうか。
+  final bool isOutgoing;
 
-  /// 返信先のメッセージが自分のものかどうか。
-  final bool isRepliedMine;
+  /// 返信先のメッセージがログインユーザーのものかどうか。
+  final bool isReplyOutgoing;
 
   /// 複数画像に対する返信のインデックス。
   final int? replyImageIndex;
@@ -1447,12 +1463,12 @@ class _ReplyToMessageContents extends StatelessWidget {
                 replyTo.sender.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: isMine
-                    ? altiveChatRoomTheme.myReplyToUserNameTextStyle ??
+                style: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToUserNameTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onPrimary,
                           )
-                    : altiveChatRoomTheme.otherUserReplyToUserNameTextStyle ??
+                    : altiveChatRoomTheme.incomingReplyToUserNameTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -1463,17 +1479,19 @@ class _ReplyToMessageContents extends StatelessWidget {
                   ChatImagesMessage(:final label) => label,
                   ChatStickerMessage(:final label) => label,
                   ChatVoiceCallMessage(:final voiceCallType) =>
-                    // 返信先のメッセージが自分のものかどうかで表示するテキストを変更する。
-                    voiceCallType.text(isMine: isRepliedMine),
+                    // 返信先のメッセージがログインユーザーのものかどうかで表示するテキストを変更する。
+                    voiceCallType.text(
+                      isOutgoing: isReplyOutgoing,
+                    ),
                 },
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: isMine
-                    ? altiveChatRoomTheme.myReplyToMessageTextStyle ??
+                style: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToMessageTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onPrimary,
                           )
-                    : altiveChatRoomTheme.otherUserReplyToMessageTextStyle ??
+                    : altiveChatRoomTheme.incomingReplyToMessageTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),

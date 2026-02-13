@@ -2,6 +2,7 @@ name: altive_chat_room_example
 description: "Demonstrates how to use the altive_chat_room package. "
 publish_to: "none"
 version: 1.0.0
+resolution: workspace
 
 environment:
   sdk: ^3.10.4
@@ -16,7 +17,7 @@ dependencies:
   intl: ^0.20.2
 
 dev_dependencies:
-  altive_lints: ^1.21.0
+  altive_lints: ^2.1.0
   flutter_test:
     sdk: flutter
 

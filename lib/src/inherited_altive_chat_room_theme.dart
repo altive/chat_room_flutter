@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'model.dart';
+import 'models.dart';
 
 /// {@template altive_chat_room.InheritedAltiveChatRoomTheme}
 /// [AltiveChatRoomTheme] をツリー全体へ共有する [InheritedWidget]。

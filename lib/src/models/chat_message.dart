@@ -51,7 +51,7 @@ sealed class ChatUserMessage extends ChatMessage {
   final String label;
 
   /// ログインユーザーが送信したメッセージかどうか。
-  bool isSentByCurrentUser(String currentUserId) {
+  bool isOutgoing({required String currentUserId}) {
     return sender.id == currentUserId;
   }
 
@@ -315,10 +315,9 @@ enum VoiceCallType {
   ;
 
   /// text を実行する。
-  String text({required bool isSentByCurrentUser}) => switch (this) {
+  String text({required bool isOutgoing}) => switch (this) {
     VoiceCallType.connected => 'Voice call',
-    VoiceCallType.unanswered =>
-      isSentByCurrentUser ? 'No answer' : 'Missed call',
+    VoiceCallType.unanswered => isOutgoing ? 'No answer' : 'Missed call',
   };
 }
 

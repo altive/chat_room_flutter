@@ -45,14 +45,14 @@ class AltiveChatRoom extends StatefulWidget {
     this.bottomLeadingWidgets,
     this.replyToMessageBar,
     this.stickerPackages = const [],
-    this.myTextMessagePopupMenuLayout,
-    this.myImageMessagePopupMenuLayout,
-    this.myStickerMessagePopupMenuLayout,
-    this.myVoiceCallMessagePopupMenuLayout,
-    this.otherUserTextMessagePopupMenuLayout,
-    this.otherUserImageMessagePopupMenuLayout,
-    this.otherUserStickerMessagePopupMenuLayout,
-    this.otherUserVoiceCallMessagePopupMenuLayout,
+    this.outgoingTextMessagePopupMenuLayout,
+    this.outgoingImageMessagePopupMenuLayout,
+    this.outgoingStickerMessagePopupMenuLayout,
+    this.outgoingVoiceCallMessagePopupMenuLayout,
+    this.incomingTextMessagePopupMenuLayout,
+    this.incomingImageMessagePopupMenuLayout,
+    this.incomingStickerMessagePopupMenuLayout,
+    this.incomingVoiceCallMessagePopupMenuLayout,
     this.pendingIndicator,
     this.pendingMessageIds = const <String>[],
   });
@@ -161,30 +161,30 @@ class AltiveChatRoom extends StatefulWidget {
   /// 自分が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
   /// `null`の場合はポップアップメニューが表示されず、テキストが選択可能になる。
-  final PopupMenuLayout? myTextMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
 
   /// 自分が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? myImageMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
 
   /// 自分が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? myStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
 
   /// 自分が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? myVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
 
   /// 自分以外が送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
   /// `null`の場合はポップアップメニューが表示されず、テキストが選択可能になる。
-  final PopupMenuLayout? otherUserTextMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingTextMessagePopupMenuLayout;
 
   /// 自分以外が送信した画像メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
 
   /// 自分以外が送信したステッカーメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
 
   /// 自分以外が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
-  final PopupMenuLayout? otherUserVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
   /// 送信保留中メッセージのインジケーター。
   final Widget? pendingIndicator;
@@ -243,19 +243,22 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         onImageMessageTap: widget.onImageMessageTap,
         onStickerMessageTap: widget.onStickerMessageTap,
         onActionButtonTap: widget.onActionButtonTap,
-        myTextMessagePopupMenuLayout: widget.myTextMessagePopupMenuLayout,
-        myImageMessagePopupMenuLayout: widget.myImageMessagePopupMenuLayout,
-        myStickerMessagePopupMenuLayout: widget.myStickerMessagePopupMenuLayout,
-        myVoiceCallMessagePopupMenuLayout:
-            widget.myVoiceCallMessagePopupMenuLayout,
-        otherUserTextMessagePopupMenuLayout:
-            widget.otherUserTextMessagePopupMenuLayout,
-        otherUserImageMessagePopupMenuLayout:
-            widget.otherUserImageMessagePopupMenuLayout,
-        otherUserStickerMessagePopupMenuLayout:
-            widget.otherUserStickerMessagePopupMenuLayout,
-        otherUserVoiceCallMessagePopupMenuLayout:
-            widget.otherUserVoiceCallMessagePopupMenuLayout,
+        outgoingTextMessagePopupMenuLayout:
+            widget.outgoingTextMessagePopupMenuLayout,
+        outgoingImageMessagePopupMenuLayout:
+            widget.outgoingImageMessagePopupMenuLayout,
+        outgoingStickerMessagePopupMenuLayout:
+            widget.outgoingStickerMessagePopupMenuLayout,
+        outgoingVoiceCallMessagePopupMenuLayout:
+            widget.outgoingVoiceCallMessagePopupMenuLayout,
+        incomingTextMessagePopupMenuLayout:
+            widget.incomingTextMessagePopupMenuLayout,
+        incomingImageMessagePopupMenuLayout:
+            widget.incomingImageMessagePopupMenuLayout,
+        incomingStickerMessagePopupMenuLayout:
+            widget.incomingStickerMessagePopupMenuLayout,
+        incomingVoiceCallMessagePopupMenuLayout:
+            widget.incomingVoiceCallMessagePopupMenuLayout,
         pendingIndicator: widget.pendingIndicator,
         pendingMessageIds: widget.pendingMessageIds,
       ),
@@ -434,14 +437,14 @@ class _MessageListView extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
-    required this.myTextMessagePopupMenuLayout,
-    required this.myImageMessagePopupMenuLayout,
-    required this.myStickerMessagePopupMenuLayout,
-    required this.myVoiceCallMessagePopupMenuLayout,
-    required this.otherUserTextMessagePopupMenuLayout,
-    required this.otherUserImageMessagePopupMenuLayout,
-    required this.otherUserStickerMessagePopupMenuLayout,
-    required this.otherUserVoiceCallMessagePopupMenuLayout,
+    required this.outgoingTextMessagePopupMenuLayout,
+    required this.outgoingImageMessagePopupMenuLayout,
+    required this.outgoingStickerMessagePopupMenuLayout,
+    required this.outgoingVoiceCallMessagePopupMenuLayout,
+    required this.incomingTextMessagePopupMenuLayout,
+    required this.incomingImageMessagePopupMenuLayout,
+    required this.incomingStickerMessagePopupMenuLayout,
+    required this.incomingVoiceCallMessagePopupMenuLayout,
     required this.pendingIndicator,
     required this.pendingMessageIds,
   });
@@ -462,14 +465,14 @@ class _MessageListView extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
-  final PopupMenuLayout? myTextMessagePopupMenuLayout;
-  final PopupMenuLayout? myImageMessagePopupMenuLayout;
-  final PopupMenuLayout? myStickerMessagePopupMenuLayout;
-  final PopupMenuLayout? myVoiceCallMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserTextMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserImageMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserStickerMessagePopupMenuLayout;
-  final PopupMenuLayout? otherUserVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? outgoingVoiceCallMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingTextMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
+  final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
 
@@ -513,19 +516,22 @@ class _MessageListView extends StatelessWidget {
             onImageMessageTap: onImageMessageTap,
             onStickerMessageTap: onStickerMessageTap,
             onActionButtonTap: onActionButtonTap,
-            myTextMessagePopupMenuLayout: myTextMessagePopupMenuLayout,
-            myImageMessagePopupMenuLayout: myImageMessagePopupMenuLayout,
-            myStickerMessagePopupMenuLayout: myStickerMessagePopupMenuLayout,
-            myVoiceCallMessagePopupMenuLayout:
-                myVoiceCallMessagePopupMenuLayout,
-            otherUserTextMessagePopupMenuLayout:
-                otherUserTextMessagePopupMenuLayout,
-            otherUserImageMessagePopupMenuLayout:
-                otherUserImageMessagePopupMenuLayout,
-            otherUserStickerMessagePopupMenuLayout:
-                otherUserStickerMessagePopupMenuLayout,
-            otherUserVoiceCallMessagePopupMenuLayout:
-                otherUserVoiceCallMessagePopupMenuLayout,
+            outgoingTextMessagePopupMenuLayout:
+                outgoingTextMessagePopupMenuLayout,
+            outgoingImageMessagePopupMenuLayout:
+                outgoingImageMessagePopupMenuLayout,
+            outgoingStickerMessagePopupMenuLayout:
+                outgoingStickerMessagePopupMenuLayout,
+            outgoingVoiceCallMessagePopupMenuLayout:
+                outgoingVoiceCallMessagePopupMenuLayout,
+            incomingTextMessagePopupMenuLayout:
+                incomingTextMessagePopupMenuLayout,
+            incomingImageMessagePopupMenuLayout:
+                incomingImageMessagePopupMenuLayout,
+            incomingStickerMessagePopupMenuLayout:
+                incomingStickerMessagePopupMenuLayout,
+            incomingVoiceCallMessagePopupMenuLayout:
+                incomingVoiceCallMessagePopupMenuLayout,
             pendingIndicator: pendingIndicator,
             pendingMessageIds: pendingMessageIds,
           );

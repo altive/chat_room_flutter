@@ -6,5 +6,5 @@ import 'chat_message.dart';
 typedef MessageBottomWidgetBuilder =
     Widget? Function(
       ChatUserMessage message, {
-      required bool isSentByCurrentUser,
+      required bool isOutgoing,
     });

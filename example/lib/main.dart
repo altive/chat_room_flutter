@@ -107,10 +107,10 @@ class _HomePage extends StatelessWidget {
                 );
               },
               messageBottomWidgetBuilder:
-                  (message, {required isSentByCurrentUser}) =>
+                  (message, {required bool isOutgoing}) =>
                       _MessageBottomWidgets(
                         message: message,
-                        isSentByCurrentUser: isSentByCurrentUser,
+                        isOutgoing: isOutgoing,
                       ),
               popupMenuAccessoryBuilder:
                   (
@@ -163,7 +163,7 @@ class _HomePage extends StatelessWidget {
                 ),
               ],
               stickerPackages: _stickerPackages,
-              myTextMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingTextMessagePopupMenuLayout: PopupMenuLayout(
                 // 2 * 2のレイアウトで表示する。
                 column: 2,
                 // 4つのボタンを表示する。
@@ -222,7 +222,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myImageMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingImageMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 3のレイアウトで表示する。
                 column: 3,
                 // 3つのボタンを表示する。
@@ -268,7 +268,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myStickerMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingStickerMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -301,7 +301,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              myVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+              outgoingVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
                 column: 1,
                 buttonItems: [
                   PopupMenuButtonItem(
@@ -319,7 +319,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserTextMessagePopupMenuLayout: PopupMenuLayout(
+              incomingTextMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 3のレイアウトで表示する。
                 column: 3,
                 // 3つのボタンを表示する。
@@ -365,7 +365,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserImageMessagePopupMenuLayout: PopupMenuLayout(
+              incomingImageMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -398,7 +398,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserStickerMessagePopupMenuLayout: PopupMenuLayout(
+              incomingStickerMessagePopupMenuLayout: PopupMenuLayout(
                 // 1 * 2のレイアウトで表示する。
                 column: 2,
                 // 2つのボタンを表示する。
@@ -431,7 +431,7 @@ class _HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-              otherUserVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
+              incomingVoiceCallMessagePopupMenuLayout: PopupMenuLayout(
                 column: 1,
                 buttonItems: [
                   PopupMenuButtonItem(
@@ -470,10 +470,10 @@ class _HomePage extends StatelessWidget {
                 }
               },
               messageBottomWidgetBuilder:
-                  (message, {required isSentByCurrentUser}) =>
+                  (message, {required bool isOutgoing}) =>
                       _MessageBottomWidgets(
                         message: message,
-                        isSentByCurrentUser: isSentByCurrentUser,
+                        isOutgoing: isOutgoing,
                       ),
             ),
           ],
@@ -712,11 +712,11 @@ final List<ChatMessage> _directMessages = [
 class _MessageBottomWidgets extends StatelessWidget {
   const _MessageBottomWidgets({
     required this.message,
-    required this.isSentByCurrentUser,
+    required this.isOutgoing,
   });
 
   final ChatUserMessage message;
-  final bool isSentByCurrentUser;
+  final bool isOutgoing;
 
   static const _reactions = [
     ('👍', 3, true),
@@ -726,13 +726,9 @@ class _MessageBottomWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: isSentByCurrentUser
-          ? Alignment.centerRight
-          : Alignment.centerLeft,
+      alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
       child: Wrap(
-        alignment: isSentByCurrentUser
-            ? WrapAlignment.end
-            : WrapAlignment.start,
+        alignment: isOutgoing ? WrapAlignment.end : WrapAlignment.start,
         children: [
           for (final (emoji, count, reactedByMe) in _reactions)
             InkWell(

@@ -20,30 +20,30 @@ class AltiveChatRoomTheme extends Equatable {
     this.messageInsetsVertical = 10,
     this.voiceCallMessageInsetsHorizontal = 12,
     this.voiceCallMessageInsetsVertical = 14,
-    this.myMessageBoxDecoration,
-    this.myMessageHighlightBoxDecoration,
-    this.otherUserMessageBoxDecoration,
-    this.otherUserMessageHighlightBoxDecoration,
-    this.myMessageTextStyle,
-    this.myMessageHighlightTextStyle,
-    this.myEmojiMessageTextStyle,
-    this.mySpecialMessageTextStyle,
-    this.otherUserMessageTextStyle,
-    this.otherUserHighlightMessageTextStyle,
-    this.otherUserEmojiMessageTextStyle,
-    this.otherUserSpecialMessageTextStyle,
-    this.myReplyToMessageTextStyle,
-    this.myReplyToUserNameTextStyle,
-    this.myReplyToDividerColor,
-    this.otherUserReplyToMessageTextStyle,
-    this.otherUserReplyToUserNameTextStyle,
-    this.otherUserReplyToDividerColor,
-    this.myOgpTitleTextStyle,
-    this.myOgpDescriptionTextStyle,
-    this.myOgpDividerColor,
-    this.otherUserOgpTitleTextStyle,
-    this.otherUserOgpDescriptionTextStyle,
-    this.otherUserOgpDividerColor,
+    this.outgoingMessageBoxDecoration,
+    this.outgoingMessageHighlightBoxDecoration,
+    this.incomingMessageBoxDecoration,
+    this.incomingMessageHighlightBoxDecoration,
+    this.outgoingMessageTextStyle,
+    this.outgoingMessageHighlightTextStyle,
+    this.outgoingEmojiMessageTextStyle,
+    this.outgoingSpecialMessageTextStyle,
+    this.incomingMessageTextStyle,
+    this.incomingHighlightMessageTextStyle,
+    this.incomingEmojiMessageTextStyle,
+    this.incomingSpecialMessageTextStyle,
+    this.outgoingReplyToMessageTextStyle,
+    this.outgoingReplyToUserNameTextStyle,
+    this.outgoingReplyToDividerColor,
+    this.incomingReplyToMessageTextStyle,
+    this.incomingReplyToUserNameTextStyle,
+    this.incomingReplyToDividerColor,
+    this.outgoingOgpTitleTextStyle,
+    this.outgoingOgpDescriptionTextStyle,
+    this.outgoingOgpDividerColor,
+    this.incomingOgpTitleTextStyle,
+    this.incomingOgpDescriptionTextStyle,
+    this.incomingOgpDividerColor,
     this.timeTextStyle,
     this.messageActionButtonStyle,
     this.inputDecorationTheme,
@@ -74,148 +74,148 @@ class AltiveChatRoomTheme extends Equatable {
   /// 自分が送信したメッセージバブルの装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.primaryColor]が使用される。
-  final BoxDecoration? myMessageBoxDecoration;
+  final BoxDecoration? outgoingMessageBoxDecoration;
 
   /// 自分が送信したメッセージバブルのハイライトされた場合の装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
   /// 枠線に[ColorScheme.outline]が使用される。
-  final BoxDecoration? myMessageHighlightBoxDecoration;
+  final BoxDecoration? outgoingMessageHighlightBoxDecoration;
 
   /// 自分以外が送信したメッセージバブルの装飾。
   ///
   /// `null`の場合は、背景色に[ColorScheme.surfaceContainerHighest]が使用される。
-  final BoxDecoration? otherUserMessageBoxDecoration;
+  final BoxDecoration? incomingMessageBoxDecoration;
 
   /// 自分以外が送信したメッセージバブルのハイライトされた場合の装飾。
   ///
   /// `null`の場合は、背景色に[ThemeData.highlightColor]を使用し
   /// 枠線に[ColorScheme.outline]が使用される。
-  final BoxDecoration? otherUserMessageHighlightBoxDecoration;
+  final BoxDecoration? incomingMessageHighlightBoxDecoration;
 
   /// 自分が送信したテキストメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
-  final TextStyle? myMessageTextStyle;
+  final TextStyle? outgoingMessageTextStyle;
 
   /// 自分が送信したテキストメッセージのハイライトされた場合のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[700]`で上書きしたものが使用される。
-  final TextStyle? myMessageHighlightTextStyle;
+  final TextStyle? outgoingMessageHighlightTextStyle;
 
   /// 自分が送信した絵文字メッセージのテキストスタイル。
   ///
-  /// `null`の場合は、[myMessageTextStyle]を使用する。
-  /// 配色はハイライトされた場合は[myMessageHighlightTextStyle]、
-  /// ハイライトされていない場合は[myMessageTextStyle]の配色で上書きされる。
-  final TextStyle? myEmojiMessageTextStyle;
+  /// `null`の場合は、[outgoingMessageTextStyle]を使用する。
+  /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
+  /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? outgoingEmojiMessageTextStyle;
 
   /// 自分が送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
   ///
-  /// `null`の場合は、[myMessageTextStyle]を使用する。
-  /// 配色はハイライトされた場合は[myMessageHighlightTextStyle]、
-  /// ハイライトされていない場合は[myMessageTextStyle]の配色で上書きされる。
-  final TextStyle? mySpecialMessageTextStyle;
+  /// `null`の場合は、[outgoingMessageTextStyle]を使用する。
+  /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
+  /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? outgoingSpecialMessageTextStyle;
 
   /// 自分以外が送信したテキストメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
-  final TextStyle? otherUserMessageTextStyle;
+  final TextStyle? incomingMessageTextStyle;
 
   /// 自分以外が送信したテキストメッセージのハイライトされた場合のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[700]`で上書きしたものが使用される。
-  final TextStyle? otherUserHighlightMessageTextStyle;
+  final TextStyle? incomingHighlightMessageTextStyle;
 
   /// 自分以外が送信した絵文字メッセージのテキストスタイル。
   ///
-  /// `null`の場合は、[otherUserMessageTextStyle]を使用する。
-  /// 配色はハイライトされた場合は[otherUserHighlightMessageTextStyle]、
-  /// ハイライトされていない場合は[otherUserMessageTextStyle]の配色で上書きされる。
-  final TextStyle? otherUserEmojiMessageTextStyle;
+  /// `null`の場合は、[incomingMessageTextStyle]を使用する。
+  /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
+  /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? incomingEmojiMessageTextStyle;
 
   /// 自分以外が送信した英数字日本語以外の特殊文字メッセージのテキストスタイル。
   ///
-  /// `null`の場合は、[otherUserMessageTextStyle]を使用する。
-  /// 配色はハイライトされた場合は[otherUserHighlightMessageTextStyle]、
-  /// ハイライトされていない場合は[otherUserMessageTextStyle]の配色で上書きされる。
-  final TextStyle? otherUserSpecialMessageTextStyle;
+  /// `null`の場合は、[incomingMessageTextStyle]を使用する。
+  /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
+  /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? incomingSpecialMessageTextStyle;
 
   /// 自分が送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
-  final TextStyle? myReplyToMessageTextStyle;
+  final TextStyle? outgoingReplyToMessageTextStyle;
 
   /// 自分が送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を[ColorScheme.onPrimary]で上書きしたものが使用される。
-  final TextStyle? myReplyToUserNameTextStyle;
+  final TextStyle? outgoingReplyToUserNameTextStyle;
 
   /// 自分が送信したメッセージに対するリプライ先の仕切り線の色。
   ///
   /// リプライ先に対してテキストメッセージを送信する場合のみ使用される。
-  final Color? myReplyToDividerColor;
+  final Color? outgoingReplyToDividerColor;
 
   /// 自分以外が送信したメッセージに対するリプライ先のメッセージのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
-  final TextStyle? otherUserReplyToMessageTextStyle;
+  final TextStyle? incomingReplyToMessageTextStyle;
 
   /// 自分以外が送信したメッセージに対するリプライ先のユーザー名のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodyMedium]のテキストテーマを使用し
   /// 配色を`Colors.grey[600]`で上書きしたものが使用される。
-  final TextStyle? otherUserReplyToUserNameTextStyle;
+  final TextStyle? incomingReplyToUserNameTextStyle;
 
   /// 自分以外が送信したメッセージに対するリプライ先の仕切り線の色。
   ///
   /// リプライ先に対してテキストメッセージを送信する場合のみ使用される。
-  final Color? otherUserReplyToDividerColor;
+  final Color? incomingReplyToDividerColor;
 
   /// 自分が送信したメッセージの OGP タイトルのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodySmall]のテキストテーマを使用し
-  /// 配色はハイライトされた場合は[myMessageHighlightTextStyle]、
-  /// ハイライトされていない場合は[myMessageTextStyle]の配色で上書きされる。
-  final TextStyle? myOgpTitleTextStyle;
+  /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
+  /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? outgoingOgpTitleTextStyle;
 
   /// 自分が送信したメッセージの OGP 説明のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.labelSmall]のテキストテーマを使用し
-  /// 配色はハイライトされた場合は[myMessageHighlightTextStyle]、
-  /// ハイライトされていない場合は[myMessageTextStyle]の配色で上書きされる。
-  final TextStyle? myOgpDescriptionTextStyle;
+  /// 配色はハイライトされた場合は[outgoingMessageHighlightTextStyle]、
+  /// ハイライトされていない場合は[outgoingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? outgoingOgpDescriptionTextStyle;
 
   /// 自分が送信したメッセージの OGP 情報の仕切り線の色。
   ///
   /// OGP 情報が表示される場合のみ使用される。
-  final Color? myOgpDividerColor;
+  final Color? outgoingOgpDividerColor;
 
   /// 自分以外が送信したメッセージの OGP タイトルのテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.bodySmall]のテキストテーマを使用し
-  /// 配色はハイライトされた場合は[otherUserHighlightMessageTextStyle]、
-  /// ハイライトされていない場合は[otherUserMessageTextStyle]の配色で上書きされる。
-  final TextStyle? otherUserOgpTitleTextStyle;
+  /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
+  /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? incomingOgpTitleTextStyle;
 
   /// 自分以外が送信したメッセージの OGP 説明のテキストスタイル。
   ///
   /// `null`の場合は、[TextTheme.labelSmall]のテキストテーマを使用し
-  /// 配色はハイライトされた場合は[otherUserHighlightMessageTextStyle]、
-  /// ハイライトされていない場合は[otherUserMessageTextStyle]の配色で上書きされる。
-  final TextStyle? otherUserOgpDescriptionTextStyle;
+  /// 配色はハイライトされた場合は[incomingHighlightMessageTextStyle]、
+  /// ハイライトされていない場合は[incomingMessageTextStyle]の配色で上書きされる。
+  final TextStyle? incomingOgpDescriptionTextStyle;
 
   /// 自分以外が送信したメッセージの OGP 情報の仕切り線の色。
   ///
   /// OGP 情報が表示される場合のみ使用される。
-  final Color? otherUserOgpDividerColor;
+  final Color? incomingOgpDividerColor;
 
   /// 時間を表示するテキストのテキストスタイル。
   ///
@@ -248,30 +248,30 @@ class AltiveChatRoomTheme extends Equatable {
     messageInsetsVertical,
     voiceCallMessageInsetsHorizontal,
     voiceCallMessageInsetsVertical,
-    myMessageBoxDecoration,
-    myMessageHighlightBoxDecoration,
-    otherUserMessageBoxDecoration,
-    otherUserMessageHighlightBoxDecoration,
-    myMessageTextStyle,
-    myMessageHighlightTextStyle,
-    myEmojiMessageTextStyle,
-    mySpecialMessageTextStyle,
-    otherUserMessageTextStyle,
-    otherUserHighlightMessageTextStyle,
-    otherUserEmojiMessageTextStyle,
-    otherUserSpecialMessageTextStyle,
-    myReplyToMessageTextStyle,
-    myReplyToUserNameTextStyle,
-    myReplyToDividerColor,
-    otherUserReplyToMessageTextStyle,
-    otherUserReplyToUserNameTextStyle,
-    otherUserReplyToDividerColor,
-    myOgpTitleTextStyle,
-    myOgpDescriptionTextStyle,
-    myOgpDividerColor,
-    otherUserOgpTitleTextStyle,
-    otherUserOgpDescriptionTextStyle,
-    otherUserOgpDividerColor,
+    outgoingMessageBoxDecoration,
+    outgoingMessageHighlightBoxDecoration,
+    incomingMessageBoxDecoration,
+    incomingMessageHighlightBoxDecoration,
+    outgoingMessageTextStyle,
+    outgoingMessageHighlightTextStyle,
+    outgoingEmojiMessageTextStyle,
+    outgoingSpecialMessageTextStyle,
+    incomingMessageTextStyle,
+    incomingHighlightMessageTextStyle,
+    incomingEmojiMessageTextStyle,
+    incomingSpecialMessageTextStyle,
+    outgoingReplyToMessageTextStyle,
+    outgoingReplyToUserNameTextStyle,
+    outgoingReplyToDividerColor,
+    incomingReplyToMessageTextStyle,
+    incomingReplyToUserNameTextStyle,
+    incomingReplyToDividerColor,
+    outgoingOgpTitleTextStyle,
+    outgoingOgpDescriptionTextStyle,
+    outgoingOgpDividerColor,
+    incomingOgpTitleTextStyle,
+    incomingOgpDescriptionTextStyle,
+    incomingOgpDividerColor,
     timeTextStyle,
     messageActionButtonStyle,
     inputDecorationTheme,

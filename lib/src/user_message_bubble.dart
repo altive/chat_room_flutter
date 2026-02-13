@@ -210,75 +210,75 @@ class _TextMessageBubbleContents extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final borderRadius = BorderRadius.circular(10);
 
-    final isSentByCurrentUser = message.isSentByCurrentUser(currentUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
 
-    final myMessageBoxDecoration = message.highlight
-        ? altiveChatRoomTheme.myMessageHighlightBoxDecoration ??
+    final outgoingMessageBoxDecoration = message.highlight
+        ? altiveChatRoomTheme.outgoingMessageHighlightBoxDecoration ??
               BoxDecoration(
                 border: Border.all(color: colorScheme.outline),
                 borderRadius: borderRadius,
                 color: theme.highlightColor,
               )
-        : altiveChatRoomTheme.myMessageBoxDecoration ??
+        : altiveChatRoomTheme.outgoingMessageBoxDecoration ??
               BoxDecoration(
                 borderRadius: borderRadius,
                 color: theme.primaryColor,
               );
-    final otherUserMessageBoxDecoration = message.highlight
-        ? altiveChatRoomTheme.otherUserMessageHighlightBoxDecoration ??
+    final incomingMessageBoxDecoration = message.highlight
+        ? altiveChatRoomTheme.incomingMessageHighlightBoxDecoration ??
               BoxDecoration(
                 border: Border.all(color: colorScheme.outline),
                 borderRadius: borderRadius,
                 color: theme.highlightColor,
               )
-        : altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+        : altiveChatRoomTheme.incomingMessageBoxDecoration ??
               BoxDecoration(
                 borderRadius: borderRadius,
                 color: colorScheme.surfaceContainerHighest,
               );
-    final decoration = isSentByCurrentUser
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
-    final myMessageTextStyle = message.highlight
-        ? altiveChatRoomTheme.myMessageHighlightTextStyle ??
+    final outgoingMessageTextStyle = message.highlight
+        ? altiveChatRoomTheme.outgoingMessageHighlightTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)
-        : altiveChatRoomTheme.myMessageTextStyle ??
+        : altiveChatRoomTheme.outgoingMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onPrimary,
               );
-    final otherUserMessageTextStyle = message.highlight
-        ? altiveChatRoomTheme.otherUserHighlightMessageTextStyle ??
+    final incomingMessageTextStyle = message.highlight
+        ? altiveChatRoomTheme.incomingHighlightMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface)
-        : altiveChatRoomTheme.otherUserMessageTextStyle ??
+        : altiveChatRoomTheme.incomingMessageTextStyle ??
               theme.textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               );
-    final textStyle = isSentByCurrentUser
-        ? myMessageTextStyle
-        : otherUserMessageTextStyle;
+    final textStyle = isOutgoing
+        ? outgoingMessageTextStyle
+        : incomingMessageTextStyle;
     final textStyleColor = textStyle?.color;
 
-    final myEmojiMessageTextStyle =
-        altiveChatRoomTheme.myEmojiMessageTextStyle ?? textStyle;
-    final otherUserEmojiMessageTextStyle =
-        altiveChatRoomTheme.otherUserEmojiMessageTextStyle ?? textStyle;
+    final outgoingEmojiMessageTextStyle =
+        altiveChatRoomTheme.outgoingEmojiMessageTextStyle ?? textStyle;
+    final incomingEmojiMessageTextStyle =
+        altiveChatRoomTheme.incomingEmojiMessageTextStyle ?? textStyle;
     // 配色を統一するため、絵文字の配色は`textStyle`の配色を適用する。
     final emojiTextStyle =
-        (isSentByCurrentUser
-                ? myEmojiMessageTextStyle
-                : otherUserEmojiMessageTextStyle)
+        (isOutgoing
+                ? outgoingEmojiMessageTextStyle
+                : incomingEmojiMessageTextStyle)
             ?.copyWith(color: textStyleColor);
 
-    final mySpecialMessageTextStyle =
-        altiveChatRoomTheme.mySpecialMessageTextStyle ?? textStyle;
-    final otherUserSpecialMessageTextStyle =
-        altiveChatRoomTheme.otherUserSpecialMessageTextStyle ?? textStyle;
+    final outgoingSpecialMessageTextStyle =
+        altiveChatRoomTheme.outgoingSpecialMessageTextStyle ?? textStyle;
+    final incomingSpecialMessageTextStyle =
+        altiveChatRoomTheme.incomingSpecialMessageTextStyle ?? textStyle;
     // 配色を統一するため、特殊文字の配色は`textStyle`の配色を適用する。
     final specialTextStyle =
-        (isSentByCurrentUser
-                ? mySpecialMessageTextStyle
-                : otherUserSpecialMessageTextStyle)
+        (isOutgoing
+                ? outgoingSpecialMessageTextStyle
+                : incomingSpecialMessageTextStyle)
             ?.copyWith(color: textStyleColor);
 
     final linkStyle = TextStyle(
@@ -352,18 +352,18 @@ class _TextMessageBubbleContents extends StatelessWidget {
                 ),
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
-                  isSentByCurrentUser: isSentByCurrentUser,
-                  isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
-                    currentUserId,
+                  isOutgoing: isOutgoing,
+                  isReplyOutgoing: replyTo.isOutgoing(
+                    currentUserId: currentUserId,
                   ),
                   replyImageIndex: message.replyImageIndex,
                 ),
               ),
               Divider(
                 height: 1,
-                color: isSentByCurrentUser
-                    ? altiveChatRoomTheme.myReplyToDividerColor
-                    : altiveChatRoomTheme.otherUserReplyToDividerColor,
+                color: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToDividerColor
+                    : altiveChatRoomTheme.incomingReplyToDividerColor,
               ),
             ],
             Padding(
@@ -411,7 +411,7 @@ class _TextMessageBubbleContents extends StatelessWidget {
                     _OgpContents(
                       urlElement: e,
                       onOpen: onOpen,
-                      isSentByCurrentUser: isSentByCurrentUser,
+                      isOutgoing: isOutgoing,
                       textStyleColor: textStyleColor,
                     ),
                 ],
@@ -574,13 +574,13 @@ class _OgpContents extends StatelessWidget {
   const _OgpContents({
     required this.urlElement,
     required this.onOpen,
-    required this.isSentByCurrentUser,
+    required this.isOutgoing,
     required this.textStyleColor,
   });
 
   final UrlElement urlElement;
   final ValueChanged<UrlElement> onOpen;
-  final bool isSentByCurrentUser;
+  final bool isOutgoing;
   final Color? textStyleColor;
 
   @override
@@ -592,12 +592,12 @@ class _OgpContents extends StatelessWidget {
       future: cachedOgpData.get(urlElement.url),
       builder: (context, snapshot) {
         final ogpTitleTextStyle =
-            (isSentByCurrentUser
-                    ? altiveChatRoomTheme.myOgpTitleTextStyle ??
+            (isOutgoing
+                    ? altiveChatRoomTheme.outgoingOgpTitleTextStyle ??
                           theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           )
-                    : altiveChatRoomTheme.otherUserOgpTitleTextStyle?.copyWith(
+                    : altiveChatRoomTheme.incomingOgpTitleTextStyle?.copyWith(
                             color: textStyleColor,
                           ) ??
                           theme.textTheme.bodySmall?.copyWith(
@@ -605,10 +605,10 @@ class _OgpContents extends StatelessWidget {
                           ))
                 ?.copyWith(color: textStyleColor);
         final ogpDescriptionTextStyle =
-            (isSentByCurrentUser
-                    ? altiveChatRoomTheme.myOgpDescriptionTextStyle ??
+            (isOutgoing
+                    ? altiveChatRoomTheme.outgoingOgpDescriptionTextStyle ??
                           theme.textTheme.labelSmall
-                    : altiveChatRoomTheme.otherUserOgpDescriptionTextStyle ??
+                    : altiveChatRoomTheme.incomingOgpDescriptionTextStyle ??
                           theme.textTheme.labelSmall)
                 ?.copyWith(color: textStyleColor);
         if (snapshot.connectionState != ConnectionState.done) {
@@ -634,9 +634,9 @@ class _OgpContents extends StatelessWidget {
                   VerticalDivider(
                     width: 2,
                     thickness: 2,
-                    color: isSentByCurrentUser
-                        ? altiveChatRoomTheme.myOgpDividerColor
-                        : altiveChatRoomTheme.otherUserOgpDividerColor,
+                    color: isOutgoing
+                        ? altiveChatRoomTheme.outgoingOgpDividerColor
+                        : altiveChatRoomTheme.incomingOgpDividerColor,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -701,20 +701,20 @@ class _ImagesMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
-    final isSentByCurrentUser = message.isSentByCurrentUser(currentUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
     final replyTo = message.replyTo;
 
     return Column(
-      crossAxisAlignment: isSentByCurrentUser
+      crossAxisAlignment: isOutgoing
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
         if (replyTo != null) ...[
           _ReplyToMessageBubble(
             replyTo: replyTo,
-            isSentByCurrentUser: isSentByCurrentUser,
-            isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
-              currentUserId,
+            isOutgoing: isOutgoing,
+            isReplyOutgoing: replyTo.isOutgoing(
+              currentUserId: currentUserId,
             ),
             replyImageIndex: message.replyImageIndex,
           ),
@@ -1112,20 +1112,20 @@ class StickerMessageBubble extends StatelessWidget {
       context,
     ).theme.popupMenuConfig;
 
-    final isSentByCurrentUser = message.isSentByCurrentUser(currentUserId);
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
     final replyTo = message.replyTo;
 
     return Column(
-      crossAxisAlignment: isSentByCurrentUser
+      crossAxisAlignment: isOutgoing
           ? CrossAxisAlignment.end
           : CrossAxisAlignment.start,
       children: [
         if (replyTo != null) ...[
           _ReplyToMessageBubble(
             replyTo: replyTo,
-            isSentByCurrentUser: isSentByCurrentUser,
-            isRepliedSentByCurrentUser: replyTo.isSentByCurrentUser(
-              currentUserId,
+            isOutgoing: isOutgoing,
+            isReplyOutgoing: replyTo.isOutgoing(
+              currentUserId: currentUserId,
             ),
             replyImageIndex: message.replyImageIndex,
           ),
@@ -1248,39 +1248,37 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final borderRadius = BorderRadius.circular(10);
-    final myMessageBoxDecoration =
-        altiveChatRoomTheme.myMessageBoxDecoration ??
+    final outgoingMessageBoxDecoration =
+        altiveChatRoomTheme.outgoingMessageBoxDecoration ??
         BoxDecoration(borderRadius: borderRadius, color: theme.primaryColor);
-    final otherUserMessageBoxDecoration =
-        altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+    final incomingMessageBoxDecoration =
+        altiveChatRoomTheme.incomingMessageBoxDecoration ??
         BoxDecoration(
           borderRadius: borderRadius,
           color: colorScheme.surfaceContainerHighest,
         );
 
-    final isSentByCurrentUser = message.isSentByCurrentUser(currentUserId);
-    final decoration = isSentByCurrentUser
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
-    final myMessageTextStyle =
-        altiveChatRoomTheme.myMessageTextStyle ??
+    final outgoingMessageTextStyle =
+        altiveChatRoomTheme.outgoingMessageTextStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onPrimary,
         );
-    final otherUserMessageTextStyle =
-        altiveChatRoomTheme.otherUserMessageTextStyle ??
+    final incomingMessageTextStyle =
+        altiveChatRoomTheme.incomingMessageTextStyle ??
         theme.textTheme.bodyMedium?.copyWith(
           color: colorScheme.onSurfaceVariant,
         );
     // テキストスタイルに太字を適用する。
     final textStyle =
-        (isSentByCurrentUser ? myMessageTextStyle : otherUserMessageTextStyle)!
+        (isOutgoing ? outgoingMessageTextStyle : incomingMessageTextStyle)!
             .copyWith(fontWeight: FontWeight.bold);
     final defaultTimeTextStyle = theme.textTheme.labelSmall?.copyWith(
-      color: isSentByCurrentUser
-          ? colorScheme.onPrimary
-          : colorScheme.onSurfaceVariant,
+      color: isOutgoing ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
     );
     final timeTextStyle =
         altiveChatRoomTheme.timeTextStyle ?? defaultTimeTextStyle;
@@ -1312,7 +1310,7 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
             children: [
               Text(
                 message.voiceCallType.text(
-                  isSentByCurrentUser: isSentByCurrentUser,
+                  isOutgoing: isOutgoing,
                 ),
                 style: textStyle,
               ),
@@ -1334,8 +1332,8 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
 class _ReplyToMessageBubble extends StatelessWidget {
   const _ReplyToMessageBubble({
     required this.replyTo,
-    required this.isSentByCurrentUser,
-    required this.isRepliedSentByCurrentUser,
+    required this.isOutgoing,
+    required this.isReplyOutgoing,
     required this.replyImageIndex,
   });
 
@@ -1343,10 +1341,10 @@ class _ReplyToMessageBubble extends StatelessWidget {
   final ChatUserMessage replyTo;
 
   /// 返信するメッセージがログインユーザーのものかどうか。
-  final bool isSentByCurrentUser;
+  final bool isOutgoing;
 
   /// 返信先のメッセージがログインユーザーのものかどうか。
-  final bool isRepliedSentByCurrentUser;
+  final bool isReplyOutgoing;
 
   /// 複数画像の何枚目に対する返信かを示すインデックス。
   final int? replyImageIndex;
@@ -1358,24 +1356,24 @@ class _ReplyToMessageBubble extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final borderRadius = BorderRadius.circular(10);
 
-    final myMessageBoxDecoration =
-        altiveChatRoomTheme.myMessageBoxDecoration ??
+    final outgoingMessageBoxDecoration =
+        altiveChatRoomTheme.outgoingMessageBoxDecoration ??
         BoxDecoration(borderRadius: borderRadius, color: theme.primaryColor);
-    final otherUserMessageBoxDecoration =
-        altiveChatRoomTheme.otherUserMessageBoxDecoration ??
+    final incomingMessageBoxDecoration =
+        altiveChatRoomTheme.incomingMessageBoxDecoration ??
         BoxDecoration(
           borderRadius: borderRadius,
           color: colorScheme.surfaceContainerHighest,
         );
-    final decoration = isSentByCurrentUser
-        ? myMessageBoxDecoration
-        : otherUserMessageBoxDecoration;
+    final decoration = isOutgoing
+        ? outgoingMessageBoxDecoration
+        : incomingMessageBoxDecoration;
 
     return IntrinsicWidth(
       child: Column(
         children: [
           Align(
-            alignment: isSentByCurrentUser
+            alignment: isOutgoing
                 ? Alignment.centerRight
                 : Alignment.centerLeft,
             child: DecoratedBox(
@@ -1387,8 +1385,8 @@ class _ReplyToMessageBubble extends StatelessWidget {
                 ),
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
-                  isSentByCurrentUser: isSentByCurrentUser,
-                  isRepliedSentByCurrentUser: isRepliedSentByCurrentUser,
+                  isOutgoing: isOutgoing,
+                  isReplyOutgoing: isReplyOutgoing,
                   replyImageIndex: replyImageIndex,
                 ),
               ),
@@ -1416,8 +1414,8 @@ class _ReplyToMessageBubble extends StatelessWidget {
 class _ReplyToMessageContents extends StatelessWidget {
   const _ReplyToMessageContents({
     required this.replyTo,
-    required this.isSentByCurrentUser,
-    required this.isRepliedSentByCurrentUser,
+    required this.isOutgoing,
+    required this.isReplyOutgoing,
     required this.replyImageIndex,
   });
 
@@ -1425,10 +1423,10 @@ class _ReplyToMessageContents extends StatelessWidget {
   final ChatUserMessage replyTo;
 
   /// 返信するメッセージがログインユーザーのものかどうか。
-  final bool isSentByCurrentUser;
+  final bool isOutgoing;
 
   /// 返信先のメッセージがログインユーザーのものかどうか。
-  final bool isRepliedSentByCurrentUser;
+  final bool isReplyOutgoing;
 
   /// 複数画像に対する返信のインデックス。
   final int? replyImageIndex;
@@ -1465,12 +1463,12 @@ class _ReplyToMessageContents extends StatelessWidget {
                 replyTo.sender.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: isSentByCurrentUser
-                    ? altiveChatRoomTheme.myReplyToUserNameTextStyle ??
+                style: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToUserNameTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onPrimary,
                           )
-                    : altiveChatRoomTheme.otherUserReplyToUserNameTextStyle ??
+                    : altiveChatRoomTheme.incomingReplyToUserNameTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -1483,17 +1481,17 @@ class _ReplyToMessageContents extends StatelessWidget {
                   ChatVoiceCallMessage(:final voiceCallType) =>
                     // 返信先のメッセージがログインユーザーのものかどうかで表示するテキストを変更する。
                     voiceCallType.text(
-                      isSentByCurrentUser: isRepliedSentByCurrentUser,
+                      isOutgoing: isReplyOutgoing,
                     ),
                 },
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: isSentByCurrentUser
-                    ? altiveChatRoomTheme.myReplyToMessageTextStyle ??
+                style: isOutgoing
+                    ? altiveChatRoomTheme.outgoingReplyToMessageTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onPrimary,
                           )
-                    : altiveChatRoomTheme.otherUserReplyToMessageTextStyle ??
+                    : altiveChatRoomTheme.incomingReplyToMessageTextStyle ??
                           theme.textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),

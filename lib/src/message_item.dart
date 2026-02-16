@@ -233,7 +233,7 @@ class _UserMessageItem extends StatelessWidget {
     );
     final timeSection = _BubbleSideStatus(
       dateTime: message.createdAt,
-      isRead: message.isRead,
+      isRead: isOutgoing && message.isRead,
       readStatusWidget: readStatusWidget,
       pendingIndicator: isPending
           ? pendingIndicator ??

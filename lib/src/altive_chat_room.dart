@@ -39,6 +39,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.onImageMessageTap,
     this.onStickerMessageTap,
     this.onActionButtonTap,
+    this.incomingAvatarSizeDimension = 30,
     this.hintText = 'Message',
     this.showSendButtonInTextField = false,
     this.sendButtonWidget,
@@ -143,6 +144,9 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// メッセージのアクションボタンをタップした時の処理。
   final ValueChanged<Object?>? onActionButtonTap;
+
+  /// 受信メッセージに表示するアバター画像の直径。
+  final double incomingAvatarSizeDimension;
 
   /// 入力欄のプレースホルダーテキスト。
   final String hintText;
@@ -273,6 +277,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         onImageMessageTap: widget.onImageMessageTap,
         onStickerMessageTap: widget.onStickerMessageTap,
         onActionButtonTap: widget.onActionButtonTap,
+        incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
         outgoingTextMessagePopupMenuLayout:
             widget.outgoingTextMessagePopupMenuLayout,
         outgoingImageMessagePopupMenuLayout:
@@ -476,6 +481,7 @@ class _MessageListView extends StatefulWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -509,6 +515,7 @@ class _MessageListView extends StatefulWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
+  final double incomingAvatarSizeDimension;
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
@@ -623,6 +630,7 @@ class _MessageListViewState extends State<_MessageListView> {
             onImageMessageTap: widget.onImageMessageTap,
             onStickerMessageTap: widget.onStickerMessageTap,
             onActionButtonTap: widget.onActionButtonTap,
+            incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
             outgoingTextMessagePopupMenuLayout:
                 widget.outgoingTextMessagePopupMenuLayout,
             outgoingImageMessagePopupMenuLayout:

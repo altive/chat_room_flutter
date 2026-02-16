@@ -24,6 +24,7 @@ class MessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -73,6 +74,9 @@ class MessageItem extends StatelessWidget {
 
   /// テキスト内アクションボタンタップ時のコールバック。
   final ValueChanged<Object?>? onActionButtonTap;
+
+  /// 受信メッセージに表示するアバター画像の直径。
+  final double incomingAvatarSizeDimension;
 
   /// ログインユーザーのテキストメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
@@ -135,6 +139,7 @@ class MessageItem extends StatelessWidget {
         onImageMessageTap: onImageMessageTap,
         onStickerMessageTap: onStickerMessageTap,
         onActionButtonTap: onActionButtonTap,
+        incomingAvatarSizeDimension: incomingAvatarSizeDimension,
         outgoingTextMessagePopupMenuLayout: outgoingTextMessagePopupMenuLayout,
         outgoingImageMessagePopupMenuLayout:
             outgoingImageMessagePopupMenuLayout,
@@ -176,6 +181,7 @@ class _UserMessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -204,6 +210,7 @@ class _UserMessageItem extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
+  final double incomingAvatarSizeDimension;
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
@@ -304,7 +311,7 @@ class _UserMessageItem extends StatelessWidget {
               children: [
                 AvatarImage(
                   user: message.sender,
-                  sizeDimension: 30,
+                  sizeDimension: incomingAvatarSizeDimension,
                   onAvatarTap: onAvatarTap,
                 ),
                 const SizedBox(width: 8),

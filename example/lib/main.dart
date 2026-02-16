@@ -18,8 +18,53 @@ Future<void> main() async {
   );
 }
 
-class _HomePage extends StatelessWidget {
+class _HomePage extends StatefulWidget {
   const _HomePage();
+
+  @override
+  State<_HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<_HomePage> {
+  late final List<ChatMessage> _directMessagesState;
+  var _localMessageId = 100000;
+
+  @override
+  void initState() {
+    super.initState();
+    _directMessagesState = List<ChatMessage>.of(_directMessages);
+  }
+
+  void _handleSendDirect(({String text, Sticker? sticker}) value) {
+    if (value.text.isEmpty && value.sticker == null) {
+      return;
+    }
+
+    final localMessage = value.sticker != null
+        ? ChatStickerMessage(
+            id: 'local_${_localMessageId++}',
+            createdAt: DateTime.now(),
+            sender: _user1,
+            sticker: value.sticker!,
+          )
+        : ChatTextMessage(
+            id: 'local_${_localMessageId++}',
+            createdAt: DateTime.now(),
+            sender: _user1,
+            text: value.text,
+          );
+
+    setState(() {
+      _directMessagesState.insert(0, localMessage);
+    });
+
+    if (value.text.isNotEmpty) {
+      _showSnackBar(context: context, text: '${value.text} is sent');
+    }
+    if (value.sticker != null) {
+      _showSnackBar(context: context, text: 'Sticker is sent');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,22 +142,11 @@ class _HomePage extends StatelessWidget {
             AltiveChatRoom(
               theme: theme,
               currentUserId: '1',
-              messages: _directMessages,
-              pendingMessageIds: const ['1'],
-              onSendIconPressed: (value) {
-                if (value.text.isNotEmpty) {
-                  _showSnackBar(
-                    context: context,
-                    text: '${value.text} is sent',
-                  );
-                }
-                if (value.sticker != null) {
-                  _showSnackBar(
-                    context: context,
-                    text: 'Sticker is sent',
-                  );
-                }
-              },
+              messages: _directMessagesState,
+              pendingMessageIds: _directMessagesState.isEmpty
+                  ? const []
+                  : ['1'],
+              onSendIconPressed: _handleSendDirect,
               onRefresh: () async {
                 _showSnackBar(context: context, text: 'onRefresh is called');
               },

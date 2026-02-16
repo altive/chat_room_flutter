@@ -496,12 +496,10 @@ class _MessageListView extends StatelessWidget {
         // テキストメッセージに切り替える。
         messageTypeNotifier.value = MessageInputType.text;
       },
-      child: ListView.separated(
+      child: ListView.builder(
         reverse: true,
         controller: scrollController,
         itemCount: messages.length,
-        separatorBuilder: (_, _) =>
-            SizedBox(height: altiveChatRoomTheme.messageInsetsVertical),
         itemBuilder: (context, index) {
           final message = messages[index];
 

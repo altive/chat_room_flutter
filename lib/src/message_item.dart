@@ -224,6 +224,7 @@ class _UserMessageItem extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
+        vertical: altiveChatRoomTheme.messageInsetsVertical,
       ),
       child: isOutgoing
           ? Column(

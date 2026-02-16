@@ -23,6 +23,55 @@ class _HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const theme = AltiveChatRoomTheme(
+      outgoingMessageBoxDecoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFCA8DA3),
+            Color(0xFF996A7F),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      incomingMessageBoxDecoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF6A646B),
+            Color(0xFF555055),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      outgoingMessageTextStyle: TextStyle(
+        color: Color(0xFFEDE6EA),
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      incomingMessageTextStyle: TextStyle(
+        color: Color(0xFFF0ECEF),
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -46,7 +95,7 @@ class _HomePage extends StatelessWidget {
         body: TabBarView(
           children: [
             AltiveChatRoom(
-              theme: const AltiveChatRoomTheme(),
+              theme: theme,
               currentUserId: '1',
               messages: _directMessages,
               pendingMessageIds: [_directMessages.first.id],
@@ -452,7 +501,7 @@ class _HomePage extends StatelessWidget {
             ),
             AltiveChatRoom(
               isGroupChat: true,
-              theme: const AltiveChatRoomTheme(),
+              theme: theme,
               currentUserId: '1',
               messages: _groupMessages,
               onSendIconPressed: (value) {

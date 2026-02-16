@@ -538,44 +538,48 @@ class _MessageListView extends StatefulWidget {
 
 class _MessageListViewState extends State<_MessageListView> {
   // 表示済みメッセージIDのセット。
-  final _showedMessageIds = <String>{};
-  // 出現アニメーションを表示するメッセージIDのセット。
-  final _animateOnAppearIds = <String>{};
+  final _seenMessageIds = <String>{};
+  // 今回の更新で出現アニメーションを適用する最新メッセージID。
+  String? _showAnimationMessageId;
 
   @override
   void initState() {
     super.initState();
-    _showedMessageIds.addAll(widget.messages.map((message) => message.id));
+    _seenMessageIds.addAll(widget.messages.map((message) => message.id));
   }
 
   @override
   void didUpdateWidget(covariant _MessageListView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 現在のメッセージIDのセットに存在しない表示済みメッセージIDと出現アニメーション対象IDを削除する。
+    _showAnimationMessageId = null;
+    if (!widget.showOutgoingMessageAppearAnimation || widget.messages.isEmpty) {
+      final currentMessageIds = widget.messages
+          .map((message) => message.id)
+          .toSet();
+      _seenMessageIds
+        ..removeWhere((id) => !currentMessageIds.contains(id))
+        ..addAll(currentMessageIds);
+      return;
+    }
+
+    final latestMessage = widget.messages.first;
+    if (latestMessage case ChatUserMessage()) {
+      final isNewMessage = !_seenMessageIds.contains(latestMessage.id);
+      final isOutgoing = latestMessage.isOutgoing(
+        currentUserId: widget.currentUserId,
+      );
+      if (isNewMessage && isOutgoing) {
+        _showAnimationMessageId = latestMessage.id;
+      }
+    }
+
     final currentMessageIds = widget.messages
         .map((message) => message.id)
         .toSet();
-    _showedMessageIds.removeWhere((id) => !currentMessageIds.contains(id));
-    _animateOnAppearIds.removeWhere((id) => !currentMessageIds.contains(id));
-
-    for (final message in widget.messages) {
-      // 既に表示されているメッセージはスキップする。
-      if (_showedMessageIds.contains(message.id)) {
-        continue;
-      }
-      // 新たに表示されたメッセージで、ログインユーザーが送信したテキストメッセージの場合は、出現アニメーションの対象にする。
-      if (message case ChatUserMessage()) {
-        final isOutgoing = message.isOutgoing(
-          currentUserId: widget.currentUserId,
-        );
-        if (isOutgoing) {
-          _animateOnAppearIds.add(message.id);
-        }
-      }
-      // 表示済みメッセージIDを追加する。
-      _showedMessageIds.add(message.id);
-    }
+    _seenMessageIds
+      ..removeWhere((id) => !currentMessageIds.contains(id))
+      ..addAll(currentMessageIds);
   }
 
   @override
@@ -610,13 +614,11 @@ class _MessageListViewState extends State<_MessageListView> {
           // - 最新メッセージ
           // - ユーザーが送信するメッセージ
           // - ログインユーザーが送信したメッセージ
-          // - まだアニメーションを表示していないメッセージ
+          // - 今回の更新でアニメーション対象として確定したメッセージ
           final showAnimation =
               widget.showOutgoingMessageAppearAnimation &&
               index == 0 &&
-              message is ChatUserMessage &&
-              message.isOutgoing(currentUserId: widget.currentUserId) &&
-              _animateOnAppearIds.remove(message.id);
+              _showAnimationMessageId == message.id;
 
           final messageItem = MessageItem(
             currentUserId: widget.currentUserId,

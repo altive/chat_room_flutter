@@ -17,7 +17,7 @@ class BottomWidget extends StatefulWidget {
     this.textEditingController,
     required this.onSendIconPressed,
     required this.hintText,
-    required this.sendButtonIcon,
+    required this.sendButtonWidget,
     required this.expandButtonIcon,
     required this.textFieldSuffixBuilder,
     required this.messageTypeNotifier,
@@ -37,8 +37,8 @@ class BottomWidget extends StatefulWidget {
   /// 入力欄のプレースホルダーテキスト。
   final String hintText;
 
-  /// 送信ボタンのアイコン。
-  final Icon? sendButtonIcon;
+  /// 送信ボタンに表示するWidget。
+  final Widget? sendButtonWidget;
 
   /// 先頭ウィジェットを再表示するボタンのアイコン。
   final Icon? expandButtonIcon;
@@ -183,8 +183,10 @@ class _BottomWidgetState extends State<BottomWidget> {
                   if (_effectiveController.text.isNotEmpty ||
                       widget.selectedSticker != null)
                     IconButton(
-                      icon: widget.sendButtonIcon ?? const Icon(Icons.send),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      icon: widget.sendButtonWidget ?? const Icon(Icons.send),
+                      padding: widget.sendButtonWidget == null
+                          ? const EdgeInsets.symmetric(horizontal: 16)
+                          : EdgeInsets.zero,
                       onPressed: () {
                         widget.onSendIconPressed.call((
                           text: _effectiveController.text,

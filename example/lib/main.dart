@@ -212,7 +212,7 @@ class _HomePageState extends State<_HomePage> {
                       closePopupMenu: closePopupMenu,
                     );
                   },
-              sendButtonIcon: const Icon(Icons.send_sharp),
+              sendButtonWidget: const Icon(Icons.send_sharp),
               expandButtonIcon: const Icon(Icons.arrow_forward_ios_sharp),
               textFieldSuffixBuilder: (type) {
                 return switch (type) {

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChatTextMessage', () {
-    test('isSentByCurrentUser は sender.id 一致で true / 不一致で false を返す', () {
+    test('isOutgoing は sender.id 一致で true / 不一致で false を返す', () {
       final message = ChatTextMessage(
         id: 'm1',
         createdAt: DateTime(2026, 2, 9),
@@ -12,8 +12,8 @@ void main() {
         text: 'hello',
       );
 
-      expect(message.isSentByCurrentUser('u1'), isTrue);
-      expect(message.isSentByCurrentUser('u2'), isFalse);
+      expect(message.isOutgoing(currentUserId: 'u1'), isTrue);
+      expect(message.isOutgoing(currentUserId: 'u2'), isFalse);
     });
 
     test('copyWith は指定項目のみ更新し、未指定項目は維持する', () {
@@ -91,19 +91,19 @@ void main() {
   group('VoiceCallType', () {
     test('text は通話種別と送信者種別に応じた文言を返す', () {
       expect(
-        VoiceCallType.connected.text(isSentByCurrentUser: true),
+        VoiceCallType.connected.text(isOutgoing: true),
         'Voice call',
       );
       expect(
-        VoiceCallType.connected.text(isSentByCurrentUser: false),
+        VoiceCallType.connected.text(isOutgoing: false),
         'Voice call',
       );
       expect(
-        VoiceCallType.unanswered.text(isSentByCurrentUser: true),
+        VoiceCallType.unanswered.text(isOutgoing: true),
         'No answer',
       );
       expect(
-        VoiceCallType.unanswered.text(isSentByCurrentUser: false),
+        VoiceCallType.unanswered.text(isOutgoing: false),
         'Missed call',
       );
     });

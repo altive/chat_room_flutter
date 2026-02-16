@@ -17,6 +17,7 @@ class BottomWidget extends StatefulWidget {
     this.textEditingController,
     required this.onSendIconPressed,
     required this.hintText,
+    required this.showSendButtonInTextField,
     required this.sendButtonWidget,
     required this.expandButtonIcon,
     required this.textFieldSuffixBuilder,
@@ -36,6 +37,9 @@ class BottomWidget extends StatefulWidget {
 
   /// 入力欄のプレースホルダーテキスト。
   final String hintText;
+
+  /// 送信ボタンをTextField内に表示するかどうか。
+  final bool showSendButtonInTextField;
 
   /// 送信ボタンに表示するWidget。
   final Widget? sendButtonWidget;
@@ -101,9 +105,55 @@ class _BottomWidgetState extends State<BottomWidget> {
     final replyToMessageBar = widget.replyToMessageBar;
     final textFieldSuffixBuilder = widget.textFieldSuffixBuilder;
     final messageTypeNotifier = widget.messageTypeNotifier;
+    final sendButtonWidget = widget.sendButtonWidget;
+    final shouldShowSendButton =
+        _effectiveController.text.isNotEmpty || widget.selectedSticker != null;
+
+    final sendButton = IconButton(
+      icon: sendButtonWidget ?? const Icon(Icons.send),
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: sendButtonWidget == null
+          ? const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            )
+          : null,
+      onPressed: () {
+        widget.onSendIconPressed.call((
+          text: _effectiveController.text,
+          sticker: widget.selectedSticker,
+        ));
+        setState(() {
+          _effectiveController.clear();
+        });
+      },
+    );
+
     return ValueListenableBuilder<MessageInputType>(
       valueListenable: messageTypeNotifier,
       builder: (context, messageType, child) {
+        final suffixWidgets = [
+          if (textFieldSuffixBuilder != null)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  switch (messageType) {
+                    case MessageInputType.text:
+                      messageTypeNotifier.value = MessageInputType.sticker;
+                      FocusScope.of(context).unfocus();
+                    case MessageInputType.sticker:
+                      messageTypeNotifier.value = MessageInputType.text;
+                      FocusScope.of(context).requestFocus(focusNode);
+                  }
+                });
+              },
+              child: textFieldSuffixBuilder(messageType),
+            ),
+          if (widget.showSendButtonInTextField && shouldShowSendButton)
+            sendButton,
+        ];
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -141,31 +191,12 @@ class _BottomWidgetState extends State<BottomWidget> {
                       maxLines: 10,
                       decoration: InputDecoration(
                         hintText: widget.hintText,
-                        suffixIcon: textFieldSuffixBuilder != null
-                            ? GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    switch (messageType) {
-                                      case MessageInputType.text:
-                                        messageTypeNotifier.value =
-                                            MessageInputType.sticker;
-                                        FocusScope.of(context).unfocus();
-                                      case MessageInputType.sticker:
-                                        messageTypeNotifier.value =
-                                            MessageInputType.text;
-                                        FocusScope.of(
-                                          context,
-                                        ).requestFocus(focusNode);
-                                    }
-                                  });
-                                },
-                                child: Center(
-                                  widthFactor: 1,
-                                  heightFactor: 1,
-                                  child: textFieldSuffixBuilder(messageType),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        suffixIcon: suffixWidgets.isEmpty
+                            ? null
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: suffixWidgets,
+                              ),
                       ),
                       onChanged: (text) {
                         setState(() {
@@ -180,23 +211,8 @@ class _BottomWidgetState extends State<BottomWidget> {
                       },
                     ),
                   ),
-                  if (_effectiveController.text.isNotEmpty ||
-                      widget.selectedSticker != null)
-                    IconButton(
-                      icon: widget.sendButtonWidget ?? const Icon(Icons.send),
-                      padding: widget.sendButtonWidget == null
-                          ? const EdgeInsets.symmetric(horizontal: 16)
-                          : EdgeInsets.zero,
-                      onPressed: () {
-                        widget.onSendIconPressed.call((
-                          text: _effectiveController.text,
-                          sticker: widget.selectedSticker,
-                        ));
-                        setState(() {
-                          _effectiveController.clear();
-                        });
-                      },
-                    ),
+                  if (!widget.showSendButtonInTextField && shouldShowSendButton)
+                    sendButton,
                   const SizedBox(width: 8),
                 ],
               ),

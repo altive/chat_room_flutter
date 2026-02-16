@@ -40,6 +40,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.onStickerMessageTap,
     this.onActionButtonTap,
     this.hintText = 'Message',
+    this.showSendButtonInTextField = false,
     this.sendButtonWidget,
     this.expandButtonIcon,
     this.textFieldSuffixBuilder,
@@ -145,6 +146,9 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// 入力欄のプレースホルダーテキスト。
   final String hintText;
+
+  /// 送信ボタンをTextField内に表示するかどうか。
+  final bool showSendButtonInTextField;
 
   /// 送信ボタンに表示するWidget。
   final Widget? sendButtonWidget;
@@ -377,6 +381,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                       });
                     },
                     hintText: widget.hintText,
+                    showSendButtonInTextField: widget.showSendButtonInTextField,
                     sendButtonWidget: widget.sendButtonWidget,
                     expandButtonIcon: widget.expandButtonIcon,
                     textFieldSuffixBuilder: widget.textFieldSuffixBuilder,

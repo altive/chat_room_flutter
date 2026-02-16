@@ -26,7 +26,6 @@ sealed class ChatUserMessage extends ChatMessage {
     required super.id,
     required super.createdAt,
     required this.sender,
-    this.unsent = false,
     this.replyTo,
     this.replyImageIndex,
     required this.label,
@@ -34,9 +33,6 @@ sealed class ChatUserMessage extends ChatMessage {
 
   /// 送信者。
   final ChatUser sender;
-
-  /// 送信が取り消されたかどうか。
-  final bool unsent;
 
   /// リプライ先メッセージ。
   final ChatUserMessage? replyTo;
@@ -59,7 +55,6 @@ sealed class ChatUserMessage extends ChatMessage {
   List<Object?> get props => [
     ...super.props,
     sender,
-    unsent,
     replyTo,
     replyImageIndex,
     label,

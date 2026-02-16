@@ -16,6 +16,7 @@ class BottomWidget extends StatefulWidget {
     super.key,
     this.textEditingController,
     required this.onSendIconPressed,
+    required this.hintText,
     required this.sendButtonIcon,
     required this.expandButtonIcon,
     required this.textFieldSuffixBuilder,
@@ -32,6 +33,9 @@ class BottomWidget extends StatefulWidget {
 
   /// 送信ボタン押下時のコールバック。
   final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
+
+  /// 入力欄のプレースホルダーテキスト。
+  final String hintText;
 
   /// 送信ボタンのアイコン。
   final Icon? sendButtonIcon;
@@ -136,7 +140,7 @@ class _BottomWidgetState extends State<BottomWidget> {
                       minLines: 1,
                       maxLines: 10,
                       decoration: InputDecoration(
-                        hintText: 'Message',
+                        hintText: widget.hintText,
                         suffixIcon: textFieldSuffixBuilder != null
                             ? GestureDetector(
                                 onTap: () {

@@ -39,6 +39,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.onImageMessageTap,
     this.onStickerMessageTap,
     this.onActionButtonTap,
+    this.hintText = 'Message',
     this.sendButtonIcon,
     this.expandButtonIcon,
     this.textFieldSuffixBuilder,
@@ -141,6 +142,9 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// メッセージのアクションボタンをタップした時の処理。
   final ValueChanged<Object?>? onActionButtonTap;
+
+  /// 入力欄のプレースホルダーテキスト。
+  final String hintText;
 
   /// 送信ボタンのアイコン。
   final Icon? sendButtonIcon;
@@ -372,6 +376,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                         _selectedSticker = null;
                       });
                     },
+                    hintText: widget.hintText,
                     sendButtonIcon: widget.sendButtonIcon,
                     expandButtonIcon: widget.expandButtonIcon,
                     textFieldSuffixBuilder: widget.textFieldSuffixBuilder,

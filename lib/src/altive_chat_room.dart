@@ -424,7 +424,7 @@ class _StickerPreview extends StatelessWidget {
   }
 }
 
-class _MessageListView extends StatelessWidget {
+class _MessageListView extends StatefulWidget {
   const _MessageListView({
     super.key,
     required this.currentUserId,
@@ -484,6 +484,11 @@ class _MessageListView extends StatelessWidget {
   final List<String> pendingMessageIds;
 
   @override
+  State<_MessageListView> createState() => _MessageListViewState();
+}
+
+class _MessageListViewState extends State<_MessageListView> {
+  @override
   Widget build(BuildContext context) {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
 
@@ -494,56 +499,56 @@ class _MessageListView extends StatelessWidget {
         // キーボードを閉じるために追加する。
         FocusScope.of(context).unfocus();
         // テキストメッセージに切り替える。
-        messageTypeNotifier.value = MessageInputType.text;
+        widget.messageTypeNotifier.value = MessageInputType.text;
       },
       child: ListView.builder(
         reverse: true,
-        controller: scrollController,
-        itemCount: messages.length,
+        controller: widget.scrollController,
+        itemCount: widget.messages.length,
         itemBuilder: (context, index) {
-          final message = messages[index];
+          final message = widget.messages[index];
 
           // 同じ日付の中で先頭の要素かどうか
           final isFirstInGroup =
               index == 0 ||
-              messages[index - 1].createdAt.dateText !=
+              widget.messages[index - 1].createdAt.dateText !=
                   message.createdAt.dateText;
 
           final messageItem = MessageItem(
-            currentUserId: currentUserId,
+            currentUserId: widget.currentUserId,
             message: message,
-            isGroupChat: isGroupChat,
-            selectableTextMessageId: selectableTextMessageId,
-            contextMenuBuilder: contextMenuBuilder,
-            messageBottomWidgetBuilder: messageBottomWidgetBuilder,
-            popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-            onAvatarTap: onAvatarTap,
-            onImageMessageTap: onImageMessageTap,
-            onStickerMessageTap: onStickerMessageTap,
-            onActionButtonTap: onActionButtonTap,
+            isGroupChat: widget.isGroupChat,
+            selectableTextMessageId: widget.selectableTextMessageId,
+            contextMenuBuilder: widget.contextMenuBuilder,
+            messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
+            popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
+            onAvatarTap: widget.onAvatarTap,
+            onImageMessageTap: widget.onImageMessageTap,
+            onStickerMessageTap: widget.onStickerMessageTap,
+            onActionButtonTap: widget.onActionButtonTap,
             outgoingTextMessagePopupMenuLayout:
-                outgoingTextMessagePopupMenuLayout,
+                widget.outgoingTextMessagePopupMenuLayout,
             outgoingImageMessagePopupMenuLayout:
-                outgoingImageMessagePopupMenuLayout,
+                widget.outgoingImageMessagePopupMenuLayout,
             outgoingStickerMessagePopupMenuLayout:
-                outgoingStickerMessagePopupMenuLayout,
+                widget.outgoingStickerMessagePopupMenuLayout,
             outgoingVoiceCallMessagePopupMenuLayout:
-                outgoingVoiceCallMessagePopupMenuLayout,
+                widget.outgoingVoiceCallMessagePopupMenuLayout,
             incomingTextMessagePopupMenuLayout:
-                incomingTextMessagePopupMenuLayout,
+                widget.incomingTextMessagePopupMenuLayout,
             incomingImageMessagePopupMenuLayout:
-                incomingImageMessagePopupMenuLayout,
+                widget.incomingImageMessagePopupMenuLayout,
             incomingStickerMessagePopupMenuLayout:
-                incomingStickerMessagePopupMenuLayout,
+                widget.incomingStickerMessagePopupMenuLayout,
             incomingVoiceCallMessagePopupMenuLayout:
-                incomingVoiceCallMessagePopupMenuLayout,
-            readStatusWidget: readStatusWidget,
-            pendingIndicator: pendingIndicator,
-            pendingMessageIds: pendingMessageIds,
+                widget.incomingVoiceCallMessagePopupMenuLayout,
+            readStatusWidget: widget.readStatusWidget,
+            pendingIndicator: widget.pendingIndicator,
+            pendingMessageIds: widget.pendingMessageIds,
           );
 
-          final messageBubbleBuilder = this.messageBubbleBuilder;
-          final dateTextBuilder = this.dateTextBuilder;
+          final messageBubbleBuilder = widget.messageBubbleBuilder;
+          final dateTextBuilder = widget.dateTextBuilder;
           return Column(
             children: [
               // 同じ日付の中で先頭の場合のみヘッダーを表示する

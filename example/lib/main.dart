@@ -98,7 +98,7 @@ class _HomePage extends StatelessWidget {
               theme: theme,
               currentUserId: '1',
               messages: _directMessages,
-              pendingMessageIds: [_directMessages.first.id],
+              pendingMessageIds: const ['1'],
               onSendIconPressed: (value) {
                 if (value.text.isNotEmpty) {
                   _showSnackBar(
@@ -530,6 +530,7 @@ class _HomePage extends StatelessWidget {
                       _MessageBottomWidgets(
                         message: message,
                         isOutgoing: isOutgoing,
+                        showReactions: message.id == '1',
                       ),
             ),
           ],
@@ -776,10 +777,12 @@ class _MessageBottomWidgets extends StatelessWidget {
   const _MessageBottomWidgets({
     required this.message,
     required this.isOutgoing,
+    required this.showReactions,
   });
 
   final ChatUserMessage message;
   final bool isOutgoing;
+  final bool showReactions;
 
   static const _reactions = [
     ('👍', 3, true),
@@ -788,6 +791,9 @@ class _MessageBottomWidgets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!showReactions) {
+      return const SizedBox.shrink();
+    }
     return Align(
       alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
       child: Wrap(

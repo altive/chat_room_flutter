@@ -581,10 +581,11 @@ class _MessageListViewState extends State<_MessageListView> {
         itemBuilder: (context, index) {
           final message = widget.messages[index];
 
-          // 同じ日付の中で先頭の要素かどうか
+          // reverse: true のため、1つ古いメッセージ（index + 1）と比較して
+          // 日付の切り替わり位置でヘッダーを表示する。
           final isFirstInGroup =
-              index == 0 ||
-              widget.messages[index - 1].createdAt.dateText !=
+              index == widget.messages.length - 1 ||
+              widget.messages[index + 1].createdAt.dateText !=
                   message.createdAt.dateText;
 
           // 出現アニメーションは以下の条件をすべて満たす場合に表示する。

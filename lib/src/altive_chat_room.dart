@@ -53,6 +53,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.incomingImageMessagePopupMenuLayout,
     this.incomingStickerMessagePopupMenuLayout,
     this.incomingVoiceCallMessagePopupMenuLayout,
+    this.readStatusWidget,
     this.pendingIndicator,
     this.pendingMessageIds = const <String>[],
   });
@@ -186,6 +187,9 @@ class AltiveChatRoom extends StatefulWidget {
   /// 相手が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
+  /// 既読表示に使用するWidget。
+  final Widget? readStatusWidget;
+
   /// 送信保留中メッセージのインジケーター。
   final Widget? pendingIndicator;
 
@@ -259,6 +263,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
             widget.incomingStickerMessagePopupMenuLayout,
         incomingVoiceCallMessagePopupMenuLayout:
             widget.incomingVoiceCallMessagePopupMenuLayout,
+        readStatusWidget: widget.readStatusWidget,
         pendingIndicator: widget.pendingIndicator,
         pendingMessageIds: widget.pendingMessageIds,
       ),
@@ -445,6 +450,7 @@ class _MessageListView extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
+    required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
   });
@@ -473,6 +479,7 @@ class _MessageListView extends StatelessWidget {
   final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
   final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
+  final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
 
@@ -532,6 +539,7 @@ class _MessageListView extends StatelessWidget {
                 incomingStickerMessagePopupMenuLayout,
             incomingVoiceCallMessagePopupMenuLayout:
                 incomingVoiceCallMessagePopupMenuLayout,
+            readStatusWidget: readStatusWidget,
             pendingIndicator: pendingIndicator,
             pendingMessageIds: pendingMessageIds,
           );

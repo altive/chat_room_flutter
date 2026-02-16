@@ -32,8 +32,9 @@ class MessageItem extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
-    required this.pendingMessageIds,
+    required this.readStatusWidget,
     required this.pendingIndicator,
+    required this.pendingMessageIds,
   });
 
   /// ログイン中ユーザーの ID。
@@ -93,6 +94,9 @@ class MessageItem extends StatelessWidget {
   /// 相手の通話メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
+  /// 既読表示に使用するWidget。
+  final Widget? readStatusWidget;
+
   /// 送信待ち中に表示するインジケーター。
   final Widget? pendingIndicator;
 
@@ -129,6 +133,7 @@ class MessageItem extends StatelessWidget {
             incomingStickerMessagePopupMenuLayout,
         incomingVoiceCallMessagePopupMenuLayout:
             incomingVoiceCallMessagePopupMenuLayout,
+        readStatusWidget: readStatusWidget,
         pendingIndicator: pendingIndicator,
         pendingMessageIds: pendingMessageIds,
       ),
@@ -159,6 +164,7 @@ class _UserMessageItem extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
+    required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
   });
@@ -182,6 +188,7 @@ class _UserMessageItem extends StatelessWidget {
   final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
   final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
+  final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
 
@@ -196,16 +203,21 @@ class _UserMessageItem extends StatelessWidget {
       message,
       isOutgoing: isOutgoing,
     );
-    final timeSection = isPending
-        ? pendingIndicator ??
-              Icon(
-                Icons.timelapse,
-                size: 14,
-                color:
-                    altiveChatRoomTheme.timeTextStyle?.color ??
-                    colorScheme.onSurfaceVariant,
-              )
-        : _TimeText.userMessage(dateTime: message.createdAt);
+    final timeSection = _BubbleSideStatus(
+      dateTime: message.createdAt,
+      isRead: message.isRead,
+      readStatusWidget: readStatusWidget,
+      pendingIndicator: isPending
+          ? pendingIndicator ??
+                Icon(
+                  Icons.timelapse,
+                  size: 14,
+                  color:
+                      altiveChatRoomTheme.timeTextStyle?.color ??
+                      colorScheme.onSurfaceVariant,
+                )
+          : null,
+    );
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
     final popupMenuEnabled = !isPending;
@@ -370,6 +382,49 @@ class _TimeText extends StatelessWidget {
       style:
           altiveChatRoomTheme.timeTextStyle?.copyWith(color: color) ??
           theme.textTheme.labelSmall!.copyWith(color: color),
+    );
+  }
+}
+
+class _BubbleSideStatus extends StatelessWidget {
+  const _BubbleSideStatus({
+    required this.dateTime,
+    required this.isRead,
+    this.readStatusWidget,
+    this.pendingIndicator,
+  });
+
+  final DateTime dateTime;
+  final bool isRead;
+  final Widget? readStatusWidget;
+  final Widget? pendingIndicator;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
+    final readTextStyle =
+        altiveChatRoomTheme.timeTextStyle?.copyWith(
+          color: theme.colorScheme.primary,
+        ) ??
+        theme.textTheme.labelSmall!.copyWith(color: theme.colorScheme.primary);
+    final timeTextStyle =
+        altiveChatRoomTheme.timeTextStyle ?? theme.textTheme.labelSmall!;
+    final readStatus = isRead
+        ? readStatusWidget ??
+              // 既定表示として日本語の「既読」を表示する。
+              // ignore: altive_lints/avoid_hardcoded_japanese
+              Text('既読', style: readTextStyle)
+        : null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        ?readStatus,
+        ?pendingIndicator,
+        Text(dateTime.timeText, style: timeTextStyle),
+      ],
     );
   }
 }

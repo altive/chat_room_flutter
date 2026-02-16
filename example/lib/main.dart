@@ -533,6 +533,7 @@ final List<ChatMessage> _directMessages = [
     sender: _user1,
     text: 'Invitation accepted.',
     highlight: true,
+    isRead: true,
   ),
   // ハイライトされたテキストメッセージ。
   ChatTextMessage(
@@ -555,6 +556,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 2)),
     sender: _user1,
     imageUrls: const ['https://picsum.photos/300/100'],
+    isRead: true,
   ),
   // 大きい画像
   ChatImagesMessage(
@@ -572,6 +574,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/400/400',
       'https://picsum.photos/401/400',
     ],
+    isRead: true,
   ),
   // 複数画像（3枚）
   ChatImagesMessage(
@@ -596,6 +599,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/408/400',
       'https://picsum.photos/409/400',
     ],
+    isRead: true,
   ),
   // ステッカーメッセージ。
   ChatStickerMessage(
@@ -606,6 +610,7 @@ final List<ChatMessage> _directMessages = [
       id: 11,
       imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
     ),
+    isRead: true,
   ),
   // ステッカーメッセージ。
   ChatStickerMessage(
@@ -669,6 +674,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 4)),
     sender: _user1,
     text: 'Hello',
+    isRead: true,
     replyTo: ChatStickerMessage(
       id: '9',
       createdAt: DateTime.now().subtract(const Duration(days: 4)),
@@ -691,6 +697,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 5)),
     sender: _user1,
     text: 'Look at this link! https://www.yahoo.co.jp/',
+    isRead: true,
   ),
   // 音声通話メッセージ（通話成立）。
   ChatVoiceCallMessage(

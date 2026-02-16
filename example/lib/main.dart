@@ -155,11 +155,18 @@ class _HomePage extends StatelessWidget {
                   text: 'Button is tapped: $value',
                 );
               },
+              showOutgoingMessageAppearAnimation: true,
+              outgoingMessageAnimationDuration: const Duration(
+                milliseconds: 400,
+              ),
+              outgoingMessageAnimationCurve: Curves.easeOut,
+              outgoingMessageAnimationOffset: 14,
               messageBottomWidgetBuilder:
                   (message, {required bool isOutgoing}) =>
                       _MessageBottomWidgets(
                         message: message,
                         isOutgoing: isOutgoing,
+                        showReactions: message.id == '1',
                       ),
               popupMenuAccessoryBuilder:
                   (

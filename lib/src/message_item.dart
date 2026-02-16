@@ -35,6 +35,10 @@ class MessageItem extends StatelessWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   /// ログイン中ユーザーの ID。
@@ -103,6 +107,18 @@ class MessageItem extends StatelessWidget {
   /// 送信待ち状態のメッセージ ID 一覧。
   final List<String> pendingMessageIds;
 
+  /// 送信メッセージの出現アニメーションを有効にするかどうか。
+  final bool showOutgoingMessageAppearAnimation;
+
+  /// 送信メッセージの出現アニメーション時間。
+  final Duration outgoingMessageAnimationDuration;
+
+  /// 送信メッセージの出現アニメーションカーブ。
+  final Curve outgoingMessageAnimationCurve;
+
+  /// 送信メッセージの出現時の縦方向オフセット。
+  final double outgoingMessageAnimationOffset;
+
   @override
   Widget build(BuildContext context) {
     final message = this.message;
@@ -136,6 +152,10 @@ class MessageItem extends StatelessWidget {
         readStatusWidget: readStatusWidget,
         pendingIndicator: pendingIndicator,
         pendingMessageIds: pendingMessageIds,
+        showOutgoingMessageAppearAnimation: showOutgoingMessageAppearAnimation,
+        outgoingMessageAnimationDuration: outgoingMessageAnimationDuration,
+        outgoingMessageAnimationCurve: outgoingMessageAnimationCurve,
+        outgoingMessageAnimationOffset: outgoingMessageAnimationOffset,
       ),
       ChatSystemMessage() => _SystemMessageItem(message: message),
     };
@@ -167,6 +187,10 @@ class _UserMessageItem extends StatelessWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   final String currentUserId;
@@ -191,6 +215,10 @@ class _UserMessageItem extends StatelessWidget {
   final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final bool showOutgoingMessageAppearAnimation;
+  final Duration outgoingMessageAnimationDuration;
+  final Curve outgoingMessageAnimationCurve;
+  final double outgoingMessageAnimationOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +249,33 @@ class _UserMessageItem extends StatelessWidget {
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
     final popupMenuEnabled = !isPending;
+    final outgoingRow = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        timeSection,
+        const SizedBox(width: 6),
+        Flexible(
+          child: UserMessageBubble(
+            currentUserId: currentUserId,
+            message: message,
+            selectableTextMessageId: selectableTextMessageId,
+            contextMenuBuilder: contextMenuBuilder,
+            onImageMessageTap: onImageMessageTap,
+            onStickerMessageTap: onStickerMessageTap,
+            onActionButtonTap: onActionButtonTap,
+            popupMenuLayoutForText: outgoingTextMessagePopupMenuLayout,
+            popupMenuLayoutForImage: outgoingImageMessagePopupMenuLayout,
+            popupMenuLayoutForSticker: outgoingStickerMessagePopupMenuLayout,
+            popupMenuLayoutForVoiceCall:
+                outgoingVoiceCallMessagePopupMenuLayout,
+            popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
+            popupMenuEnabled: popupMenuEnabled,
+          ),
+        ),
+      ],
+    );
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
@@ -229,35 +284,15 @@ class _UserMessageItem extends StatelessWidget {
       child: isOutgoing
           ? Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    timeSection,
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: UserMessageBubble(
-                        currentUserId: currentUserId,
-                        message: message,
-                        selectableTextMessageId: selectableTextMessageId,
-                        contextMenuBuilder: contextMenuBuilder,
-                        onImageMessageTap: onImageMessageTap,
-                        onStickerMessageTap: onStickerMessageTap,
-                        onActionButtonTap: onActionButtonTap,
-                        popupMenuLayoutForText:
-                            outgoingTextMessagePopupMenuLayout,
-                        popupMenuLayoutForImage:
-                            outgoingImageMessagePopupMenuLayout,
-                        popupMenuLayoutForSticker:
-                            outgoingStickerMessagePopupMenuLayout,
-                        popupMenuLayoutForVoiceCall:
-                            outgoingVoiceCallMessagePopupMenuLayout,
-                        popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-                        popupMenuEnabled: popupMenuEnabled,
-                      ),
-                    ),
-                  ],
-                ),
+                if (showOutgoingMessageAppearAnimation)
+                  _AnimatableOutgoingBubble(
+                    duration: outgoingMessageAnimationDuration,
+                    curve: outgoingMessageAnimationCurve,
+                    initialVerticalOffset: outgoingMessageAnimationOffset,
+                    child: outgoingRow,
+                  )
+                else
+                  outgoingRow,
                 if (bottomWidget != null) ...[
                   const SizedBox(height: 4),
                   bottomWidget,
@@ -325,6 +360,47 @@ class _UserMessageItem extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// 送信直後に出現アニメーションを適用したメッセージバブル。
+class _AnimatableOutgoingBubble extends StatelessWidget {
+  const _AnimatableOutgoingBubble({
+    required this.duration,
+    required this.curve,
+    required this.initialVerticalOffset,
+    required this.child,
+  });
+
+  final Duration duration;
+  final Curve curve;
+  final double initialVerticalOffset;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: duration,
+      curve: curve,
+      child: child,
+      builder: (context, value, child) {
+        final opacity = value.clamp(0, 1).toDouble();
+        final translateY = (1 - value) * initialVerticalOffset;
+        final scale = 0.96 + (value * 0.04);
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, translateY),
+            child: Transform.scale(
+              alignment: Alignment.bottomRight,
+              scale: scale,
+              child: child,
+            ),
+          ),
+        );
+      },
     );
   }
 }

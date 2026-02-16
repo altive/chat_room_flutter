@@ -56,6 +56,10 @@ class AltiveChatRoom extends StatefulWidget {
     this.readStatusWidget,
     this.pendingIndicator,
     this.pendingMessageIds = const <String>[],
+    this.showOutgoingMessageAppearAnimation = false,
+    this.outgoingMessageAnimationDuration = const Duration(milliseconds: 300),
+    this.outgoingMessageAnimationCurve = Curves.easeOutCubic,
+    this.outgoingMessageAnimationOffset = 10,
   });
 
   /// AltiveChatRoomのテーマ。
@@ -196,6 +200,20 @@ class AltiveChatRoom extends StatefulWidget {
   /// 未同期メッセージのID一覧。
   final List<String> pendingMessageIds;
 
+  /// 送信メッセージの出現アニメーションを有効にするかどうか。
+  ///
+  /// [ChatUserMessage] でログインユーザーが送信したメッセージにのみ適用される。
+  final bool showOutgoingMessageAppearAnimation;
+
+  /// 送信メッセージの出現アニメーション時間。
+  final Duration outgoingMessageAnimationDuration;
+
+  /// 送信メッセージの出現アニメーションカーブ。
+  final Curve outgoingMessageAnimationCurve;
+
+  /// 送信メッセージの出現時の縦方向オフセット。
+  final double outgoingMessageAnimationOffset;
+
   @override
   State<AltiveChatRoom> createState() => _AltiveChatRoomState();
 }
@@ -266,6 +284,12 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         readStatusWidget: widget.readStatusWidget,
         pendingIndicator: widget.pendingIndicator,
         pendingMessageIds: widget.pendingMessageIds,
+        showOutgoingMessageAppearAnimation:
+            widget.showOutgoingMessageAppearAnimation,
+        outgoingMessageAnimationDuration:
+            widget.outgoingMessageAnimationDuration,
+        outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,
+        outgoingMessageAnimationOffset: widget.outgoingMessageAnimationOffset,
       ),
     );
 
@@ -453,6 +477,10 @@ class _MessageListView extends StatefulWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   final String currentUserId;
@@ -482,12 +510,57 @@ class _MessageListView extends StatefulWidget {
   final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final bool showOutgoingMessageAppearAnimation;
+  final Duration outgoingMessageAnimationDuration;
+  final Curve outgoingMessageAnimationCurve;
+  final double outgoingMessageAnimationOffset;
 
   @override
   State<_MessageListView> createState() => _MessageListViewState();
 }
 
 class _MessageListViewState extends State<_MessageListView> {
+  // 表示済みメッセージIDのセット。
+  final _showedMessageIds = <String>{};
+  // 出現アニメーションを表示するメッセージIDのセット。
+  final _animateOnAppearIds = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _showedMessageIds.addAll(widget.messages.map((message) => message.id));
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessageListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 現在のメッセージIDのセットに存在しない表示済みメッセージIDと出現アニメーション対象IDを削除する。
+    final currentMessageIds = widget.messages
+        .map((message) => message.id)
+        .toSet();
+    _showedMessageIds.removeWhere((id) => !currentMessageIds.contains(id));
+    _animateOnAppearIds.removeWhere((id) => !currentMessageIds.contains(id));
+
+    for (final message in widget.messages) {
+      // 既に表示されているメッセージはスキップする。
+      if (_showedMessageIds.contains(message.id)) {
+        continue;
+      }
+      // 新たに表示されたメッセージで、ログインユーザーが送信したテキストメッセージの場合は、出現アニメーションの対象にする。
+      if (message case ChatUserMessage()) {
+        final isOutgoing = message.isOutgoing(
+          currentUserId: widget.currentUserId,
+        );
+        if (isOutgoing) {
+          _animateOnAppearIds.add(message.id);
+        }
+      }
+      // 表示済みメッセージIDを追加する。
+      _showedMessageIds.add(message.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
@@ -513,6 +586,19 @@ class _MessageListViewState extends State<_MessageListView> {
               index == 0 ||
               widget.messages[index - 1].createdAt.dateText !=
                   message.createdAt.dateText;
+
+          // 出現アニメーションは以下の条件をすべて満たす場合に表示する。
+          // - アニメーションが有効
+          // - 最新メッセージ
+          // - ユーザーが送信するメッセージ
+          // - ログインユーザーが送信したメッセージ
+          // - まだアニメーションを表示していないメッセージ
+          final showAnimation =
+              widget.showOutgoingMessageAppearAnimation &&
+              index == 0 &&
+              message is ChatUserMessage &&
+              message.isOutgoing(currentUserId: widget.currentUserId) &&
+              _animateOnAppearIds.remove(message.id);
 
           final messageItem = MessageItem(
             currentUserId: widget.currentUserId,
@@ -545,6 +631,12 @@ class _MessageListViewState extends State<_MessageListView> {
             readStatusWidget: widget.readStatusWidget,
             pendingIndicator: widget.pendingIndicator,
             pendingMessageIds: widget.pendingMessageIds,
+            showOutgoingMessageAppearAnimation: showAnimation,
+            outgoingMessageAnimationDuration:
+                widget.outgoingMessageAnimationDuration,
+            outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,
+            outgoingMessageAnimationOffset:
+                widget.outgoingMessageAnimationOffset,
           );
 
           final messageBubbleBuilder = widget.messageBubbleBuilder;

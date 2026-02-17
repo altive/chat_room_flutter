@@ -564,13 +564,13 @@ class _MessageListViewState extends State<_MessageListView> {
     _showAnimationMessageId = _resolveShowAnimationMessageId();
 
     // 画面上に存在しないIDを表示済みIDセットから削除し、存在するIDをセットに追加する。
-      final currentMessageIds = widget.messages
-          .map((message) => message.id)
-          .toSet();
-      _seenMessageIds
-        ..removeWhere((id) => !currentMessageIds.contains(id))
-        ..addAll(currentMessageIds);
-    }
+    final currentMessageIds = widget.messages
+        .map((message) => message.id)
+        .toSet();
+    _seenMessageIds
+      ..removeWhere((id) => !currentMessageIds.contains(id))
+      ..addAll(currentMessageIds);
+  }
 
   /// 出現アニメーションは以下の順で判定する。
   /// - 最新メッセージが `ChatUserMessage` であること
@@ -584,12 +584,12 @@ class _MessageListViewState extends State<_MessageListView> {
     if (_seenMessageIds.contains(latestMessage.id)) {
       return null;
     }
-      final isOutgoing = latestMessage.isOutgoing(
-        currentUserId: widget.currentUserId,
-      );
+    final isOutgoing = latestMessage.isOutgoing(
+      currentUserId: widget.currentUserId,
+    );
     if (!isOutgoing) {
       return null;
-      }
+    }
     return latestMessage.id;
   }
 
@@ -621,6 +621,7 @@ class _MessageListViewState extends State<_MessageListView> {
                   message.createdAt.dateText;
 
           final messageItem = MessageItem(
+            key: ValueKey(message.id),
             currentUserId: widget.currentUserId,
             message: message,
             isGroupChat: widget.isGroupChat,

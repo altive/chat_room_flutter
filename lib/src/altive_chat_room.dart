@@ -539,12 +539,13 @@ class _MessageListView extends StatefulWidget {
 class _MessageListViewState extends State<_MessageListView> {
   // 表示済みメッセージIDのセット。
   final _seenMessageIds = <String>{};
-  // 今回の更新で出現アニメーションを適用する最新メッセージID。
+  // 今回の更新で出現アニメーションを適用するメッセージID。
   String? _showAnimationMessageId;
 
   @override
   void initState() {
     super.initState();
+    // 起動時は全てのメッセージIDを表示済みIDセットに追加する。
     _seenMessageIds.addAll(widget.messages.map((message) => message.id));
   }
 
@@ -552,34 +553,44 @@ class _MessageListViewState extends State<_MessageListView> {
   void didUpdateWidget(covariant _MessageListView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // 表示済みのアニメーション対象IDをリセットする。
     _showAnimationMessageId = null;
+
+    // アニメーションが無効、または表示対象メッセージがない場合は判定をスキップする。
     if (!widget.showOutgoingMessageAppearAnimation || widget.messages.isEmpty) {
+      return;
+    }
+    // 出現アニメーションを適用するメッセージIDを決定する。
+    _showAnimationMessageId = _resolveShowAnimationMessageId();
+
+    // 画面上に存在しないIDを表示済みIDセットから削除し、存在するIDをセットに追加する。
       final currentMessageIds = widget.messages
           .map((message) => message.id)
           .toSet();
       _seenMessageIds
         ..removeWhere((id) => !currentMessageIds.contains(id))
         ..addAll(currentMessageIds);
-      return;
     }
 
+  /// 出現アニメーションは以下の順で判定する。
+  /// - 最新メッセージが `ChatUserMessage` であること
+  /// - 最新メッセージが未表示（新規）であること
+  /// - 最新メッセージがログインユーザー送信であること
+  String? _resolveShowAnimationMessageId() {
     final latestMessage = widget.messages.first;
-    if (latestMessage case ChatUserMessage()) {
-      final isNewMessage = !_seenMessageIds.contains(latestMessage.id);
+    if (latestMessage is! ChatUserMessage) {
+      return null;
+    }
+    if (_seenMessageIds.contains(latestMessage.id)) {
+      return null;
+    }
       final isOutgoing = latestMessage.isOutgoing(
         currentUserId: widget.currentUserId,
       );
-      if (isNewMessage && isOutgoing) {
-        _showAnimationMessageId = latestMessage.id;
+    if (!isOutgoing) {
+      return null;
       }
-    }
-
-    final currentMessageIds = widget.messages
-        .map((message) => message.id)
-        .toSet();
-    _seenMessageIds
-      ..removeWhere((id) => !currentMessageIds.contains(id))
-      ..addAll(currentMessageIds);
+    return latestMessage.id;
   }
 
   @override
@@ -608,17 +619,6 @@ class _MessageListViewState extends State<_MessageListView> {
               index == widget.messages.length - 1 ||
               widget.messages[index + 1].createdAt.dateText !=
                   message.createdAt.dateText;
-
-          // 出現アニメーションは以下の条件をすべて満たす場合に表示する。
-          // - アニメーションが有効
-          // - 最新メッセージ
-          // - ユーザーが送信するメッセージ
-          // - ログインユーザーが送信したメッセージ
-          // - 今回の更新でアニメーション対象として確定したメッセージ
-          final showAnimation =
-              widget.showOutgoingMessageAppearAnimation &&
-              index == 0 &&
-              _showAnimationMessageId == message.id;
 
           final messageItem = MessageItem(
             currentUserId: widget.currentUserId,
@@ -652,7 +652,8 @@ class _MessageListViewState extends State<_MessageListView> {
             readStatusWidget: widget.readStatusWidget,
             pendingIndicator: widget.pendingIndicator,
             pendingMessageIds: widget.pendingMessageIds,
-            showOutgoingMessageAppearAnimation: showAnimation,
+            showOutgoingMessageAppearAnimation:
+                _showAnimationMessageId == message.id,
             outgoingMessageAnimationDuration:
                 widget.outgoingMessageAnimationDuration,
             outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,

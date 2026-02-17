@@ -16,7 +16,9 @@ class BottomWidget extends StatefulWidget {
     super.key,
     this.textEditingController,
     required this.onSendIconPressed,
-    required this.sendButtonIcon,
+    required this.hintText,
+    required this.showSendButtonInTextField,
+    required this.sendButtonWidget,
     required this.expandButtonIcon,
     required this.textFieldSuffixBuilder,
     required this.messageTypeNotifier,
@@ -33,8 +35,14 @@ class BottomWidget extends StatefulWidget {
   /// 送信ボタン押下時のコールバック。
   final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
 
-  /// 送信ボタンのアイコン。
-  final Icon? sendButtonIcon;
+  /// 入力欄のプレースホルダーテキスト。
+  final String hintText;
+
+  /// 送信ボタンをTextField内に表示するかどうか。
+  final bool showSendButtonInTextField;
+
+  /// 送信ボタンに表示するWidget。
+  final Widget? sendButtonWidget;
 
   /// 先頭ウィジェットを再表示するボタンのアイコン。
   final Icon? expandButtonIcon;
@@ -97,9 +105,55 @@ class _BottomWidgetState extends State<BottomWidget> {
     final replyToMessageBar = widget.replyToMessageBar;
     final textFieldSuffixBuilder = widget.textFieldSuffixBuilder;
     final messageTypeNotifier = widget.messageTypeNotifier;
+    final sendButtonWidget = widget.sendButtonWidget;
+    final shouldShowSendButton =
+        _effectiveController.text.isNotEmpty || widget.selectedSticker != null;
+
+    final sendButton = IconButton(
+      icon: sendButtonWidget ?? const Icon(Icons.send),
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: sendButtonWidget == null
+          ? const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            )
+          : null,
+      onPressed: () {
+        widget.onSendIconPressed.call((
+          text: _effectiveController.text,
+          sticker: widget.selectedSticker,
+        ));
+        setState(() {
+          _effectiveController.clear();
+        });
+      },
+    );
+
     return ValueListenableBuilder<MessageInputType>(
       valueListenable: messageTypeNotifier,
       builder: (context, messageType, child) {
+        final suffixWidgets = [
+          if (textFieldSuffixBuilder != null)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  switch (messageType) {
+                    case MessageInputType.text:
+                      messageTypeNotifier.value = MessageInputType.sticker;
+                      FocusScope.of(context).unfocus();
+                    case MessageInputType.sticker:
+                      messageTypeNotifier.value = MessageInputType.text;
+                      FocusScope.of(context).requestFocus(focusNode);
+                  }
+                });
+              },
+              child: textFieldSuffixBuilder(messageType),
+            ),
+          if (widget.showSendButtonInTextField && shouldShowSendButton)
+            sendButton,
+        ];
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -136,32 +190,13 @@ class _BottomWidgetState extends State<BottomWidget> {
                       minLines: 1,
                       maxLines: 10,
                       decoration: InputDecoration(
-                        hintText: 'Message',
-                        suffixIcon: textFieldSuffixBuilder != null
-                            ? GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    switch (messageType) {
-                                      case MessageInputType.text:
-                                        messageTypeNotifier.value =
-                                            MessageInputType.sticker;
-                                        FocusScope.of(context).unfocus();
-                                      case MessageInputType.sticker:
-                                        messageTypeNotifier.value =
-                                            MessageInputType.text;
-                                        FocusScope.of(
-                                          context,
-                                        ).requestFocus(focusNode);
-                                    }
-                                  });
-                                },
-                                child: Center(
-                                  widthFactor: 1,
-                                  heightFactor: 1,
-                                  child: textFieldSuffixBuilder(messageType),
-                                ),
-                              )
-                            : const SizedBox.shrink(),
+                        hintText: widget.hintText,
+                        suffixIcon: suffixWidgets.isEmpty
+                            ? null
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: suffixWidgets,
+                              ),
                       ),
                       onChanged: (text) {
                         setState(() {
@@ -176,21 +211,8 @@ class _BottomWidgetState extends State<BottomWidget> {
                       },
                     ),
                   ),
-                  if (_effectiveController.text.isNotEmpty ||
-                      widget.selectedSticker != null)
-                    IconButton(
-                      icon: widget.sendButtonIcon ?? const Icon(Icons.send),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      onPressed: () {
-                        widget.onSendIconPressed.call((
-                          text: _effectiveController.text,
-                          sticker: widget.selectedSticker,
-                        ));
-                        setState(() {
-                          _effectiveController.clear();
-                        });
-                      },
-                    ),
+                  if (!widget.showSendButtonInTextField && shouldShowSendButton)
+                    sendButton,
                   const SizedBox(width: 8),
                 ],
               ),

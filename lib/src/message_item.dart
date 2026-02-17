@@ -24,6 +24,7 @@ class MessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -32,8 +33,13 @@ class MessageItem extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
-    required this.pendingMessageIds,
+    required this.readStatusWidget,
     required this.pendingIndicator,
+    required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   /// ログイン中ユーザーの ID。
@@ -69,6 +75,9 @@ class MessageItem extends StatelessWidget {
   /// テキスト内アクションボタンタップ時のコールバック。
   final ValueChanged<Object?>? onActionButtonTap;
 
+  /// 受信メッセージに表示するアバター画像の直径。
+  final double incomingAvatarSizeDimension;
+
   /// ログインユーザーのテキストメッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
 
@@ -93,11 +102,26 @@ class MessageItem extends StatelessWidget {
   /// 相手の通話メッセージ用ポップアップメニューレイアウト。
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
+  /// 既読表示に使用するWidget。
+  final Widget? readStatusWidget;
+
   /// 送信待ち中に表示するインジケーター。
   final Widget? pendingIndicator;
 
   /// 送信待ち状態のメッセージ ID 一覧。
   final List<String> pendingMessageIds;
+
+  /// 送信メッセージの出現アニメーションを有効にするかどうか。
+  final bool showOutgoingMessageAppearAnimation;
+
+  /// 送信メッセージの出現アニメーション時間。
+  final Duration outgoingMessageAnimationDuration;
+
+  /// 送信メッセージの出現アニメーションカーブ。
+  final Curve outgoingMessageAnimationCurve;
+
+  /// 送信メッセージの出現時の縦方向オフセット。
+  final double outgoingMessageAnimationOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +139,7 @@ class MessageItem extends StatelessWidget {
         onImageMessageTap: onImageMessageTap,
         onStickerMessageTap: onStickerMessageTap,
         onActionButtonTap: onActionButtonTap,
+        incomingAvatarSizeDimension: incomingAvatarSizeDimension,
         outgoingTextMessagePopupMenuLayout: outgoingTextMessagePopupMenuLayout,
         outgoingImageMessagePopupMenuLayout:
             outgoingImageMessagePopupMenuLayout,
@@ -129,8 +154,13 @@ class MessageItem extends StatelessWidget {
             incomingStickerMessagePopupMenuLayout,
         incomingVoiceCallMessagePopupMenuLayout:
             incomingVoiceCallMessagePopupMenuLayout,
+        readStatusWidget: readStatusWidget,
         pendingIndicator: pendingIndicator,
         pendingMessageIds: pendingMessageIds,
+        showOutgoingMessageAppearAnimation: showOutgoingMessageAppearAnimation,
+        outgoingMessageAnimationDuration: outgoingMessageAnimationDuration,
+        outgoingMessageAnimationCurve: outgoingMessageAnimationCurve,
+        outgoingMessageAnimationOffset: outgoingMessageAnimationOffset,
       ),
       ChatSystemMessage() => _SystemMessageItem(message: message),
     };
@@ -151,6 +181,7 @@ class _UserMessageItem extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -159,8 +190,13 @@ class _UserMessageItem extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
+    required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   final String currentUserId;
@@ -174,6 +210,7 @@ class _UserMessageItem extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
+  final double incomingAvatarSizeDimension;
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
@@ -182,8 +219,13 @@ class _UserMessageItem extends StatelessWidget {
   final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
   final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
+  final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final bool showOutgoingMessageAppearAnimation;
+  final Duration outgoingMessageAnimationDuration;
+  final Curve outgoingMessageAnimationCurve;
+  final double outgoingMessageAnimationOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -196,55 +238,68 @@ class _UserMessageItem extends StatelessWidget {
       message,
       isOutgoing: isOutgoing,
     );
-    final timeSection = isPending
-        ? pendingIndicator ??
-              Icon(
-                Icons.timelapse,
-                size: 14,
-                color:
-                    altiveChatRoomTheme.timeTextStyle?.color ??
-                    colorScheme.onSurfaceVariant,
-              )
-        : _TimeText.userMessage(dateTime: message.createdAt);
+    final timeSection = _BubbleSideStatus(
+      dateTime: message.createdAt,
+      isRead: isOutgoing && message.isRead,
+      readStatusWidget: readStatusWidget,
+      pendingIndicator: isPending
+          ? pendingIndicator ??
+                Icon(
+                  Icons.timelapse,
+                  size: 14,
+                  color:
+                      altiveChatRoomTheme.timeTextStyle?.color ??
+                      colorScheme.onSurfaceVariant,
+                )
+          : null,
+    );
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
     final popupMenuEnabled = !isPending;
+    final outgoingRow = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        timeSection,
+        const SizedBox(width: 6),
+        Flexible(
+          child: UserMessageBubble(
+            currentUserId: currentUserId,
+            message: message,
+            selectableTextMessageId: selectableTextMessageId,
+            contextMenuBuilder: contextMenuBuilder,
+            onImageMessageTap: onImageMessageTap,
+            onStickerMessageTap: onStickerMessageTap,
+            onActionButtonTap: onActionButtonTap,
+            popupMenuLayoutForText: outgoingTextMessagePopupMenuLayout,
+            popupMenuLayoutForImage: outgoingImageMessagePopupMenuLayout,
+            popupMenuLayoutForSticker: outgoingStickerMessagePopupMenuLayout,
+            popupMenuLayoutForVoiceCall:
+                outgoingVoiceCallMessagePopupMenuLayout,
+            popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
+            popupMenuEnabled: popupMenuEnabled,
+          ),
+        ),
+      ],
+    );
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: altiveChatRoomTheme.messageInsetsHorizontal,
+        vertical: altiveChatRoomTheme.messageInsetsVertical,
       ),
       child: isOutgoing
           ? Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    timeSection,
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: UserMessageBubble(
-                        currentUserId: currentUserId,
-                        message: message,
-                        selectableTextMessageId: selectableTextMessageId,
-                        contextMenuBuilder: contextMenuBuilder,
-                        onImageMessageTap: onImageMessageTap,
-                        onStickerMessageTap: onStickerMessageTap,
-                        onActionButtonTap: onActionButtonTap,
-                        popupMenuLayoutForText:
-                            outgoingTextMessagePopupMenuLayout,
-                        popupMenuLayoutForImage:
-                            outgoingImageMessagePopupMenuLayout,
-                        popupMenuLayoutForSticker:
-                            outgoingStickerMessagePopupMenuLayout,
-                        popupMenuLayoutForVoiceCall:
-                            outgoingVoiceCallMessagePopupMenuLayout,
-                        popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-                        popupMenuEnabled: popupMenuEnabled,
-                      ),
-                    ),
-                  ],
-                ),
+                if (showOutgoingMessageAppearAnimation)
+                  _AnimatableOutgoingBubble(
+                    duration: outgoingMessageAnimationDuration,
+                    curve: outgoingMessageAnimationCurve,
+                    initialVerticalOffset: outgoingMessageAnimationOffset,
+                    child: outgoingRow,
+                  )
+                else
+                  outgoingRow,
                 if (bottomWidget != null) ...[
                   const SizedBox(height: 4),
                   bottomWidget,
@@ -256,7 +311,7 @@ class _UserMessageItem extends StatelessWidget {
               children: [
                 AvatarImage(
                   user: message.sender,
-                  sizeDimension: 30,
+                  sizeDimension: incomingAvatarSizeDimension,
                   onAvatarTap: onAvatarTap,
                 ),
                 const SizedBox(width: 8),
@@ -316,6 +371,47 @@ class _UserMessageItem extends StatelessWidget {
   }
 }
 
+/// 送信直後に出現アニメーションを適用したメッセージバブル。
+class _AnimatableOutgoingBubble extends StatelessWidget {
+  const _AnimatableOutgoingBubble({
+    required this.duration,
+    required this.curve,
+    required this.initialVerticalOffset,
+    required this.child,
+  });
+
+  final Duration duration;
+  final Curve curve;
+  final double initialVerticalOffset;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: duration,
+      curve: curve,
+      child: child,
+      builder: (context, value, child) {
+        final opacity = value.clamp(0, 1).toDouble();
+        final translateY = (1 - value) * initialVerticalOffset;
+        final scale = 0.96 + (value * 0.04);
+        return Opacity(
+          opacity: opacity,
+          child: Transform.translate(
+            offset: Offset(0, translateY),
+            child: Transform.scale(
+              alignment: Alignment.bottomRight,
+              scale: scale,
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// [ChatSystemMessage]を表示するWidget。
 class _SystemMessageItem extends StatelessWidget {
   const _SystemMessageItem({required this.message});
@@ -370,6 +466,49 @@ class _TimeText extends StatelessWidget {
       style:
           altiveChatRoomTheme.timeTextStyle?.copyWith(color: color) ??
           theme.textTheme.labelSmall!.copyWith(color: color),
+    );
+  }
+}
+
+class _BubbleSideStatus extends StatelessWidget {
+  const _BubbleSideStatus({
+    required this.dateTime,
+    required this.isRead,
+    this.readStatusWidget,
+    this.pendingIndicator,
+  });
+
+  final DateTime dateTime;
+  final bool isRead;
+  final Widget? readStatusWidget;
+  final Widget? pendingIndicator;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
+    final readTextStyle =
+        altiveChatRoomTheme.timeTextStyle?.copyWith(
+          color: theme.colorScheme.primary,
+        ) ??
+        theme.textTheme.labelSmall!.copyWith(color: theme.colorScheme.primary);
+    final timeTextStyle =
+        altiveChatRoomTheme.timeTextStyle ?? theme.textTheme.labelSmall!;
+    final readStatus = isRead
+        ? readStatusWidget ??
+              // 既定表示として日本語の「既読」を表示する。
+              // ignore: altive_lints/avoid_hardcoded_japanese
+              Text('既読', style: readTextStyle)
+        : null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        ?readStatus,
+        ?pendingIndicator,
+        Text(dateTime.timeText, style: timeTextStyle),
+      ],
     );
   }
 }

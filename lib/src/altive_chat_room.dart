@@ -39,7 +39,10 @@ class AltiveChatRoom extends StatefulWidget {
     this.onImageMessageTap,
     this.onStickerMessageTap,
     this.onActionButtonTap,
-    this.sendButtonIcon,
+    this.incomingAvatarSizeDimension = 30,
+    this.hintText = 'Message',
+    this.showSendButtonInTextField = false,
+    this.sendButtonWidget,
     this.expandButtonIcon,
     this.textFieldSuffixBuilder,
     this.bottomLeadingWidgets,
@@ -53,8 +56,13 @@ class AltiveChatRoom extends StatefulWidget {
     this.incomingImageMessagePopupMenuLayout,
     this.incomingStickerMessagePopupMenuLayout,
     this.incomingVoiceCallMessagePopupMenuLayout,
+    this.readStatusWidget,
     this.pendingIndicator,
     this.pendingMessageIds = const <String>[],
+    this.showOutgoingMessageAppearAnimation = false,
+    this.outgoingMessageAnimationDuration = const Duration(milliseconds: 300),
+    this.outgoingMessageAnimationCurve = Curves.easeOutCubic,
+    this.outgoingMessageAnimationOffset = 10,
   });
 
   /// AltiveChatRoomのテーマ。
@@ -137,8 +145,17 @@ class AltiveChatRoom extends StatefulWidget {
   /// メッセージのアクションボタンをタップした時の処理。
   final ValueChanged<Object?>? onActionButtonTap;
 
-  /// 送信ボタンのアイコン。
-  final Icon? sendButtonIcon;
+  /// 受信メッセージに表示するアバター画像の直径。
+  final double incomingAvatarSizeDimension;
+
+  /// 入力欄のプレースホルダーテキスト。
+  final String hintText;
+
+  /// 送信ボタンをTextField内に表示するかどうか。
+  final bool showSendButtonInTextField;
+
+  /// 送信ボタンに表示するWidget。
+  final Widget? sendButtonWidget;
 
   /// 非表示状態の[bottomLeadingWidgets]を表示するボタンのアイコン。
   final Icon? expandButtonIcon;
@@ -186,11 +203,28 @@ class AltiveChatRoom extends StatefulWidget {
   /// 相手が送信した音声通話メッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
 
+  /// 既読表示に使用するWidget。
+  final Widget? readStatusWidget;
+
   /// 送信保留中メッセージのインジケーター。
   final Widget? pendingIndicator;
 
   /// 未同期メッセージのID一覧。
   final List<String> pendingMessageIds;
+
+  /// 送信メッセージの出現アニメーションを有効にするかどうか。
+  ///
+  /// [ChatUserMessage] でログインユーザーが送信したメッセージにのみ適用される。
+  final bool showOutgoingMessageAppearAnimation;
+
+  /// 送信メッセージの出現アニメーション時間。
+  final Duration outgoingMessageAnimationDuration;
+
+  /// 送信メッセージの出現アニメーションカーブ。
+  final Curve outgoingMessageAnimationCurve;
+
+  /// 送信メッセージの出現時の縦方向オフセット。
+  final double outgoingMessageAnimationOffset;
 
   @override
   State<AltiveChatRoom> createState() => _AltiveChatRoomState();
@@ -243,6 +277,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         onImageMessageTap: widget.onImageMessageTap,
         onStickerMessageTap: widget.onStickerMessageTap,
         onActionButtonTap: widget.onActionButtonTap,
+        incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
         outgoingTextMessagePopupMenuLayout:
             widget.outgoingTextMessagePopupMenuLayout,
         outgoingImageMessagePopupMenuLayout:
@@ -259,8 +294,15 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
             widget.incomingStickerMessagePopupMenuLayout,
         incomingVoiceCallMessagePopupMenuLayout:
             widget.incomingVoiceCallMessagePopupMenuLayout,
+        readStatusWidget: widget.readStatusWidget,
         pendingIndicator: widget.pendingIndicator,
         pendingMessageIds: widget.pendingMessageIds,
+        showOutgoingMessageAppearAnimation:
+            widget.showOutgoingMessageAppearAnimation,
+        outgoingMessageAnimationDuration:
+            widget.outgoingMessageAnimationDuration,
+        outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,
+        outgoingMessageAnimationOffset: widget.outgoingMessageAnimationOffset,
       ),
     );
 
@@ -343,7 +385,9 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                         _selectedSticker = null;
                       });
                     },
-                    sendButtonIcon: widget.sendButtonIcon,
+                    hintText: widget.hintText,
+                    showSendButtonInTextField: widget.showSendButtonInTextField,
+                    sendButtonWidget: widget.sendButtonWidget,
                     expandButtonIcon: widget.expandButtonIcon,
                     textFieldSuffixBuilder: widget.textFieldSuffixBuilder,
                     messageTypeNotifier: messageTypeNotifier,
@@ -419,7 +463,7 @@ class _StickerPreview extends StatelessWidget {
   }
 }
 
-class _MessageListView extends StatelessWidget {
+class _MessageListView extends StatefulWidget {
   const _MessageListView({
     super.key,
     required this.currentUserId,
@@ -437,6 +481,7 @@ class _MessageListView extends StatelessWidget {
     required this.onImageMessageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
+    required this.incomingAvatarSizeDimension,
     required this.outgoingTextMessagePopupMenuLayout,
     required this.outgoingImageMessagePopupMenuLayout,
     required this.outgoingStickerMessagePopupMenuLayout,
@@ -445,8 +490,13 @@ class _MessageListView extends StatelessWidget {
     required this.incomingImageMessagePopupMenuLayout,
     required this.incomingStickerMessagePopupMenuLayout,
     required this.incomingVoiceCallMessagePopupMenuLayout,
+    required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.showOutgoingMessageAppearAnimation,
+    required this.outgoingMessageAnimationDuration,
+    required this.outgoingMessageAnimationCurve,
+    required this.outgoingMessageAnimationOffset,
   });
 
   final String currentUserId;
@@ -465,6 +515,7 @@ class _MessageListView extends StatelessWidget {
   final ImageMessageTapCallback? onImageMessageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
+  final double incomingAvatarSizeDimension;
   final PopupMenuLayout? outgoingTextMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingImageMessagePopupMenuLayout;
   final PopupMenuLayout? outgoingStickerMessagePopupMenuLayout;
@@ -473,8 +524,74 @@ class _MessageListView extends StatelessWidget {
   final PopupMenuLayout? incomingImageMessagePopupMenuLayout;
   final PopupMenuLayout? incomingStickerMessagePopupMenuLayout;
   final PopupMenuLayout? incomingVoiceCallMessagePopupMenuLayout;
+  final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final bool showOutgoingMessageAppearAnimation;
+  final Duration outgoingMessageAnimationDuration;
+  final Curve outgoingMessageAnimationCurve;
+  final double outgoingMessageAnimationOffset;
+
+  @override
+  State<_MessageListView> createState() => _MessageListViewState();
+}
+
+class _MessageListViewState extends State<_MessageListView> {
+  // 表示済みメッセージIDのセット。
+  final _seenMessageIds = <String>{};
+  // 今回の更新で出現アニメーションを適用するメッセージID。
+  String? _showAnimationMessageId;
+
+  @override
+  void initState() {
+    super.initState();
+    // 起動時は全てのメッセージIDを表示済みIDセットに追加する。
+    _seenMessageIds.addAll(widget.messages.map((message) => message.id));
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessageListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // 表示済みのアニメーション対象IDをリセットする。
+    _showAnimationMessageId = null;
+
+    // アニメーションが無効、または表示対象メッセージがない場合は判定をスキップする。
+    if (!widget.showOutgoingMessageAppearAnimation || widget.messages.isEmpty) {
+      return;
+    }
+    // 出現アニメーションを適用するメッセージIDを決定する。
+    _showAnimationMessageId = _resolveShowAnimationMessageId();
+
+    // 画面上に存在しないIDを表示済みIDセットから削除し、存在するIDをセットに追加する。
+    final currentMessageIds = widget.messages
+        .map((message) => message.id)
+        .toSet();
+    _seenMessageIds
+      ..removeWhere((id) => !currentMessageIds.contains(id))
+      ..addAll(currentMessageIds);
+  }
+
+  /// 出現アニメーションは以下の順で判定する。
+  /// - 最新メッセージが `ChatUserMessage` であること
+  /// - 最新メッセージが未表示（新規）であること
+  /// - 最新メッセージがログインユーザー送信であること
+  String? _resolveShowAnimationMessageId() {
+    final latestMessage = widget.messages.first;
+    if (latestMessage is! ChatUserMessage) {
+      return null;
+    }
+    if (_seenMessageIds.contains(latestMessage.id)) {
+      return null;
+    }
+    final isOutgoing = latestMessage.isOutgoing(
+      currentUserId: widget.currentUserId,
+    );
+    if (!isOutgoing) {
+      return null;
+    }
+    return latestMessage.id;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -487,57 +604,66 @@ class _MessageListView extends StatelessWidget {
         // キーボードを閉じるために追加する。
         FocusScope.of(context).unfocus();
         // テキストメッセージに切り替える。
-        messageTypeNotifier.value = MessageInputType.text;
+        widget.messageTypeNotifier.value = MessageInputType.text;
       },
-      child: ListView.separated(
+      child: ListView.builder(
         reverse: true,
-        controller: scrollController,
-        itemCount: messages.length,
-        separatorBuilder: (_, _) =>
-            SizedBox(height: altiveChatRoomTheme.messageInsetsVertical),
+        controller: widget.scrollController,
+        itemCount: widget.messages.length,
         itemBuilder: (context, index) {
-          final message = messages[index];
+          final message = widget.messages[index];
 
-          // 同じ日付の中で先頭の要素かどうか
+          // reverse: true のため、1つ古いメッセージ（index + 1）と比較して
+          // 日付の切り替わり位置でヘッダーを表示する。
           final isFirstInGroup =
-              index == 0 ||
-              messages[index - 1].createdAt.dateText !=
+              index == widget.messages.length - 1 ||
+              widget.messages[index + 1].createdAt.dateText !=
                   message.createdAt.dateText;
 
           final messageItem = MessageItem(
-            currentUserId: currentUserId,
+            key: ValueKey(message.id),
+            currentUserId: widget.currentUserId,
             message: message,
-            isGroupChat: isGroupChat,
-            selectableTextMessageId: selectableTextMessageId,
-            contextMenuBuilder: contextMenuBuilder,
-            messageBottomWidgetBuilder: messageBottomWidgetBuilder,
-            popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
-            onAvatarTap: onAvatarTap,
-            onImageMessageTap: onImageMessageTap,
-            onStickerMessageTap: onStickerMessageTap,
-            onActionButtonTap: onActionButtonTap,
+            isGroupChat: widget.isGroupChat,
+            selectableTextMessageId: widget.selectableTextMessageId,
+            contextMenuBuilder: widget.contextMenuBuilder,
+            messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
+            popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
+            onAvatarTap: widget.onAvatarTap,
+            onImageMessageTap: widget.onImageMessageTap,
+            onStickerMessageTap: widget.onStickerMessageTap,
+            onActionButtonTap: widget.onActionButtonTap,
+            incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
             outgoingTextMessagePopupMenuLayout:
-                outgoingTextMessagePopupMenuLayout,
+                widget.outgoingTextMessagePopupMenuLayout,
             outgoingImageMessagePopupMenuLayout:
-                outgoingImageMessagePopupMenuLayout,
+                widget.outgoingImageMessagePopupMenuLayout,
             outgoingStickerMessagePopupMenuLayout:
-                outgoingStickerMessagePopupMenuLayout,
+                widget.outgoingStickerMessagePopupMenuLayout,
             outgoingVoiceCallMessagePopupMenuLayout:
-                outgoingVoiceCallMessagePopupMenuLayout,
+                widget.outgoingVoiceCallMessagePopupMenuLayout,
             incomingTextMessagePopupMenuLayout:
-                incomingTextMessagePopupMenuLayout,
+                widget.incomingTextMessagePopupMenuLayout,
             incomingImageMessagePopupMenuLayout:
-                incomingImageMessagePopupMenuLayout,
+                widget.incomingImageMessagePopupMenuLayout,
             incomingStickerMessagePopupMenuLayout:
-                incomingStickerMessagePopupMenuLayout,
+                widget.incomingStickerMessagePopupMenuLayout,
             incomingVoiceCallMessagePopupMenuLayout:
-                incomingVoiceCallMessagePopupMenuLayout,
-            pendingIndicator: pendingIndicator,
-            pendingMessageIds: pendingMessageIds,
+                widget.incomingVoiceCallMessagePopupMenuLayout,
+            readStatusWidget: widget.readStatusWidget,
+            pendingIndicator: widget.pendingIndicator,
+            pendingMessageIds: widget.pendingMessageIds,
+            showOutgoingMessageAppearAnimation:
+                _showAnimationMessageId == message.id,
+            outgoingMessageAnimationDuration:
+                widget.outgoingMessageAnimationDuration,
+            outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,
+            outgoingMessageAnimationOffset:
+                widget.outgoingMessageAnimationOffset,
           );
 
-          final messageBubbleBuilder = this.messageBubbleBuilder;
-          final dateTextBuilder = this.dateTextBuilder;
+          final messageBubbleBuilder = widget.messageBubbleBuilder;
+          final dateTextBuilder = widget.dateTextBuilder;
           return Column(
             children: [
               // 同じ日付の中で先頭の場合のみヘッダーを表示する

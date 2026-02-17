@@ -18,11 +18,105 @@ Future<void> main() async {
   );
 }
 
-class _HomePage extends StatelessWidget {
+class _HomePage extends StatefulWidget {
   const _HomePage();
 
   @override
+  State<_HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<_HomePage> {
+  late final List<ChatMessage> _directMessagesState;
+  var _localMessageId = 100000;
+
+  @override
+  void initState() {
+    super.initState();
+    _directMessagesState = List<ChatMessage>.of(_directMessages);
+  }
+
+  void _handleSendDirect(({String text, Sticker? sticker}) value) {
+    if (value.text.isEmpty && value.sticker == null) {
+      return;
+    }
+
+    final localMessage = value.sticker != null
+        ? ChatStickerMessage(
+            id: 'local_${_localMessageId++}',
+            createdAt: DateTime.now(),
+            sender: _user1,
+            sticker: value.sticker!,
+          )
+        : ChatTextMessage(
+            id: 'local_${_localMessageId++}',
+            createdAt: DateTime.now(),
+            sender: _user1,
+            text: value.text,
+          );
+
+    setState(() {
+      _directMessagesState.insert(0, localMessage);
+    });
+
+    if (value.text.isNotEmpty) {
+      _showSnackBar(context: context, text: '${value.text} is sent');
+    }
+    if (value.sticker != null) {
+      _showSnackBar(context: context, text: 'Sticker is sent');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    const theme = AltiveChatRoomTheme(
+      outgoingMessageBoxDecoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFCA8DA3),
+            Color(0xFF996A7F),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      incomingMessageBoxDecoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(22)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF6A646B),
+            Color(0xFF555055),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      outgoingMessageTextStyle: TextStyle(
+        color: Color(0xFFEDE6EA),
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      incomingMessageTextStyle: TextStyle(
+        color: Color(0xFFF0ECEF),
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -46,24 +140,13 @@ class _HomePage extends StatelessWidget {
         body: TabBarView(
           children: [
             AltiveChatRoom(
-              theme: const AltiveChatRoomTheme(),
+              theme: theme,
               currentUserId: '1',
-              messages: _directMessages,
-              pendingMessageIds: [_directMessages.first.id],
-              onSendIconPressed: (value) {
-                if (value.text.isNotEmpty) {
-                  _showSnackBar(
-                    context: context,
-                    text: '${value.text} is sent',
-                  );
-                }
-                if (value.sticker != null) {
-                  _showSnackBar(
-                    context: context,
-                    text: 'Sticker is sent',
-                  );
-                }
-              },
+              messages: _directMessagesState,
+              pendingMessageIds: _directMessagesState.isEmpty
+                  ? const []
+                  : ['1'],
+              onSendIconPressed: _handleSendDirect,
               onRefresh: () async {
                 _showSnackBar(context: context, text: 'onRefresh is called');
               },
@@ -106,11 +189,18 @@ class _HomePage extends StatelessWidget {
                   text: 'Button is tapped: $value',
                 );
               },
+              showOutgoingMessageAppearAnimation: true,
+              outgoingMessageAnimationDuration: const Duration(
+                milliseconds: 400,
+              ),
+              outgoingMessageAnimationCurve: Curves.easeOut,
+              outgoingMessageAnimationOffset: 14,
               messageBottomWidgetBuilder:
                   (message, {required bool isOutgoing}) =>
                       _MessageBottomWidgets(
                         message: message,
                         isOutgoing: isOutgoing,
+                        showReactions: message.id == '1',
                       ),
               popupMenuAccessoryBuilder:
                   (
@@ -122,7 +212,7 @@ class _HomePage extends StatelessWidget {
                       closePopupMenu: closePopupMenu,
                     );
                   },
-              sendButtonIcon: const Icon(Icons.send_sharp),
+              sendButtonWidget: const Icon(Icons.send_sharp),
               expandButtonIcon: const Icon(Icons.arrow_forward_ios_sharp),
               textFieldSuffixBuilder: (type) {
                 return switch (type) {
@@ -452,7 +542,7 @@ class _HomePage extends StatelessWidget {
             ),
             AltiveChatRoom(
               isGroupChat: true,
-              theme: const AltiveChatRoomTheme(),
+              theme: theme,
               currentUserId: '1',
               messages: _groupMessages,
               onSendIconPressed: (value) {
@@ -474,6 +564,7 @@ class _HomePage extends StatelessWidget {
                       _MessageBottomWidgets(
                         message: message,
                         isOutgoing: isOutgoing,
+                        showReactions: message.id == '1',
                       ),
             ),
           ],
@@ -533,6 +624,7 @@ final List<ChatMessage> _directMessages = [
     sender: _user1,
     text: 'Invitation accepted.',
     highlight: true,
+    isRead: true,
   ),
   // ハイライトされたテキストメッセージ。
   ChatTextMessage(
@@ -555,6 +647,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 2)),
     sender: _user1,
     imageUrls: const ['https://picsum.photos/300/100'],
+    isRead: true,
   ),
   // 大きい画像
   ChatImagesMessage(
@@ -572,6 +665,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/400/400',
       'https://picsum.photos/401/400',
     ],
+    isRead: true,
   ),
   // 複数画像（3枚）
   ChatImagesMessage(
@@ -596,6 +690,7 @@ final List<ChatMessage> _directMessages = [
       'https://picsum.photos/408/400',
       'https://picsum.photos/409/400',
     ],
+    isRead: true,
   ),
   // ステッカーメッセージ。
   ChatStickerMessage(
@@ -606,6 +701,7 @@ final List<ChatMessage> _directMessages = [
       id: 11,
       imageUrl: 'https://img.skin/200x200/transparent?text=1_1',
     ),
+    isRead: true,
   ),
   // ステッカーメッセージ。
   ChatStickerMessage(
@@ -669,6 +765,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 4)),
     sender: _user1,
     text: 'Hello',
+    isRead: true,
     replyTo: ChatStickerMessage(
       id: '9',
       createdAt: DateTime.now().subtract(const Duration(days: 4)),
@@ -691,6 +788,7 @@ final List<ChatMessage> _directMessages = [
     createdAt: DateTime.now().subtract(const Duration(days: 5)),
     sender: _user1,
     text: 'Look at this link! https://www.yahoo.co.jp/',
+    isRead: true,
   ),
   // 音声通話メッセージ（通話成立）。
   ChatVoiceCallMessage(
@@ -713,10 +811,12 @@ class _MessageBottomWidgets extends StatelessWidget {
   const _MessageBottomWidgets({
     required this.message,
     required this.isOutgoing,
+    required this.showReactions,
   });
 
   final ChatUserMessage message;
   final bool isOutgoing;
+  final bool showReactions;
 
   static const _reactions = [
     ('👍', 3, true),
@@ -725,6 +825,9 @@ class _MessageBottomWidgets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!showReactions) {
+      return const SizedBox.shrink();
+    }
     return Align(
       alignment: isOutgoing ? Alignment.centerRight : Alignment.centerLeft,
       child: Wrap(

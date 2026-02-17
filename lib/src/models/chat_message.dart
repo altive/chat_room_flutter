@@ -26,7 +26,7 @@ sealed class ChatUserMessage extends ChatMessage {
     required super.id,
     required super.createdAt,
     required this.sender,
-    this.unsent = false,
+    this.isRead = false,
     this.replyTo,
     this.replyImageIndex,
     required this.label,
@@ -35,8 +35,10 @@ sealed class ChatUserMessage extends ChatMessage {
   /// 送信者。
   final ChatUser sender;
 
-  /// 送信が取り消されたかどうか。
-  final bool unsent;
+  /// 既読状態。
+  ///
+  /// 相手送信メッセージでは、未読として扱い何も表示しない。
+  final bool isRead;
 
   /// リプライ先メッセージ。
   final ChatUserMessage? replyTo;
@@ -59,7 +61,7 @@ sealed class ChatUserMessage extends ChatMessage {
   List<Object?> get props => [
     ...super.props,
     sender,
-    unsent,
+    isRead,
     replyTo,
     replyImageIndex,
     label,
@@ -79,6 +81,7 @@ class ChatTextMessage extends ChatUserMessage {
     required this.text,
     this.highlight = false,
     this.button,
+    super.isRead,
     super.replyTo,
     super.replyImageIndex,
     super.label = 'Text',
@@ -105,6 +108,7 @@ class ChatTextMessage extends ChatUserMessage {
     String? text,
     bool? highlight,
     MessageActionButton? button,
+    bool? isRead,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
     String? label,
@@ -116,6 +120,7 @@ class ChatTextMessage extends ChatUserMessage {
       text: text ?? this.text,
       highlight: highlight ?? this.highlight,
       button: button ?? this.button,
+      isRead: isRead ?? this.isRead,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
       label: label ?? this.label,
@@ -131,6 +136,7 @@ class ChatTextMessage extends ChatUserMessage {
       'text: $text, '
       'highlight: $highlight, '
       'button: $button, '
+      'isRead: $isRead, '
       'replyTo: $replyTo, '
       'replyImageIndex: $replyImageIndex, '
       'label: $label'
@@ -180,6 +186,7 @@ class ChatImagesMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.isRead,
     required List<String> imageUrls,
     this.selectedImageIndex,
     super.replyTo,
@@ -199,6 +206,7 @@ class ChatImagesMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    bool? isRead,
     List<String>? imageUrls,
     int? selectedImageIndex,
     ChatUserMessage? replyTo,
@@ -209,6 +217,7 @@ class ChatImagesMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      isRead: isRead ?? this.isRead,
       imageUrls: imageUrls ?? this.imageUrls,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,
@@ -252,6 +261,7 @@ class ChatStickerMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.isRead,
     required this.sticker,
     super.replyTo,
     super.replyImageIndex,
@@ -266,6 +276,7 @@ class ChatStickerMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    bool? isRead,
     Sticker? sticker,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
@@ -275,6 +286,7 @@ class ChatStickerMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      isRead: isRead ?? this.isRead,
       sticker: sticker ?? this.sticker,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
@@ -331,6 +343,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.isRead,
     required this.voiceCallType,
     this.durationSeconds,
     super.replyTo,
@@ -355,6 +368,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    bool? isRead,
     VoiceCallType? voiceCallType,
     int? durationSeconds,
     ChatUserMessage? replyTo,
@@ -365,6 +379,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      isRead: isRead ?? this.isRead,
       voiceCallType: voiceCallType ?? this.voiceCallType,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       replyTo: replyTo ?? this.replyTo,

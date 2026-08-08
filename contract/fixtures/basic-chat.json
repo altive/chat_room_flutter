@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "currentUserID": "user-me",
+  "messages": [
+    {
+      "id": "system-started",
+      "createdAt": "2026-08-08T01:00:00Z",
+      "sender": null,
+      "content": {
+        "type": "system",
+        "text": "Conversation started"
+      },
+      "deliveryState": "sent"
+    },
+    {
+      "id": "incoming-text",
+      "createdAt": "2026-08-08T01:01:00Z",
+      "sender": {
+        "id": "user-other",
+        "displayName": "Altive",
+        "avatarURL": null
+      },
+      "content": {
+        "type": "text",
+        "text": "Hello"
+      },
+      "deliveryState": "sent"
+    },
+    {
+      "id": "outgoing-pending",
+      "createdAt": "2026-08-08T01:02:00Z",
+      "sender": {
+        "id": "user-me",
+        "displayName": "Me",
+        "avatarURL": null
+      },
+      "content": {
+        "type": "text",
+        "text": "Hello, Altive"
+      },
+      "deliveryState": "sending"
+    }
+  ]
+}

@@ -33,15 +33,10 @@ struct ChatMessageRow: View {
             .foregroundStyle(.secondary)
         }
 
-        Text(text)
-          .foregroundStyle(isOwnMessage ? theme.outgoingText : theme.incomingText)
-          .textSelection(.enabled)
-          .padding(.horizontal, 12)
-          .padding(.vertical, 9)
-          .background(
-            isOwnMessage ? theme.outgoingBubble : theme.incomingBubble,
-            in: RoundedRectangle(cornerRadius: 17)
-          )
+        ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
+          Text(text)
+            .textSelection(.enabled)
+        }
 
         HStack(spacing: 5) {
           Text(message.createdAt.formatted(date: .omitted, time: .shortened))
@@ -69,18 +64,17 @@ struct ChatMessageRow: View {
   }
 
   private func systemMessage(_ text: String) -> some View {
-    VStack(spacing: 4) {
-      Text(text)
-        .font(.footnote)
-        .multilineTextAlignment(.center)
+    ChatSystemEventCard(theme: theme) {
+      VStack(spacing: 4) {
+        Text(text)
+          .font(.footnote)
+          .multilineTextAlignment(.center)
 
-      Text(message.createdAt.formatted(date: .omitted, time: .shortened))
-        .font(.caption2)
-        .foregroundStyle(.secondary)
+        Text(message.createdAt.formatted(date: .omitted, time: .shortened))
+          .font(.caption2)
+          .foregroundStyle(.secondary)
+      }
     }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-    .background(theme.systemBubble, in: Capsule())
     .frame(maxWidth: .infinity)
     .accessibilityElement(children: .combine)
   }

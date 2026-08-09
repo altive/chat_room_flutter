@@ -84,6 +84,12 @@ class ChatPage extends StatelessWidget {
 
 Swift Package Manager のライブラリ製品名と import 名は `AltiveChatUI` です。
 
+SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
+吹き出し、システムイベントカード、入力欄、添付プレビュー、キーボードとスタンプ
+入力面のレイアウト計算を共通コンポーネントとして提供し、ファネリーとノコリスは
+同じAPIを利用します。各アプリ固有のStore、権限、送信、再送、リアクションは
+パッケージへ持ち込みません。
+
 リポジトリ名変更と最初の SemVer tag 公開後は、次のURLから追加します。
 
 ```swift

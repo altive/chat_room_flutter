@@ -84,32 +84,25 @@ public struct AltiveChatRoom: View {
   }
 
   private var composer: some View {
-    HStack(alignment: .bottom, spacing: 10) {
-      TextField(strings.messagePlaceholder, text: $draft, axis: .vertical)
-        .focused($isComposerFocused)
-        .lineLimit(1...5)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(theme.composerField, in: RoundedRectangle(cornerRadius: 18))
-        .accessibilityIdentifier("AltiveChatUI.Composer")
-
-      Button(action: sendDraft) {
-        Image(systemName: "arrow.up.circle.fill")
-          .font(.title2)
-      }
-      .buttonStyle(.plain)
-      .disabled(ChatComposer.normalizedText(from: draft) == nil)
-      .accessibilityLabel(strings.sendButtonLabel)
-      .accessibilityIdentifier("AltiveChatUI.SendButton")
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-    .background(.regularMaterial)
-  }
-
-  private func sendDraft() {
-    guard let text = ChatComposer.normalizedText(from: draft) else { return }
-    onSend(text)
-    draft = ""
+    ChatComposer(
+      draft: $draft,
+      focus: $isComposerFocused,
+      isInputSurfacePresented: false,
+      inputSurfaceHeight: 0,
+      isSending: false,
+      placeholder: strings.messagePlaceholder,
+      sendButtonLabel: strings.sendButtonLabel,
+      showsInputSurfaceButton: false,
+      maximumLength: nil,
+      characterCountWarningThreshold: nil,
+      theme: theme,
+      onToggleInputSurface: {},
+      onSend: { text in
+        onSend(text)
+        draft = ""
+      },
+      attachmentPreview: { EmptyView() },
+      inputSurface: { EmptyView() }
+    )
   }
 }

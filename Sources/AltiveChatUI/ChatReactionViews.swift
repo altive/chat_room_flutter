@@ -55,11 +55,8 @@ public struct ChatReactionSummaryBar: View {
             }
           }
         }
-        .frame(
-          maxWidth: .infinity,
-          alignment: alignment == .outgoing ? .trailing : .leading
-        )
       }
+      .defaultScrollAnchor(alignment == .outgoing ? .trailing : .leading)
       .scrollIndicators(.hidden)
     }
   }

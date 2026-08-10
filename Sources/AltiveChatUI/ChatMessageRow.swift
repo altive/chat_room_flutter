@@ -2,14 +2,32 @@ import SwiftUI
 
 /// メッセージ種別に応じて1件分を表示する行。
 @MainActor
-struct ChatMessageRow: View {
-  let message: ChatMessage
-  let currentUserID: String
-  let theme: ChatRoomTheme
-  let strings: ChatRoomStrings
-  let showsSenderName: Bool
+public struct ChatMessageRow: View {
+  private let message: ChatMessage
+  private let currentUserID: String
+  private let theme: ChatRoomTheme
+  private let strings: ChatRoomStrings
+  private let showsSenderName: Bool
+  private let onRetry: (() -> Void)?
 
-  var body: some View {
+  /// 1件分のメッセージ行を作成する。
+  public init(
+    message: ChatMessage,
+    currentUserID: String,
+    theme: ChatRoomTheme = .fanely,
+    strings: ChatRoomStrings = .localized,
+    showsSenderName: Bool = false,
+    onRetry: (() -> Void)? = nil
+  ) {
+    self.message = message
+    self.currentUserID = currentUserID
+    self.theme = theme
+    self.strings = strings
+    self.showsSenderName = showsSenderName
+    self.onRetry = onRetry
+  }
+
+  public var body: some View {
     switch message.content {
     case .text(let text):
       userMessage(text)
@@ -41,15 +59,14 @@ struct ChatMessageRow: View {
         HStack(spacing: 5) {
           Text(message.createdAt.formatted(date: .omitted, time: .shortened))
 
-          switch message.deliveryState {
-          case .sent:
-            EmptyView()
-          case .sending:
-            Text(strings.sendingLabel)
-          case .failed:
-            Text(strings.failedLabel)
-              .foregroundStyle(.red)
-          }
+          ChatDeliveryIndicator(
+            state: message.deliveryState,
+            sendingLabel: strings.sendingLabel,
+            retryLabel: strings.failedLabel,
+            controlSize: .mini,
+            theme: theme,
+            onRetry: onRetry
+          )
         }
         .font(.caption2)
         .foregroundStyle(.secondary)

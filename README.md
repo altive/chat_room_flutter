@@ -6,7 +6,7 @@ Altive Chat は、Altive のアプリ間でチャット UI とその表示契約
 現在は次のパッケージを提供します。
 
 - Flutter: `altive_chat_room`。既存アプリとの互換性を維持します。
-- SwiftUI: `AltiveChatUI`。iOS 17 以降に対応します。
+- Swift: `AltiveChatCore` と `AltiveChatUI`。iOS 17 以降に対応します。
 - Jetpack Compose: 将来追加する予定です。
 
 プラットフォーム間で共有する責務と機能差は、
@@ -82,13 +82,17 @@ class ChatPage extends StatelessWidget {
 
 ## SwiftUI
 
-Swift Package Manager のライブラリ製品名と import 名は `AltiveChatUI` です。
+Swift Package Manager は次の2製品を提供します。
+
+- `AltiveChatCore`: Foundationだけに依存する表示モデル、入力方針、送信状態、
+  楽観的更新、最近使った項目の純粋な状態遷移。
+- `AltiveChatUI`: `AltiveChatCore`を利用するSwiftUIコンポーネント。
 
 SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
-吹き出し、システムイベントカード、入力欄、添付プレビュー、キーボードとスタンプ
-入力面のレイアウト計算を共通コンポーネントとして提供し、ファネリーとノコリスは
-同じAPIを利用します。各アプリ固有のStore、権限、送信、再送、リアクションは
-パッケージへ持ち込みません。
+吹き出し、入力欄、送信状態と再送導線、リアクションと長押し操作、ステッカーpicker、
+アバター、システムイベントの展開、キーボードとスタンプ入力面のレイアウト計算を
+共通コンポーネントとして提供します。各アプリ固有のStore、権限、外部I/O、課金、
+画面遷移はパッケージへ持ち込みません。
 
 リポジトリ名変更と最初の SemVer tag 公開後は、次のURLから追加します。
 
@@ -106,7 +110,8 @@ SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザ
 ```
 
 最小構成では、表示するメッセージと入力中テキストをアプリ側が所有します。
-送信、永続化、再送、ページングなどの業務処理はライブラリへ持ち込みません。
+ライブラリは再送ボタンや楽観的更新の純粋な状態遷移を提供しますが、実際の送信、
+永続化、オフライン方針、ページングはアプリ側が担当します。
 
 ```swift
 import AltiveChatUI
@@ -124,6 +129,14 @@ struct ChatScreen: View {
       messages: messages,
       currentUserID: currentUserID,
       draft: $draft,
+      draftPolicy: ChatDraftPolicy(
+        maximumLength: 1_000,
+        warningThreshold: 900,
+        lengthUnit: .utf16
+      ),
+      onRetry: { messageID in
+        // 同じoperation IDで再送
+      },
       onSend: send
     )
   }

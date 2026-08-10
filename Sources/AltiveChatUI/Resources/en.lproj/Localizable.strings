@@ -4,3 +4,5 @@
 "chat.delivery.sending" = "Sending";
 "chat.delivery.failed" = "Failed to send";
 "chat.sender.unknown" = "Unknown user";
+"chat.system.expand" = "Show grouped events";
+"chat.system.collapse" = "Hide grouped events";

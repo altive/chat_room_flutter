@@ -1,15 +1,6 @@
 import Foundation
 import SwiftUI
 
-/// 入力中テキストを送信可能な形式へ整える処理。
-enum ChatDraft {
-  /// 前後の空白と改行を除き、空文字の場合は `nil` を返す。
-  static func normalizedText(from draft: String) -> String? {
-    let value = draft.trimmingCharacters(in: .whitespacesAndNewlines)
-    return value.isEmpty ? nil : value
-  }
-}
-
 /// ファネリーの Family Room を基準にしたチャット入力欄。
 ///
 /// 入力値の永続化や送信状態はアプリ側が所有します。`onSend` には前後の空白と
@@ -28,8 +19,7 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
   private let inputSurfaceButtonLabel: String
   private let inputSurfaceButtonHint: String?
   private let showsInputSurfaceButton: Bool
-  private let maximumLength: Int?
-  private let characterCountWarningThreshold: Int?
+  private let draftPolicy: ChatDraftPolicy
   private let lineLimit: ClosedRange<Int>
   private let theme: ChatRoomTheme
   private let accessibilityIdentifier: String
@@ -52,6 +42,7 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     showsInputSurfaceButton: Bool = true,
     maximumLength: Int? = 500,
     characterCountWarningThreshold: Int? = 450,
+    draftPolicy: ChatDraftPolicy? = nil,
     lineLimit: ClosedRange<Int> = 1...5,
     theme: ChatRoomTheme = .fanely,
     accessibilityIdentifier: String = "AltiveChatUI.Composer",
@@ -70,8 +61,12 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     self.inputSurfaceButtonLabel = inputSurfaceButtonLabel
     self.inputSurfaceButtonHint = inputSurfaceButtonHint
     self.showsInputSurfaceButton = showsInputSurfaceButton
-    self.maximumLength = maximumLength
-    self.characterCountWarningThreshold = characterCountWarningThreshold
+    self.draftPolicy =
+      draftPolicy
+      ?? ChatDraftPolicy(
+        maximumLength: maximumLength,
+        warningThreshold: characterCountWarningThreshold
+      )
     self.lineLimit = lineLimit
     self.theme = theme
     self.accessibilityIdentifier = accessibilityIdentifier
@@ -87,7 +82,7 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
 
       HStack(alignment: .bottom, spacing: 8) {
         HStack(spacing: 4) {
-          TextField(placeholder, text: $draft, axis: .vertical)
+          TextField(placeholder, text: limitedDraft, axis: .vertical)
             .lineLimit(lineLimit)
             .focused(focus)
             .textFieldStyle(.plain)
@@ -140,10 +135,12 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
         .accessibilityIdentifier("AltiveChatUI.SendButton")
       }
 
-      if shouldShowCharacterCount, let maximumLength {
-        Text(verbatim: "\(draft.count)/\(maximumLength)")
+      if draftPolicy.shouldShowLength(for: draft), let maximumLength = draftPolicy.maximumLength {
+        Text(verbatim: "\(draftPolicy.length(of: draft))/\(maximumLength)")
           .font(.caption2.monospacedDigit())
-          .foregroundStyle(draft.count > maximumLength ? .red : .secondary)
+          .foregroundStyle(
+            draftPolicy.length(of: draft) > maximumLength ? theme.deliveryFailure : .secondary
+          )
           .padding(.trailing, 50)
       }
 
@@ -163,18 +160,18 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
   }
 
   private var canSend: Bool {
-    guard !isSending, ChatDraft.normalizedText(from: draft) != nil else { return false }
-    guard let maximumLength else { return true }
-    return draft.count <= maximumLength
+    !isSending && draftPolicy.normalizedText(from: draft) != nil
   }
 
-  private var shouldShowCharacterCount: Bool {
-    guard let threshold = characterCountWarningThreshold else { return false }
-    return draft.count >= threshold
+  private var limitedDraft: Binding<String> {
+    Binding(
+      get: { draft },
+      set: { draft = draftPolicy.limited($0) }
+    )
   }
 
   private func sendDraft() {
-    guard canSend, let text = ChatDraft.normalizedText(from: draft) else { return }
+    guard canSend, let text = draftPolicy.normalizedText(from: draft) else { return }
     onSend(text)
   }
 }

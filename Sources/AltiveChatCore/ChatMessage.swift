@@ -5,7 +5,7 @@ public enum ChatMessageContent: Hashable, Sendable {
   /// ユーザーが送信したテキスト。
   case text(String)
 
-  /// 会話内へ中央寄せで表示するシステム文言。
+  /// 会話内へ表示するシステム文言。
   case system(String)
 }
 
@@ -19,6 +19,35 @@ public enum ChatMessageDeliveryState: Hashable, Sendable {
 
   /// 送信に失敗。
   case failed
+}
+
+/// 送信状態の許可された遷移をまとめる値型。
+public struct ChatDeliveryStateMachine: Hashable, Sendable {
+  /// 現在の送信状態。
+  public private(set) var state: ChatMessageDeliveryState
+
+  /// 初期状態を指定して作成する。
+  public init(state: ChatMessageDeliveryState = .sending) {
+    self.state = state
+  }
+
+  /// 失敗状態から再送中へ移行する。
+  @discardableResult
+  public mutating func beginRetry() -> Bool {
+    guard state == .failed else { return false }
+    state = .sending
+    return true
+  }
+
+  /// 送信成功として確定する。
+  public mutating func markSent() {
+    state = .sent
+  }
+
+  /// 送信失敗として確定する。
+  public mutating func markFailed() {
+    state = .failed
+  }
 }
 
 /// チャットへ表示するメッセージ。

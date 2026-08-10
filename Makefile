@@ -16,4 +16,4 @@ swift_test:
 	swift test
 
 swift_ios_build:
-	xcodebuild -scheme AltiveChat -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/altive-chat-derived CODE_SIGNING_ALLOWED=NO build
+	xcodebuild -scheme AltiveChat-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/altive-chat-derived CODE_SIGNING_ALLOWED=NO build

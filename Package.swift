@@ -11,16 +11,28 @@ let package = Package(
   ],
   products: [
     .library(
+      name: "AltiveChatCore",
+      targets: ["AltiveChatCore"]
+    ),
+    .library(
       name: "AltiveChatUI",
       targets: ["AltiveChatUI"]
-    )
+    ),
   ],
   targets: [
     .target(
+      name: "AltiveChatCore"
+    ),
+    .target(
       name: "AltiveChatUI",
+      dependencies: ["AltiveChatCore"],
       resources: [
         .process("Resources")
       ]
+    ),
+    .testTarget(
+      name: "AltiveChatCoreTests",
+      dependencies: ["AltiveChatCore"]
     ),
     .testTarget(
       name: "AltiveChatUITests",

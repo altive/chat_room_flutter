@@ -13,8 +13,10 @@
 ```text
 .
 ├── Package.swift                 # Swift Package入口
-├── Sources/AltiveChatUI/         # SwiftUI実装
-├── Tests/AltiveChatUITests/      # Swift実装のtest
+├── Sources/AltiveChatCore/       # Foundationだけに依存する表示契約と状態遷移
+├── Sources/AltiveChatUI/         # Coreを利用するSwiftUI実装
+├── Tests/AltiveChatCoreTests/    # 純粋な状態遷移のtest
+├── Tests/AltiveChatUITests/      # SwiftUI実装のtest
 ├── contract/                     # プラットフォーム共通契約
 ├── lib/                          # 既存Flutter package
 ├── test/                         # Flutter package test

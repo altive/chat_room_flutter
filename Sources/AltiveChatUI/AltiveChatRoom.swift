@@ -1,3 +1,4 @@
+import AltiveChatCore
 import SwiftUI
 
 /// メッセージ一覧と入力欄を表示するチャット画面。
@@ -11,6 +12,8 @@ public struct AltiveChatRoom: View {
   private let strings: ChatRoomStrings
   private let showsSenderName: Bool
   private let onSend: (String) -> Void
+  private let onRetry: ((String) -> Void)?
+  private let draftPolicy: ChatDraftPolicy
 
   @Binding private var draft: String
   @FocusState private var isComposerFocused: Bool
@@ -26,6 +29,8 @@ public struct AltiveChatRoom: View {
     theme: ChatRoomTheme = .standard,
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
+    draftPolicy: ChatDraftPolicy = .unrestricted,
+    onRetry: ((String) -> Void)? = nil,
     onSend: @escaping (String) -> Void
   ) {
     self.messages = messages
@@ -34,6 +39,8 @@ public struct AltiveChatRoom: View {
     self.theme = theme
     self.strings = strings
     self.showsSenderName = showsSenderName
+    self.draftPolicy = draftPolicy
+    self.onRetry = onRetry
     self.onSend = onSend
   }
 
@@ -53,7 +60,10 @@ public struct AltiveChatRoom: View {
                 currentUserID: currentUserID,
                 theme: theme,
                 strings: strings,
-                showsSenderName: showsSenderName
+                showsSenderName: showsSenderName,
+                onRetry: onRetry.map { retry in
+                  { retry(message.id) }
+                }
               )
               .id(message.id)
             }
@@ -95,6 +105,7 @@ public struct AltiveChatRoom: View {
       showsInputSurfaceButton: false,
       maximumLength: nil,
       characterCountWarningThreshold: nil,
+      draftPolicy: draftPolicy,
       theme: theme,
       onToggleInputSurface: {},
       onSend: { text in

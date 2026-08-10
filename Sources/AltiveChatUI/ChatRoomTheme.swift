@@ -44,6 +44,27 @@ public struct ChatRoomTheme {
   /// 送信ボタンの前景色。
   public var sendButtonForeground: Color
 
+  /// リアクション件数チップの背景色。
+  public var reactionChipBackground: Color
+
+  /// リアクション件数チップの境界線色。
+  public var reactionChipBorder: Color
+
+  /// リアクション選択肢の背景色。
+  public var reactionPickerItemBackground: Color
+
+  /// アバターの代替表示背景色。
+  public var avatarFallbackBackground: Color
+
+  /// アバターの代替表示前景色。
+  public var avatarFallbackForeground: Color
+
+  /// 送信失敗を示す色。
+  public var deliveryFailure: Color
+
+  /// タイムライン境界の前景色。
+  public var timelineBoundaryForeground: Color
+
   /// チャット画面の配色を作成する。
   public init(
     background: Color = .clear,
@@ -57,7 +78,14 @@ public struct ChatRoomTheme {
     composerField: Color = .secondary.opacity(0.12),
     composerFieldBorder: Color = .secondary.opacity(0.16),
     sendButtonBackground: Color = .accentColor,
-    sendButtonForeground: Color = .white
+    sendButtonForeground: Color = .white,
+    reactionChipBackground: Color = .secondary.opacity(0.14),
+    reactionChipBorder: Color = .secondary.opacity(0.2),
+    reactionPickerItemBackground: Color = .primary.opacity(0.06),
+    avatarFallbackBackground: Color = .secondary.opacity(0.14),
+    avatarFallbackForeground: Color = .secondary,
+    deliveryFailure: Color = .red,
+    timelineBoundaryForeground: Color = .secondary
   ) {
     self.background = background
     self.outgoingBubble = outgoingBubble
@@ -71,6 +99,13 @@ public struct ChatRoomTheme {
     self.composerFieldBorder = composerFieldBorder
     self.sendButtonBackground = sendButtonBackground
     self.sendButtonForeground = sendButtonForeground
+    self.reactionChipBackground = reactionChipBackground
+    self.reactionChipBorder = reactionChipBorder
+    self.reactionPickerItemBackground = reactionPickerItemBackground
+    self.avatarFallbackBackground = avatarFallbackBackground
+    self.avatarFallbackForeground = avatarFallbackForeground
+    self.deliveryFailure = deliveryFailure
+    self.timelineBoundaryForeground = timelineBoundaryForeground
   }
 
   /// ファネリーの Family Room を正本とする標準テーマ。
@@ -81,7 +116,10 @@ public struct ChatRoomTheme {
       systemBubble: platformSecondaryGroupedBackground,
       systemBubbleBorder: platformSeparator.opacity(0.35),
       composerField: platformSecondaryBackground,
-      composerFieldBorder: platformSeparator.opacity(0.28)
+      composerFieldBorder: platformSeparator.opacity(0.28),
+      reactionChipBackground: platformTertiaryFill,
+      reactionChipBorder: platformSeparator.opacity(0.35),
+      reactionPickerItemBackground: Color.primary.opacity(0.06)
     )
   }
 
@@ -117,6 +155,16 @@ public struct ChatRoomTheme {
       Color(nsColor: .separatorColor)
     #else
       Color.secondary
+    #endif
+  }
+
+  private static var platformTertiaryFill: Color {
+    #if canImport(UIKit)
+      Color(uiColor: .tertiarySystemFill)
+    #elseif canImport(AppKit)
+      Color(nsColor: .quaternaryLabelColor).opacity(0.16)
+    #else
+      Color.secondary.opacity(0.14)
     #endif
   }
 }

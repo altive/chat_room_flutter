@@ -134,8 +134,10 @@ public struct ChatReactionPicker<TrailingActions: View>: View {
       }
 
       if showsTrailingActions {
-        Divider()
-          .frame(height: 24)
+        if !reactions.isEmpty {
+          Divider()
+            .frame(height: 24)
+        }
         trailingActions
       }
     }

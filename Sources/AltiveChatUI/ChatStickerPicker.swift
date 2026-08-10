@@ -131,6 +131,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
   private let isHistorySelected: Bool
   private let recentReferences: [Reference]
   private let strings: ChatStickerPickerStrings
+  private let referenceAccessibilityLabel: (Reference) -> String
   private let onSelectHistory: () -> Void
   private let onSelectPack: (String) -> Void
   private let onSelect: (Reference) -> Void
@@ -149,6 +150,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
     isHistorySelected: Bool,
     recentReferences: [Reference],
     strings: ChatStickerPickerStrings,
+    referenceAccessibilityLabel: @escaping (Reference) -> String = { String(describing: $0) },
     onSelectHistory: @escaping () -> Void,
     onSelectPack: @escaping (String) -> Void,
     onSelect: @escaping (Reference) -> Void,
@@ -163,6 +165,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
     self.isHistorySelected = isHistorySelected
     self.recentReferences = recentReferences
     self.strings = strings
+    self.referenceAccessibilityLabel = referenceAccessibilityLabel
     self.onSelectHistory = onSelectHistory
     self.onSelectPack = onSelectPack
     self.onSelect = onSelect
@@ -287,6 +290,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
                   .frame(minHeight: 88)
               }
               .buttonStyle(.plain)
+              .accessibilityLabel(referenceAccessibilityLabel(reference))
             }
           } else {
             ForEach(selectedPack?.stickers ?? []) { sticker in

@@ -1,0 +1,8 @@
+"chat.empty" = "まだメッセージはありません";
+"chat.composer.placeholder" = "メッセージ";
+"chat.composer.send" = "送信";
+"chat.delivery.sending" = "送信中";
+"chat.delivery.failed" = "送信できませんでした";
+"chat.sender.unknown" = "不明なユーザー";
+"chat.system.expand" = "まとめられた出来事を表示";
+"chat.system.collapse" = "まとめられた出来事を閉じる";

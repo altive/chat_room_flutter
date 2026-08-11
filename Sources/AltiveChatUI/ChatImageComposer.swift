@@ -1,3 +1,4 @@
+import AltiveChatCore
 import PhotosUI
 import SwiftUI
 
@@ -19,7 +20,7 @@ public enum ChatComposerSendPolicy {
 }
 
 @MainActor
-struct ChatImageComposer: View {
+public struct ChatImageComposer: View {
   @Binding var draft: String
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
@@ -42,8 +43,58 @@ struct ChatImageComposer: View {
   let onRequestCamera: (() -> Void)?
   let onRemoveImage: (String) -> Void
   let onSubmit: () -> Void
+  private let additionalSourceButton: AnyView?
 
-  var body: some View {
+  /// 画像入力に対応したチャット入力欄を作成する。
+  public init(
+    draft: Binding<String>,
+    imageDrafts: Binding<[ChatImageDraft]>,
+    selectedPhotoItems: Binding<[PhotosPickerItem]>,
+    isInlinePhotoLibraryPresented: Binding<Bool>,
+    isInlinePhotoLibraryExpanded: Binding<Bool>,
+    focus: FocusState<Bool>.Binding,
+    configuration: ChatImageInputConfiguration,
+    availableImageInputSources: Set<ChatImageInputSource>,
+    maximumPhotoSelectionCount: Int,
+    isPhotoLibrarySelectionEnabled: Bool,
+    inputSurfaceHeight: CGFloat,
+    isPreparingImages: Bool,
+    isPreparingCameraImage: Bool,
+    isSending: Bool,
+    strings: ChatRoomStrings = .localized,
+    draftPolicy: ChatDraftPolicy = .unrestricted,
+    theme: ChatRoomTheme = .fanely,
+    imageLoader: ChatImageLoader = .standard,
+    onRequestCamera: (() -> Void)?,
+    onRemoveImage: @escaping (String) -> Void,
+    onSubmit: @escaping () -> Void,
+    additionalSourceButton: AnyView? = nil
+  ) {
+    _draft = draft
+    _imageDrafts = imageDrafts
+    _selectedPhotoItems = selectedPhotoItems
+    _isInlinePhotoLibraryPresented = isInlinePhotoLibraryPresented
+    _isInlinePhotoLibraryExpanded = isInlinePhotoLibraryExpanded
+    self.focus = focus
+    self.configuration = configuration
+    self.availableImageInputSources = availableImageInputSources
+    self.maximumPhotoSelectionCount = maximumPhotoSelectionCount
+    self.isPhotoLibrarySelectionEnabled = isPhotoLibrarySelectionEnabled
+    self.inputSurfaceHeight = inputSurfaceHeight
+    self.isPreparingImages = isPreparingImages
+    self.isPreparingCameraImage = isPreparingCameraImage
+    self.isSending = isSending
+    self.strings = strings
+    self.draftPolicy = draftPolicy
+    self.theme = theme
+    self.imageLoader = imageLoader
+    self.onRequestCamera = onRequestCamera
+    self.onRemoveImage = onRemoveImage
+    self.onSubmit = onSubmit
+    self.additionalSourceButton = additionalSourceButton
+  }
+
+  public var body: some View {
     VStack(alignment: .trailing, spacing: 7) {
       previewStrip
 
@@ -110,6 +161,7 @@ struct ChatImageComposer: View {
   @ViewBuilder
   private var sourceButtons: some View {
     HStack(spacing: 1) {
+      additionalSourceButton
       if availableImageInputSources.contains(.camera) {
         Button {
           focus.wrappedValue = false

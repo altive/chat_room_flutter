@@ -19,13 +19,13 @@ import androidx.photopicker.compose.ExperimentalPhotoPickerComposeApi
 import androidx.photopicker.compose.rememberEmbeddedPhotoPickerState
 import kotlinx.coroutines.CancellationException
 
-internal fun isEmbeddedPhotoPickerAvailable(): Boolean =
+fun isEmbeddedPhotoPickerAvailable(): Boolean =
   Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
     SdkExtensions.getExtensionVersion(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) >= 15
 
 @SuppressLint("NewApi")
 @Composable
-internal fun BoxScope.ChatEmbeddedPhotoPicker(
+fun BoxScope.ChatEmbeddedPhotoPicker(
   maximumSelectionCount: Int,
   initialSelectedUris: Set<String>,
   isExpanded: Boolean,

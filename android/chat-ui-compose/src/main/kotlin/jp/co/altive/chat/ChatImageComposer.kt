@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun ChatImageComposer(
+fun ChatImageComposer(
   draft: String,
   onDraftChange: (String) -> Unit,
   imageDrafts: List<ChatImageDraft>,
@@ -65,6 +65,7 @@ internal fun ChatImageComposer(
   onSubmit: () -> Unit,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
   inlinePhotoLibrary: @Composable BoxScope.() -> Unit,
+  additionalSourceContent: @Composable () -> Unit = {},
 ) {
   val canSend = ChatComposerSendPolicy.canSend(
     draft = draft,
@@ -121,6 +122,7 @@ internal fun ChatImageComposer(
       horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
       Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+        additionalSourceContent()
         if (ChatImageInputSource.Camera in availableImageInputSources) {
           IconButton(
             onClick = onRequestCamera,

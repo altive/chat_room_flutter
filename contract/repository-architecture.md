@@ -27,16 +27,21 @@ Flutter packageは他アプリから利用中のため、初回再編ではル�
 将来移動する場合は、全利用側をversion付きGit dependencyまたは公開packageへ移行し、
 互換期間を設けてから行う。
 
-## 将来のCompose配置
+## Compose配置
 
-Compose実装へ着手するときだけ、`android/`配下にGradle projectを追加する。空の
-projectは先行作成しない。
+Compose実装は、`android/`配下の独立したGradle projectとして管理する。
+Flutter exampleが生成する`example/android/`とは依存関係を持たない。
 
 ```text
 android/
 ├── settings.gradle.kts
-└── chat-ui-compose/
+├── chat-core/                    # Composeに依存しない表示契約と状態遷移
+└── chat-ui-compose/              # chat-coreを利用するCompose実装
 ```
+
+ルートを`swift/kotlin/dart`へ一括再編しない。Flutterの既存path dependencyと
+Swift Package Managerの標準配置を維持し、破壊的な移動は利用アプリをversion付き
+dependencyへ移行して互換期間を設けた後にだけ検討する。
 
 ## version
 

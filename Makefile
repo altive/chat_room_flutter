@@ -1,6 +1,9 @@
-.PHONY: flutter_verify swift_format_lint swift_ios_build swift_test swift_verify verify
+.PHONY: android_verify flutter_verify swift_format_lint swift_ios_build swift_test swift_verify verify
 
-verify: flutter_verify swift_verify
+verify: flutter_verify swift_verify android_verify
+
+android_verify:
+	cd android && ./gradlew :chat-core:test :chat-ui-compose:lintDebug :chat-ui-compose:testDebugUnitTest :chat-ui-compose:compileDebugAndroidTestKotlin
 
 flutter_verify:
 	flutter pub get

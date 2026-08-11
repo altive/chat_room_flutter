@@ -14,6 +14,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  android:
+    name: Android Compose
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Set up Android SDK 37
+        run: sdkmanager "platforms;android-37"
+
+      - name: Verify Android packages
+        run: make android_verify
+
   flutter:
     name: Flutter
     runs-on: ubuntu-latest

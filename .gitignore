@@ -34,3 +34,8 @@ migrate_working_dir/
 /.build/
 /.swiftpm/
 /Package.resolved
+
+# Android / Gradle
+/android/.gradle/
+/android/**/build/
+/android/local.properties

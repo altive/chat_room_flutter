@@ -1,0 +1,10 @@
+<resources>
+  <string name="altive_chat_empty">メッセージはありません</string>
+  <string name="altive_chat_placeholder">メッセージ</string>
+  <string name="altive_chat_send">送信</string>
+  <string name="altive_chat_sending">送信中</string>
+  <string name="altive_chat_failed">送信に失敗しました。再送</string>
+  <string name="altive_chat_unknown_sender">不明な送信者</string>
+  <string name="altive_chat_expand">イベントを展開</string>
+  <string name="altive_chat_collapse">イベントを折りたたむ</string>
+</resources>

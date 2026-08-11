@@ -7,7 +7,8 @@ Altive Chat は、Altive のアプリ間でチャット UI とその表示契約
 
 - Flutter: `altive_chat_room`。既存アプリとの互換性を維持します。
 - Swift: `AltiveChatCore` と `AltiveChatUI`。iOS 17 以降に対応します。
-- Jetpack Compose: 将来追加する予定です。
+- Jetpack Compose: `chat-core` と `chat-ui-compose`。Fanely Android と同じ
+  minSdk 26、compileSdk 37の構成です。
 
 プラットフォーム間で共有する責務と機能差は、
 [`contract/chat-ui-contract.md`](contract/chat-ui-contract.md) と
@@ -143,6 +144,39 @@ struct ChatScreen: View {
 }
 ```
 
+## Jetpack Compose
+
+Android実装はFlutter exampleから独立した`android/` Gradle projectです。
+
+- `chat-core`: UI frameworkに依存しない表示モデル、入力方針、送信状態、
+  リアクションの楽観的更新、最近使った項目。
+- `chat-ui-compose`: Room、Composer、再送UI、リアクション、ステッカーpicker、
+  アバター、システムイベント、タイムライン境界。
+
+開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
+composite buildとして追加し、`jp.co.altive.chat:chat-core`と
+`jp.co.altive.chat:chat-ui-compose`をprojectへ置換します。絶対pathは
+local property等から注入し、リポジトリへcommitしません。正式配布時はMaven
+repositoryへ`chat-core`と`chat-ui-compose`を公開します。
+
+```kotlin
+var draft by remember { mutableStateOf("") }
+
+AltiveChatRoom(
+  messages = messages,
+  currentUserId = currentUserId,
+  draft = draft,
+  onDraftChange = { draft = it },
+  draftPolicy = ChatDraftPolicy(
+    maximumLength = 1_000,
+    warningThreshold = 900,
+    lengthUnit = ChatDraftLengthUnit.Utf16,
+  ),
+  onRetry = viewModel::retry,
+  onSend = viewModel::send,
+)
+```
+
 ## 開発
 
 両方をまとめて検証:
@@ -161,6 +195,12 @@ SwiftUI:
 
 ```bash
 make swift_verify
+```
+
+Android/Compose:
+
+```bash
+make android_verify
 ```
 
 Flutter example の起動:

@@ -66,9 +66,50 @@ class ChatCoreTest {
     assertNull(system.sender)
   }
 
+  @Test fun createsTextAndImageSubmissionTogether() {
+    val image = ChatImageDraft("image-1", "content://chat/image-1")
+    val submission = requireNotNull(
+      ChatComposerSubmission.create("  hello\n", listOf(image), ChatDraftPolicy.Unrestricted),
+    )
+    assertEquals("hello", submission.text)
+    assertEquals(listOf(image), submission.images)
+  }
+
+  @Test fun acceptsImageOnlyAndRejectsEmptySubmission() {
+    val image = ChatImageDraft("image-1", "content://chat/image-1")
+    val imageOnly = requireNotNull(
+      ChatComposerSubmission.create(" \n", listOf(image), ChatDraftPolicy.Unrestricted),
+    )
+    assertNull(imageOnly.text)
+    assertNull(ChatComposerSubmission.create(" \n", emptyList(), ChatDraftPolicy.Unrestricted))
+  }
+
+  @Test fun createsLocalPreviewImageFromDraft() {
+    val draft = ChatImageDraft(
+      id = "image-1",
+      localUri = "content://chat/image-1",
+      pixelWidth = 1200,
+      pixelHeight = 800,
+      accessibilityLabel = "海",
+    )
+    assertEquals(
+      ChatImage(
+        id = "image-1",
+        resource = ChatImageResource.LocalUri("content://chat/image-1"),
+        pixelWidth = 1200,
+        pixelHeight = 800,
+        accessibilityLabel = "海",
+      ),
+      draft.previewImage,
+    )
+  }
+
   @Test fun clampsInputSurfaceGeometry() {
     assertEquals(310f, ChatInputSurfaceGeometry.keyboardContentHeight(344f, 34f))
     assertEquals(261f, ChatInputSurfaceGeometry.inputSurfaceHeight(310f, 49f))
     assertEquals(0f, ChatInputSurfaceGeometry.inputSurfaceHeight(40f, 49f))
+    assertEquals(288f, ChatInputSurfaceGeometry.photoLibraryHeight(800f, false))
+    assertEquals(624f, ChatInputSurfaceGeometry.photoLibraryHeight(800f, true))
+    assertEquals(100f, ChatInputSurfaceGeometry.photoLibraryHeight(100f, false))
   }
 }

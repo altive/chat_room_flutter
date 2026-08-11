@@ -1,5 +1,11 @@
 package jp.co.altive.chat
 
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -23,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 @Immutable
 data class ChatRoomStrings(
@@ -32,6 +42,12 @@ data class ChatRoomStrings(
   val sendingLabel: String,
   val failedLabel: String,
   val unknownSender: String,
+  val cameraButtonLabel: String = "Camera",
+  val photoLibraryButtonLabel: String = "Photo library",
+  val removeImageButtonLabel: String = "Remove image",
+  val imageLabel: String = "Image",
+  val expandPhotoLibraryLabel: String = "Expand photo library",
+  val collapsePhotoLibraryLabel: String = "Collapse photo library",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -42,6 +58,12 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_sending),
         stringResource(R.string.altive_chat_failed),
         stringResource(R.string.altive_chat_unknown_sender),
+        stringResource(R.string.altive_chat_camera),
+        stringResource(R.string.altive_chat_photo_library),
+        stringResource(R.string.altive_chat_remove_image),
+        stringResource(R.string.altive_chat_image),
+        stringResource(R.string.altive_chat_photo_library_expand),
+        stringResource(R.string.altive_chat_photo_library_collapse),
       )
     }
   }
@@ -76,7 +98,14 @@ fun AltiveChatRoom(
         item { Text(strings.emptyMessage, Modifier.fillMaxWidth().padding(vertical = 48.dp), textAlign = TextAlign.Center) }
       } else {
         items(messages, key = { it.id }) { message ->
-          ChatMessageRow(message, currentUserId, theme, strings, showsSenderName, onRetry?.let { { it(message.id) } })
+          ChatMessageRow(
+            message = message,
+            currentUserId = currentUserId,
+            theme = theme,
+            strings = strings,
+            showsSenderName = showsSenderName,
+            onRetry = onRetry?.let { { it(message.id) } },
+          )
         }
       }
     }
@@ -93,6 +122,292 @@ fun AltiveChatRoom(
 }
 
 @Composable
+fun AltiveChatRoom(
+  messages: List<ChatMessage>,
+  currentUserId: String,
+  draft: String,
+  onDraftChange: (String) -> Unit,
+  imageDrafts: List<ChatImageDraft>,
+  onImageDraftsChange: (List<ChatImageDraft>) -> Unit,
+  resolvePhotoLibraryUri: suspend (String) -> ChatImageDraft,
+  modifier: Modifier = Modifier,
+  imageInputConfiguration: ChatImageInputConfiguration = ChatImageInputConfiguration(),
+  availableImageInputSources: Set<ChatImageInputSource> = setOf(
+    ChatImageInputSource.Camera,
+    ChatImageInputSource.PhotoLibrary,
+  ),
+  isPreparingCameraImage: Boolean = false,
+  isSending: Boolean = false,
+  theme: ChatRoomTheme = ChatRoomTheme.standard(),
+  strings: ChatRoomStrings = ChatRoomStrings.localized(),
+  showsSenderName: Boolean = false,
+  draftPolicy: ChatDraftPolicy = ChatDraftPolicy.Unrestricted,
+  onRequestCamera: (() -> Unit)? = null,
+  onImagePreparationFailure: ((Throwable) -> Unit)? = null,
+  onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
+  onRetry: ((String) -> Unit)? = null,
+  imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Text(strings.imageLabel)
+    }
+  },
+  onSubmit: (ChatComposerSubmission) -> Unit,
+) {
+  val listState = rememberLazyListState()
+  val coroutineScope = rememberCoroutineScope()
+  val focusManager = LocalFocusManager.current
+  var photoUris by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
+  var photoDraftIdValues by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
+  var resolvingUris by remember { mutableStateOf(emptySet<String>()) }
+  var revokedResolvingUris by remember { mutableStateOf(emptySet<String>()) }
+  var pendingDeselectUris by remember { mutableStateOf(emptySet<String>()) }
+  var isInlinePhotoLibraryPresented by rememberSaveable { mutableStateOf(false) }
+  var isInlinePhotoLibraryExpanded by rememberSaveable { mutableStateOf(false) }
+
+  val latestImageDrafts by rememberUpdatedState(imageDrafts)
+  val latestOnImageDraftsChange by rememberUpdatedState(onImageDraftsChange)
+  val latestResolver by rememberUpdatedState(resolvePhotoLibraryUri)
+  val latestFailureHandler by rememberUpdatedState(onImagePreparationFailure)
+  val photoDraftIds = photoUris.zip(photoDraftIdValues).toMap()
+  val mappedPhotoDraftIds = photoDraftIds.values.toSet()
+  val cameraDraftCount = imageDrafts.count { it.id !in mappedPhotoDraftIds }
+  val embeddedPhotoMaximum = maxOf(
+    1,
+    photoDraftIds.size,
+    imageInputConfiguration.maximumSelectionCount - cameraDraftCount,
+  )
+  val remainingCapacity = (
+    imageInputConfiguration.maximumSelectionCount - imageDrafts.size - resolvingUris.size
+  ).coerceAtLeast(0)
+  val platformPickerMaximum = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    MediaStore.getPickImagesMaxLimit()
+  } else {
+    imageInputConfiguration.maximumSelectionCount
+  }
+  val multiplePickerMaximum = multiplePhotoPickerLimit(remainingCapacity, platformPickerMaximum)
+  val embeddedAvailable = isEmbeddedPhotoPickerAvailable()
+
+  fun updatePhotoDraftIds(values: Map<String, String>) {
+    photoUris = ArrayList(values.keys)
+    photoDraftIdValues = ArrayList(values.values)
+  }
+
+  val resolveUris: (List<Uri>) -> Unit = { selectedUris ->
+    val knownUris = photoUris.toSet() + resolvingUris
+    val acceptedUris = selectedUris.map(Uri::toString)
+      .filterNot { it in knownUris }
+      .take(remainingCapacity)
+    if (acceptedUris.isNotEmpty()) {
+      revokedResolvingUris = revokedResolvingUris - acceptedUris.toSet()
+      resolvingUris = resolvingUris + acceptedUris
+      coroutineScope.launch {
+        val resolved = mutableListOf<Pair<String, ChatImageDraft>>()
+        val rejected = mutableSetOf<String>()
+        try {
+          for (uri in acceptedUris) {
+            try {
+              val resolvedDraft = latestResolver(uri)
+              if (uri in revokedResolvingUris) rejected += uri
+              else resolved += uri to resolvedDraft
+            } catch (cancellation: CancellationException) {
+              throw cancellation
+            } catch (throwable: Throwable) {
+              rejected += uri
+              latestFailureHandler?.invoke(throwable)
+            }
+          }
+
+          val mergedDrafts = (latestImageDrafts + resolved.map { it.second })
+            .distinctBy(ChatImageDraft::id)
+            .take(imageInputConfiguration.maximumSelectionCount)
+          val mergedIDs = mergedDrafts.map(ChatImageDraft::id).toSet()
+          latestOnImageDraftsChange(mergedDrafts)
+
+          val updatedMappings = photoUris.zip(photoDraftIdValues).toMap().toMutableMap()
+          for ((uri, resolvedDraft) in resolved) {
+            if (resolvedDraft.id in mergedIDs) updatedMappings[uri] = resolvedDraft.id
+            else rejected += uri
+          }
+          updatePhotoDraftIds(updatedMappings)
+          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + rejected
+        } finally {
+          resolvingUris = resolvingUris - acceptedUris.toSet()
+          revokedResolvingUris = revokedResolvingUris - acceptedUris.toSet()
+        }
+      }
+    }
+  }
+
+  val revokeUris: (List<String>) -> Unit = { revokedUris ->
+    val revokedSet = revokedUris.toSet()
+    val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
+    val removedDraftIds = revokedSet.mapNotNull(currentMappings::get).toSet()
+    latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id in removedDraftIds })
+    updatePhotoDraftIds(currentMappings.filterKeys { it !in revokedSet })
+    revokedResolvingUris = revokedResolvingUris + revokedSet
+  }
+
+  val singlePhotoPicker = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.PickVisualMedia(),
+  ) { uri ->
+    if (uri != null) resolveUris(listOf(uri))
+  }
+  val multiplePhotoPicker = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.PickMultipleVisualMedia(multiplePickerMaximum),
+  ) { uris ->
+    resolveUris(uris)
+  }
+
+  fun launchClassicPhotoPicker() {
+    val request = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+    if (remainingCapacity <= 1) singlePhotoPicker.launch(request)
+    else multiplePhotoPicker.launch(request)
+  }
+
+  val effectiveImageInputSources = availableImageInputSources.filterTo(mutableSetOf()) { source ->
+    source != ChatImageInputSource.Camera || onRequestCamera != null
+  }
+
+  LaunchedEffect(messages.lastOrNull()?.id) {
+    if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
+  }
+  LaunchedEffect(imageDrafts.map(ChatImageDraft::id)) {
+    val currentIDs = imageDrafts.map(ChatImageDraft::id).toSet()
+    val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
+    val staleUris = currentMappings.filterValues { it !in currentIDs }.keys
+    if (staleUris.isNotEmpty()) {
+      updatePhotoDraftIds(currentMappings.filterKeys { it !in staleUris })
+      if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + staleUris
+    }
+  }
+  LaunchedEffect(
+    effectiveImageInputSources,
+    imageInputConfiguration.photoLibraryPresentationStyle,
+  ) {
+    if (ChatImageInputSource.PhotoLibrary !in effectiveImageInputSources ||
+      imageInputConfiguration.photoLibraryPresentationStyle !=
+      ChatPhotoLibraryPresentationStyle.Inline
+    ) {
+      isInlinePhotoLibraryPresented = false
+      isInlinePhotoLibraryExpanded = false
+    }
+  }
+
+  BoxWithConstraints(modifier) {
+    val inputSurfaceHeight = ChatInputSurfaceGeometry.photoLibraryHeight(
+      availableHeight = maxHeight.value,
+      isExpanded = isInlinePhotoLibraryExpanded,
+    ).dp
+
+    Column(Modifier.background(theme.background).imePadding()) {
+      LazyColumn(
+        state = listState,
+        modifier = Modifier.weight(1f).fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        if (messages.isEmpty()) {
+          item {
+            Text(
+              strings.emptyMessage,
+              Modifier.fillMaxWidth().padding(vertical = 48.dp),
+              textAlign = TextAlign.Center,
+            )
+          }
+        } else {
+          items(messages, key = { it.id }) { message ->
+            ChatMessageRow(
+              message = message,
+              currentUserId = currentUserId,
+              theme = theme,
+              strings = strings,
+              showsSenderName = showsSenderName,
+              onRetry = onRetry?.let { { it(message.id) } },
+              onImageTap = onImageTap,
+              imageContent = imageContent,
+            )
+          }
+        }
+      }
+
+      ChatImageComposer(
+        draft = draft,
+        onDraftChange = onDraftChange,
+        imageDrafts = imageDrafts,
+        configuration = imageInputConfiguration,
+        availableImageInputSources = effectiveImageInputSources,
+        isInlinePhotoLibraryPresented = isInlinePhotoLibraryPresented,
+        isInlinePhotoLibraryExpanded = isInlinePhotoLibraryExpanded,
+        inputSurfaceHeight = inputSurfaceHeight,
+        isPreparingImages = resolvingUris.isNotEmpty() || isPreparingCameraImage,
+        isPreparingCameraImage = isPreparingCameraImage,
+        isSending = isSending,
+        strings = strings,
+        draftPolicy = draftPolicy,
+        theme = theme,
+        onRequestCamera = {
+          focusManager.clearFocus()
+          onRequestCamera?.invoke()
+        },
+        onRequestPhotoLibrary = {
+          focusManager.clearFocus()
+          if (imageInputConfiguration.photoLibraryPresentationStyle ==
+            ChatPhotoLibraryPresentationStyle.Inline && embeddedAvailable
+          ) {
+            isInlinePhotoLibraryPresented = !isInlinePhotoLibraryPresented
+            if (!isInlinePhotoLibraryPresented) isInlinePhotoLibraryExpanded = false
+          } else {
+            launchClassicPhotoPicker()
+          }
+        },
+        onToggleInlineExpansion = {
+          isInlinePhotoLibraryExpanded = !isInlinePhotoLibraryExpanded
+        },
+        onRemoveImage = { imageId ->
+          latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id == imageId })
+          val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
+          val removedUris = currentMappings.filterValues { it == imageId }.keys
+          updatePhotoDraftIds(currentMappings.filterValues { it != imageId })
+          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + removedUris
+        },
+        onSubmit = {
+          val submission = ChatComposerSubmission.create(
+            draft = draft,
+            images = imageDrafts,
+            policy = draftPolicy,
+          ) ?: return@ChatImageComposer
+          onSubmit(submission)
+          onDraftChange("")
+          onImageDraftsChange(emptyList())
+          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + photoUris
+          updatePhotoDraftIds(emptyMap())
+          isInlinePhotoLibraryExpanded = false
+        },
+        imageContent = imageContent,
+        inlinePhotoLibrary = {
+          ChatEmbeddedPhotoPicker(
+            maximumSelectionCount = embeddedPhotoMaximum,
+            initialSelectedUris = photoDraftIds.keys,
+            isExpanded = isInlinePhotoLibraryExpanded,
+            pendingDeselectUris = pendingDeselectUris,
+            onUrisSelected = { resolveUris(it.map(Uri::parse)) },
+            onUrisDeselected = revokeUris,
+            onPendingDeselectHandled = { handled ->
+              pendingDeselectUris = pendingDeselectUris - handled
+            },
+            onSelectionComplete = {
+              isInlinePhotoLibraryPresented = false
+              isInlinePhotoLibraryExpanded = false
+            },
+            onFailure = { latestFailureHandler?.invoke(it) },
+          )
+        },
+      )
+    }
+  }
+}
+
+@Composable
 fun ChatMessageRow(
   message: ChatMessage,
   currentUserId: String,
@@ -100,6 +415,12 @@ fun ChatMessageRow(
   strings: ChatRoomStrings = ChatRoomStrings.localized(),
   showsSenderName: Boolean = false,
   onRetry: (() -> Unit)? = null,
+  onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
+  imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+      Text(strings.imageLabel)
+    }
+  },
 ) {
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
@@ -127,6 +448,45 @@ fun ChatMessageRow(
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(formatTime(message.createdAtEpochMillis), style = MaterialTheme.typography.labelSmall)
             ChatDeliveryIndicator(message.deliveryState, strings.sendingLabel, strings.failedLabel, theme, onRetry)
+          }
+        }
+      }
+    }
+    is ChatMessageContent.Images -> {
+      val own = message.isSentBy(currentUserId)
+      Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = if (own) Arrangement.End else Arrangement.Start,
+      ) {
+        Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
+          if (showsSenderName && !own) {
+            Text(
+              message.sender?.displayName ?: strings.unknownSender,
+              style = MaterialTheme.typography.labelSmall,
+            )
+          }
+          ChatImageGrid(
+            messageId = message.id,
+            images = content.values,
+            imageLabel = strings.imageLabel,
+            onImageTap = onImageTap,
+            imageContent = imageContent,
+          )
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp),
+          ) {
+            Text(
+              formatTime(message.createdAtEpochMillis),
+              style = MaterialTheme.typography.labelSmall,
+            )
+            ChatDeliveryIndicator(
+              message.deliveryState,
+              strings.sendingLabel,
+              strings.failedLabel,
+              theme,
+              onRetry,
+            )
           }
         }
       }

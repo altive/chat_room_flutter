@@ -199,7 +199,7 @@ Android実装はFlutter exampleから独立した`android/` Gradle projectです
 - `chat-core`: UI frameworkに依存しない表示モデル、入力方針、送信状態、
   リアクションの楽観的更新、最近使った項目。
 - `chat-ui-compose`: Room、Composer、再送UI、リアクション、ステッカーpicker、
-  アバター、システムイベント、タイムライン境界。
+  アバター、システムイベント、タイムライン境界、複数画像入力と画像メッセージ。
 
 開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
 composite buildとして追加し、`jp.co.altive.chat:chat-core`と
@@ -222,6 +222,47 @@ AltiveChatRoom(
   ),
   onRetry = viewModel::retry,
   onSend = viewModel::send,
+)
+```
+
+画像入力では、classic Photo Pickerと、対応端末のEmbedded Photo Pickerを選べます。
+Embedded版はAndroid 14（API 34）かつSDK Extensions 15以上で利用され、非対応端末では
+classic Photo Pickerへフォールバックします。カメラ、URIの正規化・圧縮、アップロード、
+永続化、画像ローダーはアプリ側が担当します。
+
+```kotlin
+var draft by remember { mutableStateOf("") }
+var imageDrafts by remember { mutableStateOf(emptyList<ChatImageDraft>()) }
+
+AltiveChatRoom(
+  messages = messages,
+  currentUserId = currentUserId,
+  draft = draft,
+  onDraftChange = { draft = it },
+  imageDrafts = imageDrafts,
+  onImageDraftsChange = { imageDrafts = it },
+  imageInputConfiguration = ChatImageInputConfiguration(
+    photoLibraryPresentationStyle = ChatPhotoLibraryPresentationStyle.Inline,
+    maximumSelectionCount = 4,
+  ),
+  resolvePhotoLibraryUri = viewModel::makeImageDraft,
+  onRequestCamera = {
+    // アプリ側のカメラ画面を表示し、結果をimageDraftsへ追加
+  },
+  onImagePreparationFailure = viewModel::showImageError,
+  imageContent = { image ->
+    AsyncImage(
+      model = when (val resource = image.resource) {
+        is ChatImageResource.LocalUri -> resource.value
+        is ChatImageResource.RemoteUrl -> resource.value
+      },
+      contentDescription = image.accessibilityLabel,
+      modifier = Modifier.fillMaxSize(),
+      contentScale = ContentScale.Crop,
+    )
+  },
+  onImageTap = viewModel::openImageViewer,
+  onSubmit = viewModel::send,
 )
 ```
 

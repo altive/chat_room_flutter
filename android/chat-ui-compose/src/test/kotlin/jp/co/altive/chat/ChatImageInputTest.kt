@@ -1,0 +1,61 @@
+package jp.co.altive.chat
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+
+class ChatImageInputTest {
+  @Test fun defaultsToFourSystemPickerImages() {
+    val configuration = ChatImageInputConfiguration()
+    assertEquals(ChatPhotoLibraryPresentationStyle.System, configuration.photoLibraryPresentationStyle)
+    assertEquals(4, configuration.maximumSelectionCount)
+    assertTrue(configuration.allowsInlineExpansion)
+  }
+
+  @Test fun rejectsNonPositiveMaximum() {
+    assertFailsWith<IllegalArgumentException> {
+      ChatImageInputConfiguration(maximumSelectionCount = 0)
+    }
+  }
+
+  @Test fun calculatesGridCounts() {
+    assertEquals(0, ChatImageGridMetrics.visibleCount(-1))
+    assertEquals(4, ChatImageGridMetrics.visibleCount(8))
+    assertEquals(0, ChatImageGridMetrics.overflowCount(4))
+    assertEquals(3, ChatImageGridMetrics.overflowCount(7))
+  }
+
+  @Test fun keepsMultiplePickerContractLimitAboveOne() {
+    assertEquals(2, multiplePhotoPickerLimit(remainingCapacity = 0, platformMaximum = 1))
+    assertEquals(2, multiplePhotoPickerLimit(remainingCapacity = 1, platformMaximum = 50))
+    assertEquals(4, multiplePhotoPickerLimit(remainingCapacity = 4, platformMaximum = 50))
+    assertEquals(3, multiplePhotoPickerLimit(remainingCapacity = 4, platformMaximum = 3))
+  }
+
+  @Test fun allowsTextImagesAndBothButRejectsBusyOrOverLimit() {
+    assertTrue(canSend("hello", 0))
+    assertTrue(canSend("", 1))
+    assertTrue(canSend("hello", 2))
+    assertFalse(canSend("", 0))
+    assertFalse(canSend("hello", 1, isPreparing = true))
+    assertFalse(canSend("hello", 1, isSending = true))
+    assertFalse(canSend("hello", 5, maximumImageCount = 4))
+  }
+
+  private fun canSend(
+    draft: String,
+    imageCount: Int,
+    maximumImageCount: Int? = null,
+    isPreparing: Boolean = false,
+    isSending: Boolean = false,
+  ) = ChatComposerSendPolicy.canSend(
+    draft = draft,
+    imageCount = imageCount,
+    maximumImageCount = maximumImageCount,
+    isPreparingImages = isPreparing,
+    isSending = isSending,
+    draftPolicy = ChatDraftPolicy.Unrestricted,
+  )
+}

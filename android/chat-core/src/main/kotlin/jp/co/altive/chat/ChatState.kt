@@ -40,4 +40,13 @@ object ChatInputSurfaceGeometry {
 
   fun inputSurfaceHeight(keyboardContentHeight: Float, bottomChromeHeight: Float): Float =
     (keyboardContentHeight - bottomChromeHeight).coerceAtLeast(0f)
+
+  fun photoLibraryHeight(availableHeight: Float, isExpanded: Boolean): Float {
+    val normalizedHeight = availableHeight.coerceAtLeast(0f)
+    val compactHeight = (normalizedHeight * .36f).coerceIn(180f, 320f)
+      .coerceAtMost(normalizedHeight)
+    if (!isExpanded) return compactHeight
+    val expandedHeight = minOf(normalizedHeight * .78f, (normalizedHeight - 120f).coerceAtLeast(0f))
+    return maxOf(compactHeight, expandedHeight).coerceAtMost(normalizedHeight)
+  }
 }

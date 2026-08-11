@@ -5,6 +5,12 @@
   <string name="altive_chat_sending">Sending</string>
   <string name="altive_chat_failed">Failed to send. Retry</string>
   <string name="altive_chat_unknown_sender">Unknown</string>
+  <string name="altive_chat_camera">Take a photo</string>
+  <string name="altive_chat_photo_library">Photo library</string>
+  <string name="altive_chat_remove_image">Remove selected image</string>
+  <string name="altive_chat_image">Image</string>
+  <string name="altive_chat_photo_library_expand">Expand photo library</string>
+  <string name="altive_chat_photo_library_collapse">Collapse photo library</string>
   <string name="altive_chat_expand">Expand events</string>
   <string name="altive_chat_collapse">Collapse events</string>
 </resources>

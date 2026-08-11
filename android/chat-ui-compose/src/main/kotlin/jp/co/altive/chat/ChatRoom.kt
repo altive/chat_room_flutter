@@ -20,8 +20,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -515,6 +518,9 @@ fun ChatComposer(
   onSend: (String) -> Unit,
 ) {
   val normalized = draftPolicy.normalizedText(draft)
+  val focusManager = LocalFocusManager.current
+  val focusRequester = remember { FocusRequester() }
+  val keyboardController = LocalSoftwareKeyboardController.current
   Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 10.dp), horizontalAlignment = Alignment.End) {
     attachmentPreview()
     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -522,13 +528,23 @@ fun ChatComposer(
         BasicTextField(
           value = draft,
           onValueChange = { onDraftChange(draftPolicy.limited(it)) },
-          modifier = Modifier.weight(1f).testTag("AltiveChatUI.Composer").padding(horizontal = 16.dp, vertical = 12.dp),
+          modifier = Modifier.weight(1f).focusRequester(focusRequester).testTag("AltiveChatUI.Composer").padding(horizontal = 16.dp, vertical = 12.dp),
           textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
           cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
           decorationBox = { inner -> if (draft.isEmpty()) Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant); inner() },
         )
         if (showsInputSurfaceButton) TextButton(
-          onClick = onToggleInputSurface,
+          onClick = {
+            if (isInputSurfacePresented) {
+              onToggleInputSurface()
+              focusRequester.requestFocus()
+              keyboardController?.show()
+            } else {
+              focusManager.clearFocus()
+              keyboardController?.hide()
+              onToggleInputSurface()
+            }
+          },
           modifier = Modifier.semantics {
             contentDescription = listOfNotNull(inputSurfaceButtonLabel, inputSurfaceButtonHint).joinToString(". ")
           },

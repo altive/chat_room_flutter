@@ -94,7 +94,9 @@ fun <Reference, Asset> ChatStickerPicker(
       items(packs.size) { index ->
         val pack = packs[index]
         TextButton(onClick = { onSelectPack(pack.id) }, modifier = Modifier.semantics { contentDescription = pack.displayName }) {
-          image(ChatStickerPickerImageSource.Asset(pack.trayIcon))
+          Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+            image(ChatStickerPickerImageSource.Asset(pack.trayIcon))
+          }
         }
       }
     }
@@ -103,11 +105,15 @@ fun <Reference, Asset> ChatStickerPicker(
     else LazyVerticalGrid(columns = GridCells.Adaptive(88.dp), contentPadding = PaddingValues(12.dp)) {
       if (isHistorySelected) items(recentReferences) { reference ->
         TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }) {
-          image(ChatStickerPickerImageSource.Reference(reference))
+          Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+            image(ChatStickerPickerImageSource.Reference(reference))
+          }
         }
       } else items(selected?.stickers.orEmpty(), key = { it.id }) { sticker ->
         TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }) {
-          image(ChatStickerPickerImageSource.Asset(sticker.asset))
+          Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+            image(ChatStickerPickerImageSource.Asset(sticker.asset))
+          }
         }
       }
       item(span = { GridItemSpan(maxLineSpan) }) { footer() }

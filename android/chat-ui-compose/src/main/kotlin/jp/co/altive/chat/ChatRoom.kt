@@ -113,12 +113,17 @@ fun ChatMessageRow(
       Row(Modifier.fillMaxWidth(), horizontalArrangement = if (own) Arrangement.End else Arrangement.Start) {
         Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
           if (showsSenderName && !own) Text(message.sender?.displayName ?: strings.unknownSender, style = MaterialTheme.typography.labelSmall)
-          Surface(
-            color = if (own) theme.outgoingBubble else theme.incomingBubble,
-            contentColor = if (own) theme.outgoingText else theme.incomingText,
-            shape = RoundedCornerShape(18.dp),
-            border = if (own) null else androidx.compose.foundation.BorderStroke(.5.dp, theme.incomingBubbleBorder),
-          ) { Text(content.value, Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) }
+          ChatMessageBubble(isOwnMessage = own, theme = theme) {
+            Text(
+              content.value,
+              Modifier.padding(
+                start = if (own) 14.dp else 22.dp,
+                end = if (own) 22.dp else 14.dp,
+                top = 10.dp,
+                bottom = 10.dp,
+              ),
+            )
+          }
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(formatTime(message.createdAtEpochMillis), style = MaterialTheme.typography.labelSmall)
             ChatDeliveryIndicator(message.deliveryState, strings.sendingLabel, strings.failedLabel, theme, onRetry)

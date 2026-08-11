@@ -15,7 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
@@ -26,6 +32,66 @@ import java.text.DateFormat
 import java.util.Date
 
 enum class ChatMessageAlignment { Incoming, Outgoing }
+
+/** 投稿者側へ尻尾を伸ばす共通メッセージ吹き出し。 */
+@Composable
+fun ChatMessageBubble(
+  isOwnMessage: Boolean,
+  modifier: Modifier = Modifier,
+  theme: ChatRoomTheme = ChatRoomTheme.fanely(),
+  content: @Composable () -> Unit,
+) {
+  Surface(
+    modifier = modifier,
+    shape = ChatMessageBubbleShape(isOwnMessage),
+    color = if (isOwnMessage) theme.outgoingBubble else theme.incomingBubble,
+    contentColor = if (isOwnMessage) theme.outgoingText else theme.incomingText,
+    border = if (isOwnMessage) null else BorderStroke(1.dp, theme.incomingBubbleBorder),
+    content = content,
+  )
+}
+
+/** 投稿者側へ尻尾を伸ばす吹き出し形状。 */
+class ChatMessageBubbleShape(
+  private val isOwnMessage: Boolean,
+) : Shape {
+  override fun createOutline(
+    size: Size,
+    layoutDirection: LayoutDirection,
+    density: Density,
+  ): Outline {
+    val tailWidth = with(density) { 8.dp.toPx() }
+    val radius = minOf(with(density) { 18.dp.toPx() }, size.height / 2f)
+    val bodyMinX = if (isOwnMessage) 0f else tailWidth
+    val bodyMaxX = if (isOwnMessage) size.width - tailWidth else size.width
+    val tailTipX = if (isOwnMessage) size.width else 0f
+    val tailBaseX = if (isOwnMessage) bodyMaxX else bodyMinX
+    val path = Path().apply {
+      moveTo(bodyMinX + radius, 0f)
+      lineTo(bodyMaxX - radius, 0f)
+      quadraticTo(bodyMaxX, 0f, bodyMaxX, radius)
+      if (isOwnMessage) {
+        lineTo(bodyMaxX, size.height - 18.dp.toPx(density))
+        cubicTo(bodyMaxX, size.height - 9.dp.toPx(density), tailTipX - 4.dp.toPx(density), size.height - 4.dp.toPx(density), tailTipX, size.height)
+        cubicTo(tailTipX - 4.dp.toPx(density), size.height, tailBaseX - 8.dp.toPx(density), size.height, tailBaseX - 14.dp.toPx(density), size.height)
+        lineTo(bodyMinX + radius, size.height)
+        quadraticTo(bodyMinX, size.height, bodyMinX, size.height - radius)
+      } else {
+        lineTo(bodyMaxX, size.height - radius)
+        quadraticTo(bodyMaxX, size.height, bodyMaxX - radius, size.height)
+        lineTo(tailBaseX + 14.dp.toPx(density), size.height)
+        cubicTo(tailBaseX + 8.dp.toPx(density), size.height, tailTipX + 4.dp.toPx(density), size.height, tailTipX, size.height)
+        cubicTo(tailTipX + 4.dp.toPx(density), size.height - 4.dp.toPx(density), bodyMinX, size.height - 9.dp.toPx(density), bodyMinX, size.height - 18.dp.toPx(density))
+      }
+      lineTo(bodyMinX, radius)
+      quadraticTo(bodyMinX, 0f, bodyMinX + radius, 0f)
+      close()
+    }
+    return Outline.Generic(path)
+  }
+}
+
+private fun Dp.toPx(density: Density): Float = with(density) { toPx() }
 
 @Composable
 fun ChatReactionSummaryBar(

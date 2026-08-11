@@ -1,6 +1,7 @@
 plugins {
   id("com.android.library")
   id("org.jetbrains.kotlin.plugin.compose")
+  id("maven-publish")
 }
 
 android {
@@ -21,6 +22,10 @@ android {
   }
 
   testOptions { unitTests.isIncludeAndroidResources = true }
+
+  publishing {
+    singleVariant("release") { withSourcesJar() }
+  }
 }
 
 dependencies {
@@ -42,4 +47,54 @@ dependencies {
   androidTestImplementation("androidx.test.ext:junit:1.2.1")
   androidTestImplementation("androidx.compose.ui:ui-test-junit4")
   debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+afterEvaluate {
+  publishing {
+    publications {
+      create<MavenPublication>("release") {
+        from(components["release"])
+        artifactId = "chat-ui-compose"
+        pom {
+          name.set("Altive Chat UI Compose")
+          description.set("AltiveChatのJetpack Compose UIコンポーネント")
+          url.set("https://github.com/altive/chat_room_flutter")
+          scm {
+            url.set("https://github.com/altive/chat_room_flutter")
+            connection.set("scm:git:https://github.com/altive/chat_room_flutter.git")
+          }
+        }
+      }
+    }
+  }
+}
+
+publishing {
+  repositories {
+    maven {
+      name = "localBuild"
+      url = uri(rootProject.layout.buildDirectory.dir("maven-repository").get().asFile)
+    }
+    val remoteUrl = providers.gradleProperty("altiveChatMavenUrl")
+      .orElse(providers.environmentVariable("ALTIVE_CHAT_MAVEN_URL"))
+      .orNull
+    if (!remoteUrl.isNullOrBlank()) {
+      maven {
+        name = "remote"
+        url = uri(remoteUrl)
+        val remoteUsername = providers.gradleProperty("altiveChatMavenUsername")
+          .orElse(providers.environmentVariable("ALTIVE_CHAT_MAVEN_USERNAME"))
+          .orNull
+        val remotePassword = providers.gradleProperty("altiveChatMavenPassword")
+          .orElse(providers.environmentVariable("ALTIVE_CHAT_MAVEN_PASSWORD"))
+          .orNull
+        if (!remoteUsername.isNullOrBlank() || !remotePassword.isNullOrBlank()) {
+          credentials {
+            username = remoteUsername
+            password = remotePassword
+          }
+        }
+      }
+    }
+  }
 }

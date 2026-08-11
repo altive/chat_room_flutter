@@ -6,5 +6,5 @@ plugins {
 
 allprojects {
   group = "jp.co.altive.chat"
-  version = "0.1.0-SNAPSHOT"
+  version = providers.gradleProperty("altiveChatVersion").getOrElse("0.1.0-SNAPSHOT")
 }

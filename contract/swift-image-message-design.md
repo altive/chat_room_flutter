@@ -45,6 +45,32 @@ OS標準の検索、アルバム、複数選択、プライバシー保護をそ
 現在の最小OSと一致する。選択結果を連続して反映するため
 `selectionBehavior: .continuousAndOrdered`を使う。
 
+inline Picker自体には、キーボード相当の高さから全画面近くまで自動でスワイプ拡張する
+状態管理はない。標準SwiftUI viewと同様に`frame`でサイズを指定できるため、AltiveChatが
+同じPickerのview identityを保ったまま高さを変更して拡張を実現する。
+
+Picker上部にPackage所有のドラッグハンドルを置く。ハンドルを上へスワイプすると
+`.compact`から`.expanded`、下へスワイプすると`.compact`へ戻す。写真グリッド本体は
+縦スクロールを所有するため、グリッド全体へ競合する`DragGesture`を重ねない。ハンドルは
+タップ操作とVoiceOverの「写真一覧を拡大／縮小」操作にも対応する。
+
+```swift
+private enum ChatPhotoLibraryExpansionState {
+  case compact
+  case expanded
+}
+```
+
+- compact高は、既存のキーボード／スタンプ入力面と同じ高さにする。
+- expanded高は、利用可能高の75〜80%を目安に、Composerを操作できる余白を残して計算する。
+- `.safeAreaInset(edge: .bottom)`内の高さをアニメーションし、タイムラインは背後へ隠さず縮める。
+- 拡張前後で同じ`PhotosPicker`とselection Bindingを維持し、選択内容とresolver taskを失わない。
+- 横向きなど拡張余地がない場合は、expanded高をcompact高へclampする。
+
+代替案として、inline Pickerをcustom detentと`.large`を持つsheetへ入れれば、sheet標準の
+スワイプ拡張を利用できる。ただしチャット入力面からmodal presentationへ切り替わり、
+選択UIの連続性とLINEに近い見た目が弱くなるため、初回は同一viewの高さ変更を採用する。
+
 inline版もシステム提供のPickerであり、アプリが選択された項目だけにアクセスする。
 LINEと完全に同じサムネイル配置や操作を必要とする場合は、PhotoKitで独自グリッドを作る
 第三の方法がある。ただし、写真ライブラリ権限、Limited Library、`PHPhotoLibrary`の差分監視、
@@ -89,17 +115,22 @@ public enum ChatPhotoLibraryPresentationStyle: Hashable, Sendable {
 public struct ChatImageInputConfiguration: Hashable, Sendable {
   public var photoLibraryPresentationStyle: ChatPhotoLibraryPresentationStyle
   public var maximumSelectionCount: Int
+  public var allowsInlineExpansion: Bool
 
   public init(
     photoLibraryPresentationStyle: ChatPhotoLibraryPresentationStyle = .system,
-    maximumSelectionCount: Int = 4
+    maximumSelectionCount: Int = 4,
+    allowsInlineExpansion: Bool = true
   ) {
     precondition(maximumSelectionCount > 0)
     self.photoLibraryPresentationStyle = photoLibraryPresentationStyle
     self.maximumSelectionCount = maximumSelectionCount
+    self.allowsInlineExpansion = allowsInlineExpansion
   }
 }
 ```
+
+`allowsInlineExpansion`はinline表示だけに適用し、システム表示では無視する。
 
 写真ライブラリはPackageが表示する。アプリは`onRequestCamera`を受け、カメラ画面を表示する。
 カメラを利用できない端末などでは、
@@ -244,14 +275,15 @@ public struct ChatImageLoader: Sendable {
 3. カメラボタン押下時はキーボードを閉じ、`onRequestCamera`を通知する。
 4. 写真ボタン押下時は設定に従い、システムPickerを表示するかinline入力面を開く。
 5. inline入力面、スタンプ入力面、キーボードは単一のenum状態で排他的に管理する。
-6. 新規追加可能数は`maximumSelectionCount - imageDrafts.count`とし、0なら両画像入力を無効化する。
-7. 写真選択順を保持し、各項目をresolverで非同期処理する。選択解除された項目の処理はcancelする。
-8. プレビューは横スクロールとし、全画像に選択順と個別削除ボタンを表示する。
-9. 画像選択中もテキストフィールドを編集可能にする。
-10. 送信ボタンは正規化済みテキストまたは1枚以上の画像があれば有効にする。
-11. 送信時はテキストと全画像を1つの`ChatComposerSubmission`として`onSubmit`へ渡す。
-12. コールバック呼び出し後にテキスト、画像、`PhotosPickerItem`の選択状態をまとめて空にする。
-13. アプリはコールバック内で安定したIDの`.sending`メッセージを即座に追加する。
+6. inline入力面はドラッグハンドルの上スワイプで拡張、下スワイプで縮小する。
+7. 新規追加可能数は`maximumSelectionCount - imageDrafts.count`とし、0なら両画像入力を無効化する。
+8. 写真選択順を保持し、各項目をresolverで非同期処理する。選択解除された項目の処理はcancelする。
+9. プレビューは横スクロールとし、全画像に選択順と個別削除ボタンを表示する。
+10. 画像選択中もテキストフィールドを編集可能にする。
+11. 送信ボタンは正規化済みテキストまたは1枚以上の画像があれば有効にする。
+12. 送信時はテキストと全画像を1つの`ChatComposerSubmission`として`onSubmit`へ渡す。
+13. コールバック呼び出し後にテキスト、画像、`PhotosPickerItem`の選択状態をまとめて空にする。
+14. アプリはコールバック内で安定したIDの`.sending`メッセージを即座に追加する。
 
 写真項目の解決中は送信を無効化し、項目単位の`ProgressView`を表示する。1項目だけ失敗した
 場合は成功済みの画像を保持し、失敗項目を選択から外してアプリへエラーを通知する。
@@ -333,6 +365,9 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 - 画像機能を指定しない既存initializerでボタンが表示されない。
 - 利用可能な取得元に応じて各ボタンが表示され、正しい値をコールバックする。
 - system／inlineの両方で複数選択と選択順が一致する。
+- inlineの上下スワイプとアクセシビリティ操作で拡張／縮小し、selectionを維持する。
+- 写真グリッドの縦スクロールが拡張gestureに奪われない。
+- 横向きや狭い画面で拡張高が利用可能領域を超えない。
 - 既定上限が4で、アプリ指定上限と残り選択可能数が反映される。
 - 写真とカメラを混在させても合計上限を超えず、上限の動的縮小で既存画像を暗黙に削除しない。
 - 処理中は多重起動と送信ができず、選択解除で処理がcancelされる。
@@ -350,5 +385,6 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 - [PhotosPicker](https://developer.apple.com/documentation/photosui/photospicker)
 - [Implementing an inline Photos picker](https://developer.apple.com/documentation/photosui/implementing-an-inline-photos-picker)
 - [PhotosPickerStyle.inline](https://developer.apple.com/documentation/photosui/photospickerstyle/inline)
+- [PresentationDetent](https://developer.apple.com/documentation/swiftui/presentationdetent)
 - [UIImagePickerController](https://developer.apple.com/documentation/uikit/uiimagepickercontroller)
 - [Requesting authorization to capture and save media](https://developer.apple.com/documentation/avfoundation/requesting-authorization-to-capture-and-save-media)

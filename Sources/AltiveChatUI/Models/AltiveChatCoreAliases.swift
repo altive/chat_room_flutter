@@ -15,6 +15,18 @@ public typealias ChatDeliveryStateMachine = AltiveChatCore.ChatDeliveryStateMach
 /// `AltiveChatUI`だけをimportする既存利用側向けのメッセージ型。
 public typealias ChatMessage = AltiveChatCore.ChatMessage
 
+/// チャット画像の読み込み元。
+public typealias ChatImageResource = AltiveChatCore.ChatImageResource
+
+/// 画像メッセージへ表示する画像。
+public typealias ChatImage = AltiveChatCore.ChatImage
+
+/// 送信前に入力欄で保持する画像。
+public typealias ChatImageDraft = AltiveChatCore.ChatImageDraft
+
+/// テキストと画像をまとめた送信要求。
+public typealias ChatComposerSubmission = AltiveChatCore.ChatComposerSubmission
+
 /// チャット入力の方針。
 public typealias ChatDraftPolicy = AltiveChatCore.ChatDraftPolicy
 

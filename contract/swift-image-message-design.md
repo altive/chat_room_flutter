@@ -1,5 +1,7 @@
 # SwiftUI 画像メッセージ設計
 
+> 実装済み。公開APIの利用例と責務分担を含む実装仕様として維持する。
+
 ## 目的
 
 SwiftUI版のチャット入力欄で、テキストフィールドの左にカメラと写真ライブラリの
@@ -243,7 +245,8 @@ imageDrafts: Binding<[ChatImageDraft]> = .constant([])
 imageInputConfiguration: ChatImageInputConfiguration = .init()
 availableImageInputSources: Set<ChatImageInputSource> = []
 isPreparingCameraImage: Bool = false
-imageLoader: ChatImageLoader = .urlSession
+isSending: Bool = false
+imageLoader: ChatImageLoader = .standard
 onRequestCamera: (() -> Void)? = nil
 resolvePhotoLibraryItem: (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)? = nil
 onImagePreparationFailure: ((Error) -> Void)? = nil
@@ -260,7 +263,8 @@ UI targetだけの契約とし、CoreやアプリのStore／Entityへ保存し�
 
 ```swift
 public struct ChatImageLoader: Sendable {
-  public var load: @Sendable (ChatImageResource) async throws -> Data
+  public init(loadData: @escaping @Sendable (ChatImageResource) async throws -> Data)
+  public func data(for resource: ChatImageResource) async throws -> Data
 }
 ```
 

@@ -8,6 +8,8 @@ public struct ChatMessageRow: View {
   private let theme: ChatRoomTheme
   private let strings: ChatRoomStrings
   private let showsSenderName: Bool
+  private let imageLoader: ChatImageLoader
+  private let onImageTap: ((String, Int) -> Void)?
   private let onRetry: (() -> Void)?
 
   /// 1件分のメッセージ行を作成する。
@@ -17,6 +19,8 @@ public struct ChatMessageRow: View {
     theme: ChatRoomTheme = .fanely,
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
+    imageLoader: ChatImageLoader = .standard,
+    onImageTap: ((String, Int) -> Void)? = nil,
     onRetry: (() -> Void)? = nil
   ) {
     self.message = message
@@ -24,6 +28,8 @@ public struct ChatMessageRow: View {
     self.theme = theme
     self.strings = strings
     self.showsSenderName = showsSenderName
+    self.imageLoader = imageLoader
+    self.onImageTap = onImageTap
     self.onRetry = onRetry
   }
 
@@ -31,9 +37,45 @@ public struct ChatMessageRow: View {
     switch message.content {
     case .text(let text):
       userMessage(text)
+    case .images(let images):
+      imageMessage(images)
     case .system(let text):
       systemMessage(text)
     }
+  }
+
+  private func imageMessage(_ images: [ChatImage]) -> some View {
+    let isOwnMessage = message.isSent(by: currentUserID)
+
+    return HStack(alignment: .bottom, spacing: 8) {
+      if isOwnMessage {
+        Spacer(minLength: 8)
+      }
+
+      VStack(alignment: isOwnMessage ? .trailing : .leading, spacing: 4) {
+        if showsSenderName, !isOwnMessage {
+          Text(message.sender?.displayName ?? strings.unknownSender)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+
+        ChatImageGrid(
+          messageID: message.id,
+          images: images,
+          imageLoader: imageLoader,
+          imageLabel: strings.imageLabel,
+          loadingFailureLabel: strings.imageLoadingFailedLabel,
+          onImageTap: onImageTap
+        )
+
+        deliveryMetadata
+      }
+
+      if !isOwnMessage {
+        Spacer(minLength: 8)
+      }
+    }
+    .frame(maxWidth: .infinity)
   }
 
   private func userMessage(_ text: String) -> some View {
@@ -56,20 +98,7 @@ public struct ChatMessageRow: View {
             .textSelection(.enabled)
         }
 
-        HStack(spacing: 5) {
-          Text(message.createdAt.formatted(date: .omitted, time: .shortened))
-
-          ChatDeliveryIndicator(
-            state: message.deliveryState,
-            sendingLabel: strings.sendingLabel,
-            retryLabel: strings.failedLabel,
-            controlSize: .mini,
-            theme: theme,
-            onRetry: onRetry
-          )
-        }
-        .font(.caption2)
-        .foregroundStyle(.secondary)
+        deliveryMetadata
       }
       .accessibilityElement(children: .combine)
 
@@ -78,6 +107,23 @@ public struct ChatMessageRow: View {
       }
     }
     .frame(maxWidth: .infinity)
+  }
+
+  private var deliveryMetadata: some View {
+    HStack(spacing: 5) {
+      Text(message.createdAt.formatted(date: .omitted, time: .shortened))
+
+      ChatDeliveryIndicator(
+        state: message.deliveryState,
+        sendingLabel: strings.sendingLabel,
+        retryLabel: strings.failedLabel,
+        controlSize: .mini,
+        theme: theme,
+        onRetry: onRetry
+      )
+    }
+    .font(.caption2)
+    .foregroundStyle(.secondary)
   }
 
   private func systemMessage(_ text: String) -> some View {

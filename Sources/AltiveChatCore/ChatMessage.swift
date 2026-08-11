@@ -5,6 +5,9 @@ public enum ChatMessageContent: Hashable, Sendable {
   /// ユーザーが送信したテキスト。
   case text(String)
 
+  /// ユーザーが送信した1枚以上の画像。
+  case images([ChatImage])
+
   /// 会話内へ表示するシステム文言。
   case system(String)
 }

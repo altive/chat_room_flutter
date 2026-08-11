@@ -91,7 +91,8 @@ Swift Package Manager は次の2製品を提供します。
 
 SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
 吹き出し、入力欄、送信状態と再送導線、リアクションと長押し操作、ステッカーpicker、
-アバター、システムイベントの展開、キーボードとスタンプ入力面のレイアウト計算を
+アバター、システムイベントの展開、複数画像メッセージ、system／inline Photos Picker、
+キーボードとスタンプ入力面のレイアウト計算を
 共通コンポーネントとして提供します。各アプリ固有のStore、権限、外部I/O、課金、
 画面遷移はパッケージへ持ち込みません。
 
@@ -139,6 +140,53 @@ struct ChatScreen: View {
         // 同じoperation IDで再送
       },
       onSend: send
+    )
+  }
+}
+```
+
+画像入力を有効にする場合は、選択中画像もアプリ側で保持します。既定の最大数は4枚です。
+`resolvePhotoLibraryItem`では、選択画像を向き補正・縮小・圧縮してアプリ管理の一時ファイルへ
+保存し、そのURLを返します。カメラ画面、権限、アップロード、永続化はアプリ側の責務です。
+
+```swift
+import AltiveChatUI
+import PhotosUI
+import SwiftUI
+
+struct ImageChatScreen: View {
+  @State private var draft = ""
+  @State private var imageDrafts: [ChatImageDraft] = []
+
+  let messages: [ChatMessage]
+  let currentUserID: String
+  let makeImageDraft: @Sendable (PhotosPickerItem) async throws -> ChatImageDraft
+
+  var body: some View {
+    AltiveChatRoom(
+      messages: messages,
+      currentUserID: currentUserID,
+      draft: $draft,
+      imageDrafts: $imageDrafts,
+      imageInputConfiguration: .init(
+        photoLibraryPresentationStyle: .inline,
+        maximumSelectionCount: 4
+      ),
+      onRequestCamera: {
+        // アプリ側のカメラ画面を表示し、結果をimageDraftsへ追加
+      },
+      resolvePhotoLibraryItem: { item in
+        try await makeImageDraft(item)
+      },
+      onImagePreparationFailure: { error in
+        // AlertやToastを表示
+      },
+      onImageTap: { messageID, imageIndex in
+        // アプリ側の画像ビューアを表示
+      },
+      onSubmit: { submission in
+        // submission.textとsubmission.imagesを同じ送信操作として保存・アップロード
+      }
     )
   }
 }

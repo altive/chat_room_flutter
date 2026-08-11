@@ -19,4 +19,16 @@ public enum ChatInputSurfaceGeometry {
   ) -> CGFloat {
     max(0, keyboardContentHeight - bottomChromeHeight)
   }
+
+  /// inline写真一覧のコンパクト／拡張時の高さを返す。
+  public static func photoLibraryHeight(
+    availableHeight: CGFloat,
+    isExpanded: Bool
+  ) -> CGFloat {
+    let normalizedHeight = max(0, availableHeight)
+    let compactHeight = min(320, max(180, normalizedHeight * 0.36))
+    guard isExpanded else { return min(normalizedHeight, compactHeight) }
+    let expandedHeight = min(normalizedHeight * 0.78, max(0, normalizedHeight - 120))
+    return min(normalizedHeight, max(compactHeight, expandedHeight))
+  }
 }

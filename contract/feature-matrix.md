@@ -7,7 +7,7 @@
 | --- | --- | --- | --- |
 | テキストメッセージ | implemented | implemented | implemented |
 | システムメッセージ | implemented | implemented | implemented |
-| 画像メッセージ | implemented | planned | planned |
+| 画像メッセージ | implemented | implemented | planned |
 | スタンプメッセージ | implemented | planned | planned |
 | 音声通話メッセージ | implemented | planned | planned |
 | 自分・相手の左右配置 | implemented | implemented | implemented |

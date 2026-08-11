@@ -1,8 +1,15 @@
 "chat.empty" = "No messages yet";
 "chat.composer.placeholder" = "Message";
 "chat.composer.send" = "Send";
+"chat.composer.camera" = "Take a photo";
+"chat.composer.photoLibrary" = "Photo library";
+"chat.composer.removeImage" = "Remove selected image";
 "chat.delivery.sending" = "Sending";
 "chat.delivery.failed" = "Failed to send";
+"chat.image.label" = "Image";
+"chat.image.loadingFailed" = "Failed to load image";
+"chat.photoLibrary.expand" = "Expand photo library";
+"chat.photoLibrary.collapse" = "Collapse photo library";
 "chat.sender.unknown" = "Unknown user";
 "chat.system.expand" = "Show grouped events";
 "chat.system.collapse" = "Hide grouped events";

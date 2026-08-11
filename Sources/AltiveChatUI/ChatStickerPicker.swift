@@ -121,8 +121,13 @@ public struct ChatStickerPickerStrings: Hashable, Sendable {
 
 /// 取得・保存・画像解決をアプリ側へ注入する共通ステッカーpicker。
 @MainActor
-public struct ChatStickerPicker<Reference, Asset, ImageContent>: View
-where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
+public struct ChatStickerPicker<Reference, Asset, ImageContent, FooterContent>: View
+where
+  Reference: Hashable & Sendable,
+  Asset: Sendable,
+  ImageContent: View,
+  FooterContent: View
+{
   private let isCatalogLoading: Bool
   private let isCatalogAvailable: Bool
   private let loadState: ChatStickerPickerLoadState
@@ -136,6 +141,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
   private let onSelectPack: (String) -> Void
   private let onSelect: (Reference) -> Void
   private let onRetry: () -> Void
+  private let footer: () -> FooterContent
   private let image: (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
 
   private let columns = [GridItem(.adaptive(minimum: 88), spacing: 10)]
@@ -155,6 +161,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
     onSelectPack: @escaping (String) -> Void,
     onSelect: @escaping (Reference) -> Void,
     onRetry: @escaping () -> Void,
+    @ViewBuilder footer: @escaping () -> FooterContent,
     @ViewBuilder image: @escaping (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
   ) {
     self.isCatalogLoading = isCatalogLoading
@@ -170,6 +177,7 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
     self.onSelectPack = onSelectPack
     self.onSelect = onSelect
     self.onRetry = onRetry
+    self.footer = footer
     self.image = image
   }
 
@@ -307,6 +315,45 @@ where Reference: Hashable & Sendable, Asset: Sendable, ImageContent: View {
         }
         .padding(12)
       }
+      footer()
     }
+  }
+}
+
+extension ChatStickerPicker where FooterContent == EmptyView {
+  /// 末尾コンテンツを表示しないステッカーpickerを作成する。
+  public init(
+    isCatalogLoading: Bool,
+    isCatalogAvailable: Bool,
+    loadState: ChatStickerPickerLoadState,
+    packs: [ChatStickerPickerPack<Reference, Asset>],
+    selectedPackID: String,
+    isHistorySelected: Bool,
+    recentReferences: [Reference],
+    strings: ChatStickerPickerStrings,
+    referenceAccessibilityLabel: @escaping (Reference) -> String = { String(describing: $0) },
+    onSelectHistory: @escaping () -> Void,
+    onSelectPack: @escaping (String) -> Void,
+    onSelect: @escaping (Reference) -> Void,
+    onRetry: @escaping () -> Void,
+    @ViewBuilder image: @escaping (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
+  ) {
+    self.init(
+      isCatalogLoading: isCatalogLoading,
+      isCatalogAvailable: isCatalogAvailable,
+      loadState: loadState,
+      packs: packs,
+      selectedPackID: selectedPackID,
+      isHistorySelected: isHistorySelected,
+      recentReferences: recentReferences,
+      strings: strings,
+      referenceAccessibilityLabel: referenceAccessibilityLabel,
+      onSelectHistory: onSelectHistory,
+      onSelectPack: onSelectPack,
+      onSelect: onSelect,
+      onRetry: onRetry,
+      footer: { EmptyView() },
+      image: image
+    )
   }
 }

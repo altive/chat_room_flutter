@@ -25,6 +25,7 @@ class BottomWidget extends StatefulWidget {
     required this.leadingWidgets,
     required this.replyToMessageBar,
     required this.stickerPackages,
+    required this.stickerPickerFooter,
     required this.selectedSticker,
     required this.onStickerSelected,
   });
@@ -61,6 +62,9 @@ class BottomWidget extends StatefulWidget {
 
   /// 利用可能なステッカーパッケージ一覧。
   final List<StickerPackage> stickerPackages;
+
+  /// ステッカー一覧の最下部に表示するWidget。
+  final Widget? stickerPickerFooter;
 
   /// 現在選択中のステッカー。
   final Sticker? selectedSticker;
@@ -221,6 +225,7 @@ class _BottomWidgetState extends State<BottomWidget> {
               // ステッカー選択View。
               _StickerSelectionView(
                 stickerPackages: widget.stickerPackages,
+                footer: widget.stickerPickerFooter,
                 onStickerSelected: widget.onStickerSelected,
               ),
           ],
@@ -234,10 +239,12 @@ class _BottomWidgetState extends State<BottomWidget> {
 class _StickerSelectionView extends StatefulWidget {
   const _StickerSelectionView({
     required this.stickerPackages,
+    required this.footer,
     required this.onStickerSelected,
   });
 
   final List<StickerPackage> stickerPackages;
+  final Widget? footer;
   final ValueChanged<Sticker> onStickerSelected;
 
   @override
@@ -298,26 +305,34 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
 
           // 選択中のステッカーパッケージのステッカー一覧。
           Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 73 / 58,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 16,
-              ),
-              itemCount: _selectedStickerPackage?.stickers.length ?? 0,
-              itemBuilder: (context, index) {
-                final sticker = _selectedStickerPackage?.stickers[index];
-                if (sticker == null) {
-                  return const SizedBox.shrink();
-                }
-                return GestureDetector(
-                  onTap: () {
-                    widget.onStickerSelected.call(sticker);
+            child: CustomScrollView(
+              slivers: [
+                SliverGrid.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    childAspectRatio: 73 / 58,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 16,
+                  ),
+                  itemCount: _selectedStickerPackage?.stickers.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final sticker = _selectedStickerPackage?.stickers[index];
+                    if (sticker == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return GestureDetector(
+                      onTap: () {
+                        widget.onStickerSelected.call(sticker);
+                      },
+                      child: CommonCachedNetworkImage(
+                        imageUrl: sticker.imageUrl,
+                      ),
+                    );
                   },
-                  child: CommonCachedNetworkImage(imageUrl: sticker.imageUrl),
-                );
-              },
+                ),
+                if (widget.footer case final footer?)
+                  SliverToBoxAdapter(child: footer),
+              ],
             ),
           ),
         ],

@@ -3,6 +3,7 @@ package jp.co.altive.chat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
@@ -43,6 +44,11 @@ data class ChatStickerPickerStrings(
   val retryLabel: String,
 )
 
+/**
+ * 取得・保存・画像解決をアプリ側へ注入する共通ステッカーpicker。
+ *
+ * [footer]はスタンプ一覧の最下部へ配置され、一覧と一緒にスクロールする。
+ */
 @Composable
 fun <Reference, Asset> ChatStickerPicker(
   isCatalogLoading: Boolean,
@@ -59,6 +65,7 @@ fun <Reference, Asset> ChatStickerPicker(
   onRetry: () -> Unit,
   modifier: Modifier = Modifier,
   referenceAccessibilityLabel: (Reference) -> String = { it.toString() },
+  footer: @Composable () -> Unit = {},
   image: @Composable (ChatStickerPickerImageSource<Reference, Asset>) -> Unit,
 ) {
   if (isCatalogLoading) {
@@ -103,6 +110,7 @@ fun <Reference, Asset> ChatStickerPicker(
           image(ChatStickerPickerImageSource.Asset(sticker.asset))
         }
       }
+      item(span = { GridItemSpan(maxLineSpan) }) { footer() }
     }
   }
 }

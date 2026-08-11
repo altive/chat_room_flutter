@@ -48,6 +48,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.bottomLeadingWidgets,
     this.replyToMessageBar,
     this.stickerPackages = const [],
+    this.stickerPickerFooter,
     this.outgoingTextMessagePopupMenuLayout,
     this.outgoingImageMessagePopupMenuLayout,
     this.outgoingStickerMessagePopupMenuLayout,
@@ -174,6 +175,11 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// ステッカーパッケージの配列。
   final List<StickerPackage> stickerPackages;
+
+  /// ステッカー一覧の最下部に表示するWidget。
+  ///
+  /// アプリ固有の案内や導線を、ステッカー一覧と一緒にスクロールして表示する場合に使用する。
+  final Widget? stickerPickerFooter;
 
   /// ログインユーザーが送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
@@ -394,6 +400,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                     leadingWidgets: widget.bottomLeadingWidgets,
                     replyToMessageBar: widget.replyToMessageBar,
                     stickerPackages: widget.stickerPackages,
+                    stickerPickerFooter: widget.stickerPickerFooter,
                     selectedSticker: _selectedSticker,
                     onStickerSelected: (sticker) {
                       setState(() {

@@ -9,8 +9,6 @@
   <string name="altive_chat_photo_library">写真ライブラリ</string>
   <string name="altive_chat_remove_image">選択画像を削除</string>
   <string name="altive_chat_image">画像</string>
-  <string name="altive_chat_photo_library_expand">写真一覧を広げる</string>
-  <string name="altive_chat_photo_library_collapse">写真一覧を縮める</string>
   <string name="altive_chat_expand">イベントを展開</string>
   <string name="altive_chat_collapse">イベントを折りたたむ</string>
 </resources>

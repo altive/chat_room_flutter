@@ -85,55 +85,6 @@ public struct ChatImageComposer: View {
     self.additionalSourceButton = additionalSourceButton
   }
 
-  /// 旧inline写真入力面の引数を受け取る互換initializer。
-  @available(*, deprecated, message: "写真ライブラリはシステム標準シートで表示されます")
-  public init(
-    draft: Binding<String>,
-    imageDrafts: Binding<[ChatImageDraft]>,
-    selectedPhotoItems: Binding<[PhotosPickerItem]>,
-    isInlinePhotoLibraryPresented: Binding<Bool>,
-    isInlinePhotoLibraryExpanded: Binding<Bool>,
-    focus: FocusState<Bool>.Binding,
-    configuration: ChatImageInputConfiguration,
-    availableImageInputSources: Set<ChatImageInputSource>,
-    maximumPhotoSelectionCount: Int,
-    isPhotoLibrarySelectionEnabled: Bool,
-    inputSurfaceHeight: CGFloat,
-    isPreparingImages: Bool,
-    isPreparingCameraImage: Bool,
-    isSending: Bool,
-    strings: ChatRoomStrings = .localized,
-    draftPolicy: ChatDraftPolicy = .unrestricted,
-    theme: ChatRoomTheme = .fanely,
-    imageLoader: ChatImageLoader = .standard,
-    onRequestCamera: (() -> Void)?,
-    onRemoveImage: @escaping (String) -> Void,
-    onSubmit: @escaping () -> Void,
-    additionalSourceButton: AnyView? = nil
-  ) {
-    self.init(
-      draft: draft,
-      imageDrafts: imageDrafts,
-      selectedPhotoItems: selectedPhotoItems,
-      focus: focus,
-      configuration: configuration,
-      availableImageInputSources: availableImageInputSources,
-      maximumPhotoSelectionCount: maximumPhotoSelectionCount,
-      isPhotoLibrarySelectionEnabled: isPhotoLibrarySelectionEnabled,
-      isPreparingImages: isPreparingImages,
-      isPreparingCameraImage: isPreparingCameraImage,
-      isSending: isSending,
-      strings: strings,
-      draftPolicy: draftPolicy,
-      theme: theme,
-      imageLoader: imageLoader,
-      onRequestCamera: onRequestCamera,
-      onRemoveImage: onRemoveImage,
-      onSubmit: onSubmit,
-      additionalSourceButton: additionalSourceButton
-    )
-  }
-
   public var body: some View {
     VStack(alignment: .trailing, spacing: 7) {
       previewStrip

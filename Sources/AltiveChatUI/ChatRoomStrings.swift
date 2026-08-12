@@ -35,12 +35,6 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 画像の読み込み失敗を示す文言。
   public var imageLoadingFailedLabel: String
 
-  /// inline写真一覧を拡張する操作のラベル。
-  public var expandPhotoLibraryLabel: String
-
-  /// inline写真一覧を縮小する操作のラベル。
-  public var collapsePhotoLibraryLabel: String
-
   /// チャット画面で使用する文言を作成する。
   public init(
     emptyMessage: String,
@@ -53,9 +47,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
     photoLibraryButtonLabel: String = "Photo library",
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
-    imageLoadingFailedLabel: String = "Failed to load image",
-    expandPhotoLibraryLabel: String = "Expand photo library",
-    collapsePhotoLibraryLabel: String = "Collapse photo library"
+    imageLoadingFailedLabel: String = "Failed to load image"
   ) {
     self.emptyMessage = emptyMessage
     self.messagePlaceholder = messagePlaceholder
@@ -68,8 +60,6 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
     self.imageLoadingFailedLabel = imageLoadingFailedLabel
-    self.expandPhotoLibraryLabel = expandPhotoLibraryLabel
-    self.collapsePhotoLibraryLabel = collapsePhotoLibraryLabel
   }
 
   /// Package内のローカライズ済み文言。
@@ -85,9 +75,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
       photoLibraryButtonLabel: String(localized: "chat.composer.photoLibrary", bundle: .module),
       removeImageButtonLabel: String(localized: "chat.composer.removeImage", bundle: .module),
       imageLabel: String(localized: "chat.image.label", bundle: .module),
-      imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module),
-      expandPhotoLibraryLabel: String(localized: "chat.photoLibrary.expand", bundle: .module),
-      collapsePhotoLibraryLabel: String(localized: "chat.photoLibrary.collapse", bundle: .module)
+      imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module)
     )
   }
 }

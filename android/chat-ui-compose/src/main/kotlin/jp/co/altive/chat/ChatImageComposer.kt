@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -43,9 +42,6 @@ fun ChatImageComposer(
   imageDrafts: List<ChatImageDraft>,
   configuration: ChatImageInputConfiguration,
   availableImageInputSources: Set<ChatImageInputSource>,
-  isInlinePhotoLibraryPresented: Boolean,
-  isInlinePhotoLibraryExpanded: Boolean,
-  inputSurfaceHeight: Dp,
   isPreparingImages: Boolean,
   isPreparingCameraImage: Boolean,
   isSending: Boolean,
@@ -54,11 +50,9 @@ fun ChatImageComposer(
   theme: ChatRoomTheme,
   onRequestCamera: () -> Unit,
   onRequestPhotoLibrary: () -> Unit,
-  onToggleInlineExpansion: () -> Unit,
   onRemoveImage: (String) -> Unit,
   onSubmit: () -> Unit,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
-  inlinePhotoLibrary: @Composable BoxScope.() -> Unit,
   additionalSourceContent: @Composable () -> Unit = {},
 ) {
   val canSend = ChatComposerSendPolicy.canSend(

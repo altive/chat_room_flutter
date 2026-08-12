@@ -16,8 +16,8 @@ Photo Picker非対応端末では
 AndroidX Activityが`ACTION_OPEN_DOCUMENT`等へフォールバックする。フォールバック先では
 OSが複数選択上限を無視する場合があるため、AltiveChat側でも結果を上限以内へ丸める。
 
-`ChatPhotoLibraryPresentationStyle.Inline`はソース互換性のために残す非推奨値で、
-`System`と同じ標準Photo Pickerを表示する。
+写真ライブラリの表示方式はOS標準Photo Pickerに固定し、入力欄内へ埋め込むための
+設定や状態は公開しない。
 
 ## 公開契約
 

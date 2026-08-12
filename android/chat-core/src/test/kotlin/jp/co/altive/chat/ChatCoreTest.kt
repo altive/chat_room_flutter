@@ -108,8 +108,5 @@ class ChatCoreTest {
     assertEquals(310f, ChatInputSurfaceGeometry.keyboardContentHeight(344f, 34f))
     assertEquals(261f, ChatInputSurfaceGeometry.inputSurfaceHeight(310f, 49f))
     assertEquals(0f, ChatInputSurfaceGeometry.inputSurfaceHeight(40f, 49f))
-    assertEquals(288f, ChatInputSurfaceGeometry.photoLibraryHeight(800f, false))
-    assertEquals(624f, ChatInputSurfaceGeometry.photoLibraryHeight(800f, true))
-    assertEquals(100f, ChatInputSurfaceGeometry.photoLibraryHeight(100f, false))
   }
 }

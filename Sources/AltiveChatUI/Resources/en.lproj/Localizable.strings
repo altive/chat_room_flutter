@@ -8,8 +8,6 @@
 "chat.delivery.failed" = "Failed to send";
 "chat.image.label" = "Image";
 "chat.image.loadingFailed" = "Failed to load image";
-"chat.photoLibrary.expand" = "Expand photo library";
-"chat.photoLibrary.collapse" = "Collapse photo library";
 "chat.sender.unknown" = "Unknown user";
 "chat.system.expand" = "Show grouped events";
 "chat.system.collapse" = "Hide grouped events";

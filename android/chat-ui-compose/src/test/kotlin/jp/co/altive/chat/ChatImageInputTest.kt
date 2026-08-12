@@ -7,9 +7,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class ChatImageInputTest {
-  @Test fun defaultsToFourSystemPickerImages() {
+  @Test fun defaultsToFourPickerImages() {
     val configuration = ChatImageInputConfiguration()
-    assertEquals(ChatPhotoLibraryPresentationStyle.System, configuration.photoLibraryPresentationStyle)
     assertEquals(4, configuration.maximumSelectionCount)
   }
 

@@ -36,8 +36,8 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 OS標準の検索、アルバム、複数選択、プライバシー保護をそのまま利用でき、実装と保守が
 最も小さい。選択順を保持するため`selectionBehavior: .ordered`を使う。
 
-写真一覧はキーボードやステッカー入力面へ埋め込まない。`inline`設定は既存コードとの
-ソース互換性のために残すが、`system`と同じ標準シートを表示する非推奨値とする。
+写真一覧はキーボードやステッカー入力面へ埋め込まない。表示方式を切り替える設定は
+公開せず、常にOS標準シートを表示する。
 
 ## 責務の境界
 
@@ -60,7 +60,7 @@ OS標準の検索、アルバム、複数選択、プライバシー保護をそ
 
 ### 画像取得元
 
-`AltiveChatUI`に入力元と写真ライブラリの表示方式を追加する。
+`AltiveChatUI`に入力元と最大選択数の設定を追加する。
 
 ```swift
 public enum ChatImageInputSource: Hashable, Identifiable, Sendable {
@@ -70,31 +70,15 @@ public enum ChatImageInputSource: Hashable, Identifiable, Sendable {
   public var id: Self { self }
 }
 
-public enum ChatPhotoLibraryPresentationStyle: Hashable, Sendable {
-  case system
-  case inline
-}
-
 public struct ChatImageInputConfiguration: Hashable, Sendable {
-  public var photoLibraryPresentationStyle: ChatPhotoLibraryPresentationStyle
   public var maximumSelectionCount: Int
-  public var allowsInlineExpansion: Bool
 
-  public init(
-    photoLibraryPresentationStyle: ChatPhotoLibraryPresentationStyle = .system,
-    maximumSelectionCount: Int = 4,
-    allowsInlineExpansion: Bool = true
-  ) {
+  public init(maximumSelectionCount: Int = 4) {
     precondition(maximumSelectionCount > 0)
-    self.photoLibraryPresentationStyle = photoLibraryPresentationStyle
     self.maximumSelectionCount = maximumSelectionCount
-    self.allowsInlineExpansion = allowsInlineExpansion
   }
 }
 ```
-
-`photoLibraryPresentationStyle.inline`と`allowsInlineExpansion`は互換性のために残すが、
-標準シートへの統一後は表示へ影響しない。
 
 写真ライブラリはPackageが表示する。アプリは`onRequestCamera`を受け、カメラ画面を表示する。
 カメラを利用できない端末などでは、

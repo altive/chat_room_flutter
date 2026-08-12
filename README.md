@@ -101,7 +101,7 @@ SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザ
 ```swift
 .package(
   url: "https://github.com/altive/altive-chat.git",
-  from: "0.1.0"
+  from: "1.0.0"
 )
 ```
 

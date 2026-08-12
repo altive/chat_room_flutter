@@ -43,35 +43,4 @@ struct ChatInputSurfaceGeometryTests {
     )
   }
 
-  @Test("inline写真一覧は拡張時だけ利用可能高の約8割まで広がる")
-  func calculatesPhotoLibraryHeight() {
-    #expect(
-      ChatInputSurfaceGeometry.photoLibraryHeight(
-        availableHeight: 800,
-        isExpanded: false
-      ) == 288
-    )
-    #expect(
-      ChatInputSurfaceGeometry.photoLibraryHeight(
-        availableHeight: 800,
-        isExpanded: true
-      ) == 624
-    )
-  }
-
-  @Test("低い画面ではinline写真一覧を利用可能高へ収める")
-  func clampsPhotoLibraryHeight() {
-    #expect(
-      ChatInputSurfaceGeometry.photoLibraryHeight(
-        availableHeight: 100,
-        isExpanded: false
-      ) == 100
-    )
-    #expect(
-      ChatInputSurfaceGeometry.photoLibraryHeight(
-        availableHeight: -1,
-        isExpanded: true
-      ) == 0
-    )
-  }
 }

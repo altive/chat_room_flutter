@@ -49,8 +49,6 @@ data class ChatRoomStrings(
   val photoLibraryButtonLabel: String = "Photo library",
   val removeImageButtonLabel: String = "Remove image",
   val imageLabel: String = "Image",
-  val expandPhotoLibraryLabel: String = "Expand photo library",
-  val collapsePhotoLibraryLabel: String = "Collapse photo library",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -65,8 +63,6 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_photo_library),
         stringResource(R.string.altive_chat_remove_image),
         stringResource(R.string.altive_chat_image),
-        stringResource(R.string.altive_chat_photo_library_expand),
-        stringResource(R.string.altive_chat_photo_library_collapse),
       )
     }
   }
@@ -295,9 +291,6 @@ fun AltiveChatRoom(
         imageDrafts = imageDrafts,
         configuration = imageInputConfiguration,
         availableImageInputSources = effectiveImageInputSources,
-        isInlinePhotoLibraryPresented = false,
-        isInlinePhotoLibraryExpanded = false,
-        inputSurfaceHeight = 0.dp,
         isPreparingImages = resolvingUris.isNotEmpty() || isPreparingCameraImage,
         isPreparingCameraImage = isPreparingCameraImage,
         isSending = isSending,
@@ -312,7 +305,6 @@ fun AltiveChatRoom(
           focusManager.clearFocus()
           launchClassicPhotoPicker()
         },
-        onToggleInlineExpansion = {},
         onRemoveImage = { imageId ->
           latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id == imageId })
           val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
@@ -330,7 +322,6 @@ fun AltiveChatRoom(
           updatePhotoDraftIds(emptyMap())
         },
         imageContent = imageContent,
-        inlinePhotoLibrary = {},
       )
     }
   }

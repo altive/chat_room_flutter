@@ -9,8 +9,6 @@
   <string name="altive_chat_photo_library">Photo library</string>
   <string name="altive_chat_remove_image">Remove selected image</string>
   <string name="altive_chat_image">Image</string>
-  <string name="altive_chat_photo_library_expand">Expand photo library</string>
-  <string name="altive_chat_photo_library_collapse">Collapse photo library</string>
   <string name="altive_chat_expand">Expand events</string>
   <string name="altive_chat_collapse">Collapse events</string>
 </resources>

@@ -4,13 +4,20 @@ package jp.co.altive.chat
 enum class ChatImageInputSource { Camera, PhotoLibrary }
 
 /** 写真ライブラリをOS画面または入力欄内のどちらへ表示するか。 */
-enum class ChatPhotoLibraryPresentationStyle { System, Inline }
+enum class ChatPhotoLibraryPresentationStyle {
+  System,
+
+  /** 互換性のために残している値。現在は[System]と同じ標準シートを表示する。 */
+  @Deprecated("写真ライブラリはシステム標準シートで表示されます", ReplaceWith("System"))
+  Inline,
+}
 
 /** 複数画像入力の表示設定。 */
 data class ChatImageInputConfiguration(
   val photoLibraryPresentationStyle: ChatPhotoLibraryPresentationStyle =
     ChatPhotoLibraryPresentationStyle.System,
   val maximumSelectionCount: Int = 4,
+  @Deprecated("写真ライブラリはシステム標準シートで表示されます")
   val allowsInlineExpansion: Boolean = true,
 ) {
   init {

@@ -40,7 +40,6 @@ dependencies {
   implementation("androidx.compose.material:material-icons-extended")
   implementation("androidx.compose.ui:ui-util")
   implementation("androidx.activity:activity-compose:1.13.0")
-  implementation("androidx.photopicker:photopicker-compose:1.0.0-alpha02")
 
   testImplementation("junit:junit:4.13.2")
   testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")

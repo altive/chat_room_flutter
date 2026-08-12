@@ -24,15 +24,12 @@ public struct ChatImageComposer: View {
   @Binding var draft: String
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
-  @Binding var isInlinePhotoLibraryPresented: Bool
-  @Binding var isInlinePhotoLibraryExpanded: Bool
 
   let focus: FocusState<Bool>.Binding
   let configuration: ChatImageInputConfiguration
   let availableImageInputSources: Set<ChatImageInputSource>
   let maximumPhotoSelectionCount: Int
   let isPhotoLibrarySelectionEnabled: Bool
-  let inputSurfaceHeight: CGFloat
   let isPreparingImages: Bool
   let isPreparingCameraImage: Bool
   let isSending: Bool
@@ -46,6 +43,50 @@ public struct ChatImageComposer: View {
   private let additionalSourceButton: AnyView?
 
   /// 画像入力に対応したチャット入力欄を作成する。
+  public init(
+    draft: Binding<String>,
+    imageDrafts: Binding<[ChatImageDraft]>,
+    selectedPhotoItems: Binding<[PhotosPickerItem]>,
+    focus: FocusState<Bool>.Binding,
+    configuration: ChatImageInputConfiguration,
+    availableImageInputSources: Set<ChatImageInputSource>,
+    maximumPhotoSelectionCount: Int,
+    isPhotoLibrarySelectionEnabled: Bool,
+    isPreparingImages: Bool,
+    isPreparingCameraImage: Bool,
+    isSending: Bool,
+    strings: ChatRoomStrings = .localized,
+    draftPolicy: ChatDraftPolicy = .unrestricted,
+    theme: ChatRoomTheme = .fanely,
+    imageLoader: ChatImageLoader = .standard,
+    onRequestCamera: (() -> Void)?,
+    onRemoveImage: @escaping (String) -> Void,
+    onSubmit: @escaping () -> Void,
+    additionalSourceButton: AnyView? = nil
+  ) {
+    _draft = draft
+    _imageDrafts = imageDrafts
+    _selectedPhotoItems = selectedPhotoItems
+    self.focus = focus
+    self.configuration = configuration
+    self.availableImageInputSources = availableImageInputSources
+    self.maximumPhotoSelectionCount = maximumPhotoSelectionCount
+    self.isPhotoLibrarySelectionEnabled = isPhotoLibrarySelectionEnabled
+    self.isPreparingImages = isPreparingImages
+    self.isPreparingCameraImage = isPreparingCameraImage
+    self.isSending = isSending
+    self.strings = strings
+    self.draftPolicy = draftPolicy
+    self.theme = theme
+    self.imageLoader = imageLoader
+    self.onRequestCamera = onRequestCamera
+    self.onRemoveImage = onRemoveImage
+    self.onSubmit = onSubmit
+    self.additionalSourceButton = additionalSourceButton
+  }
+
+  /// 旧inline写真入力面の引数を受け取る互換initializer。
+  @available(*, deprecated, message: "写真ライブラリはシステム標準シートで表示されます")
   public init(
     draft: Binding<String>,
     imageDrafts: Binding<[ChatImageDraft]>,
@@ -70,28 +111,27 @@ public struct ChatImageComposer: View {
     onSubmit: @escaping () -> Void,
     additionalSourceButton: AnyView? = nil
   ) {
-    _draft = draft
-    _imageDrafts = imageDrafts
-    _selectedPhotoItems = selectedPhotoItems
-    _isInlinePhotoLibraryPresented = isInlinePhotoLibraryPresented
-    _isInlinePhotoLibraryExpanded = isInlinePhotoLibraryExpanded
-    self.focus = focus
-    self.configuration = configuration
-    self.availableImageInputSources = availableImageInputSources
-    self.maximumPhotoSelectionCount = maximumPhotoSelectionCount
-    self.isPhotoLibrarySelectionEnabled = isPhotoLibrarySelectionEnabled
-    self.inputSurfaceHeight = inputSurfaceHeight
-    self.isPreparingImages = isPreparingImages
-    self.isPreparingCameraImage = isPreparingCameraImage
-    self.isSending = isSending
-    self.strings = strings
-    self.draftPolicy = draftPolicy
-    self.theme = theme
-    self.imageLoader = imageLoader
-    self.onRequestCamera = onRequestCamera
-    self.onRemoveImage = onRemoveImage
-    self.onSubmit = onSubmit
-    self.additionalSourceButton = additionalSourceButton
+    self.init(
+      draft: draft,
+      imageDrafts: imageDrafts,
+      selectedPhotoItems: selectedPhotoItems,
+      focus: focus,
+      configuration: configuration,
+      availableImageInputSources: availableImageInputSources,
+      maximumPhotoSelectionCount: maximumPhotoSelectionCount,
+      isPhotoLibrarySelectionEnabled: isPhotoLibrarySelectionEnabled,
+      isPreparingImages: isPreparingImages,
+      isPreparingCameraImage: isPreparingCameraImage,
+      isSending: isSending,
+      strings: strings,
+      draftPolicy: draftPolicy,
+      theme: theme,
+      imageLoader: imageLoader,
+      onRequestCamera: onRequestCamera,
+      onRemoveImage: onRemoveImage,
+      onSubmit: onSubmit,
+      additionalSourceButton: additionalSourceButton
+    )
   }
 
   public var body: some View {
@@ -142,11 +182,6 @@ public struct ChatImageComposer: View {
           )
           .padding(.trailing, 50)
       }
-
-      inlinePhotoLibrary
-        .frame(height: isInlinePhotoLibraryPresented ? inputSurfaceHeight : 0)
-        .padding(.horizontal, -16)
-        .clipped()
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
@@ -154,8 +189,6 @@ public struct ChatImageComposer: View {
     .overlay(alignment: .top) {
       Divider().opacity(0.35)
     }
-    .animation(.easeInOut(duration: 0.22), value: inputSurfaceHeight)
-    .animation(.easeInOut(duration: 0.18), value: isInlinePhotoLibraryPresented)
   }
 
   @ViewBuilder
@@ -183,39 +216,23 @@ public struct ChatImageComposer: View {
       }
 
       if availableImageInputSources.contains(.photoLibrary) {
-        switch configuration.photoLibraryPresentationStyle {
-        case .system:
-          PhotosPicker(
-            selection: $selectedPhotoItems,
-            maxSelectionCount: maximumPhotoSelectionCount,
-            selectionBehavior: .ordered,
-            matching: .images
-          ) {
-            Image(systemName: "photo.on.rectangle")
-              .frame(width: 44, height: 44)
-          }
-          .buttonStyle(.plain)
-          .disabled(!isPhotoLibrarySelectionEnabled)
-          .accessibilityLabel(strings.photoLibraryButtonLabel)
-          .simultaneousGesture(
-            TapGesture().onEnded {
-              focus.wrappedValue = false
-            }
-          )
-        case .inline:
-          Button {
-            focus.wrappedValue = false
-            isInlinePhotoLibraryPresented.toggle()
-            if !isInlinePhotoLibraryPresented {
-              isInlinePhotoLibraryExpanded = false
-            }
-          } label: {
-            Image(systemName: isInlinePhotoLibraryPresented ? "keyboard" : "photo.on.rectangle")
-              .frame(width: 44, height: 44)
-          }
-          .buttonStyle(.plain)
-          .accessibilityLabel(strings.photoLibraryButtonLabel)
+        PhotosPicker(
+          selection: $selectedPhotoItems,
+          maxSelectionCount: maximumPhotoSelectionCount,
+          selectionBehavior: .ordered,
+          matching: .images
+        ) {
+          Image(systemName: "photo.on.rectangle")
+            .frame(width: 44, height: 44)
         }
+        .buttonStyle(.plain)
+        .disabled(!isPhotoLibrarySelectionEnabled)
+        .accessibilityLabel(strings.photoLibraryButtonLabel)
+        .simultaneousGesture(
+          TapGesture().onEnded {
+            focus.wrappedValue = false
+          }
+        )
       }
     }
     .font(.system(size: 19, weight: .medium))
@@ -266,60 +283,6 @@ public struct ChatImageComposer: View {
       .scrollIndicators(.hidden)
       .frame(maxWidth: .infinity, alignment: .leading)
     }
-  }
-
-  @ViewBuilder
-  private var inlinePhotoLibrary: some View {
-    if configuration.photoLibraryPresentationStyle == .inline,
-      isInlinePhotoLibraryPresented
-    {
-      VStack(spacing: 0) {
-        if configuration.allowsInlineExpansion {
-          inlineExpansionHandle
-        }
-
-        PhotosPicker(
-          selection: $selectedPhotoItems,
-          maxSelectionCount: maximumPhotoSelectionCount,
-          selectionBehavior: .continuousAndOrdered,
-          matching: .images
-        ) {
-          Text(strings.photoLibraryButtonLabel)
-        }
-        .photosPickerStyle(.inline)
-        .disabled(!isPhotoLibrarySelectionEnabled)
-      }
-    }
-  }
-
-  private var inlineExpansionHandle: some View {
-    Capsule()
-      .fill(.secondary.opacity(0.55))
-      .frame(width: 38, height: 5)
-      .frame(maxWidth: .infinity)
-      .padding(.vertical, 9)
-      .contentShape(.rect)
-      .onTapGesture {
-        isInlinePhotoLibraryExpanded.toggle()
-      }
-      .accessibilityLabel(
-        isInlinePhotoLibraryExpanded
-          ? strings.collapsePhotoLibraryLabel : strings.expandPhotoLibraryLabel
-      )
-      .accessibilityAddTraits(.isButton)
-      .accessibilityAction {
-        isInlinePhotoLibraryExpanded.toggle()
-      }
-      .gesture(
-        DragGesture(minimumDistance: 12)
-          .onEnded { value in
-            if value.translation.height < -36 {
-              isInlinePhotoLibraryExpanded = true
-            } else if value.translation.height > 36 {
-              isInlinePhotoLibraryExpanded = false
-            }
-          }
-      )
   }
 
   private var canSend: Bool {

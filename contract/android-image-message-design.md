@@ -11,20 +11,13 @@ Compose版はSwiftUI版と同じく、カメラ・写真ボタン、複数画像
 
 ## Photo Picker
 
-`ChatPhotoLibraryPresentationStyle.System`は
-`PickVisualMedia`／`PickMultipleVisualMedia`を使用する。Photo Picker非対応端末では
+写真ボタンでは`PickVisualMedia`／`PickMultipleVisualMedia`を使用する。
+Photo Picker非対応端末では
 AndroidX Activityが`ACTION_OPEN_DOCUMENT`等へフォールバックする。フォールバック先では
 OSが複数選択上限を無視する場合があるため、AltiveChat側でも結果を上限以内へ丸める。
 
-`ChatPhotoLibraryPresentationStyle.Inline`はAndroidX
-`EmbeddedPhotoPicker`を使用する。利用条件はAndroid 14（API 34）かつSDK Extensions 15以上。
-条件を満たさない端末ではSystem表示へフォールバックする。
-
-Embedded Picker上部のPackage所有ハンドルだけへ縦ドラッグを設定する。写真グリッド本体の
-スクロールとは競合させない。compact高は利用可能高の36%、expanded高は約78%を基準にする。
-
-AndroidX `photopicker-compose`は現時点で`1.0.0-alpha02`のため、更新時はAPI差分と
-対応SDK Extensionsを確認する。
+`ChatPhotoLibraryPresentationStyle.Inline`はソース互換性のために残す非推奨値で、
+`System`と同じ標準Photo Pickerを表示する。
 
 ## 公開契約
 

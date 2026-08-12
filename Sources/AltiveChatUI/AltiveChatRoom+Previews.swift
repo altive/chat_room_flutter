@@ -74,7 +74,7 @@
         currentUserID: me.id,
         draft: $draft,
         imageDrafts: $imageDrafts,
-        imageInputConfiguration: .init(photoLibraryPresentationStyle: .inline),
+        imageInputConfiguration: .init(),
         imageLoader: ChatImageLoader { _ in previewImageData },
         onRequestCamera: {},
         resolvePhotoLibraryItem: { _ in

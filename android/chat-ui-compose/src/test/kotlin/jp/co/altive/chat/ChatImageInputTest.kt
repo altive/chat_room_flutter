@@ -11,7 +11,6 @@ class ChatImageInputTest {
     val configuration = ChatImageInputConfiguration()
     assertEquals(ChatPhotoLibraryPresentationStyle.System, configuration.photoLibraryPresentationStyle)
     assertEquals(4, configuration.maximumSelectionCount)
-    assertTrue(configuration.allowsInlineExpansion)
   }
 
   @Test fun rejectsNonPositiveMaximum() {

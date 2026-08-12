@@ -17,7 +17,7 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 最初のリリースでは次を対象とする。
 
 - カメラ、写真ライブラリの2ボタン
-- 写真ライブラリのシステム表示と、キーボード位置へ埋め込むinline表示
+- 写真ライブラリのOS標準シート表示
 - 複数画像の選択、プレビュー、個別取り消し、送信
 - 1回の送信操作で指定できる最大画像数をアプリから注入し、既定値は4枚
 - テキストだけ、画像だけ、テキストと画像の同時送信
@@ -32,58 +32,19 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 
 ## 写真ライブラリの表示方式
 
-二通りとも実装可能であり、同じ`PhotosPicker`の選択契約を共有する。
-
-### システム表示
-
 写真ボタンを`PhotosPicker`のlabelとして使用し、iOS標準のPickerを画面上へ表示する。
 OS標準の検索、アルバム、複数選択、プライバシー保護をそのまま利用でき、実装と保守が
 最も小さい。選択順を保持するため`selectionBehavior: .ordered`を使う。
 
-### 入力面へのinline表示
-
-写真ボタンを押すとキーボードまたはスタンプ一覧を閉じ、同じ高さの入力面へ
-`PhotosPicker`を`.photosPickerStyle(.inline)`で表示する。iOS 17+で利用でき、Packageの
-現在の最小OSと一致する。選択結果を連続して反映するため
-`selectionBehavior: .continuousAndOrdered`を使う。
-
-inline Picker自体には、キーボード相当の高さから全画面近くまで自動でスワイプ拡張する
-状態管理はない。標準SwiftUI viewと同様に`frame`でサイズを指定できるため、AltiveChatが
-同じPickerのview identityを保ったまま高さを変更して拡張を実現する。
-
-Picker上部にPackage所有のドラッグハンドルを置く。ハンドルを上へスワイプすると
-`.compact`から`.expanded`、下へスワイプすると`.compact`へ戻す。写真グリッド本体は
-縦スクロールを所有するため、グリッド全体へ競合する`DragGesture`を重ねない。ハンドルは
-タップ操作とVoiceOverの「写真一覧を拡大／縮小」操作にも対応する。
-
-```swift
-private enum ChatPhotoLibraryExpansionState {
-  case compact
-  case expanded
-}
-```
-
-- compact高は、既存のキーボード／スタンプ入力面と同じ高さにする。
-- expanded高は、利用可能高の75〜80%を目安に、Composerを操作できる余白を残して計算する。
-- `.safeAreaInset(edge: .bottom)`内の高さをアニメーションし、タイムラインは背後へ隠さず縮める。
-- 拡張前後で同じ`PhotosPicker`とselection Bindingを維持し、選択内容とresolver taskを失わない。
-- 横向きなど拡張余地がない場合は、expanded高をcompact高へclampする。
-
-代替案として、inline Pickerをcustom detentと`.large`を持つsheetへ入れれば、sheet標準の
-スワイプ拡張を利用できる。ただしチャット入力面からmodal presentationへ切り替わり、
-選択UIの連続性とLINEに近い見た目が弱くなるため、初回は同一viewの高さ変更を採用する。
-
-inline版もシステム提供のPickerであり、アプリが選択された項目だけにアクセスする。
-LINEと完全に同じサムネイル配置や操作を必要とする場合は、PhotoKitで独自グリッドを作る
-第三の方法がある。ただし、写真ライブラリ権限、Limited Library、`PHPhotoLibrary`の差分監視、
-iCloud画像取得、サムネイルキャッシュをアプリが管理する必要があるため初回は採用しない。
+写真一覧はキーボードやステッカー入力面へ埋め込まない。`inline`設定は既存コードとの
+ソース互換性のために残すが、`system`と同じ標準シートを表示する非推奨値とする。
 
 ## 責務の境界
 
 | AltiveChatが所有する | アプリが所有する |
 | --- | --- |
 | カメラ・写真ボタンの配置、見た目、アクセシビリティ | カメラ画面の表示とdismiss |
-| `PhotosPicker`のシステム／inline表示と一時的な選択状態 | カメラ利用可否と権限状態の判定 |
+| `PhotosPicker`の標準シート表示と一時的な選択状態 | カメラ利用可否と権限状態の判定 |
 | 最大選択数、選択順、残り選択可能数の制御 | `PhotosPickerItem`と撮影結果の正規化 |
 | 複数画像プレビュー、個別削除、送信導線 | EXIF orientationの正規化、縮小、圧縮、形式変換 |
 | 単一／複数画像メッセージと読み込み状態の表示 | Packageが読める一時ファイルの作成と寿命管理 |
@@ -132,7 +93,8 @@ public struct ChatImageInputConfiguration: Hashable, Sendable {
 }
 ```
 
-`allowsInlineExpansion`はinline表示だけに適用し、システム表示では無視する。
+`photoLibraryPresentationStyle.inline`と`allowsInlineExpansion`は互換性のために残すが、
+標準シートへの統一後は表示へ影響しない。
 
 写真ライブラリはPackageが表示する。アプリは`onRequestCamera`を受け、カメラ画面を表示する。
 カメラを利用できない端末などでは、
@@ -212,10 +174,7 @@ AltiveChatRoom(
   currentUserID: currentUserID,
   draft: $draft,
   imageDrafts: $imageDrafts,
-  imageInputConfiguration: .init(
-    photoLibraryPresentationStyle: .inline,
-    maximumSelectionCount: 4
-  ),
+  imageInputConfiguration: .init(maximumSelectionCount: 4),
   availableImageInputSources: [.camera, .photoLibrary],
   isPreparingCameraImage: isPreparingCameraImage,
   imageLoader: imageLoader,
@@ -277,9 +236,7 @@ public struct ChatImageLoader: Sendable {
 1. テキストフィールドの左に、SF Symbolsの`camera`と`photo`を使う44pt以上のタップ領域を置く。
 2. `availableImageInputSources`に含まれるボタンだけを表示する。
 3. カメラボタン押下時はキーボードを閉じ、`onRequestCamera`を通知する。
-4. 写真ボタン押下時は設定に従い、システムPickerを表示するかinline入力面を開く。
-5. inline入力面、スタンプ入力面、キーボードは単一のenum状態で排他的に管理する。
-6. inline入力面はドラッグハンドルの上スワイプで拡張、下スワイプで縮小する。
+4. 写真ボタン押下時はキーボードを閉じ、OS標準の複数選択Pickerを表示する。
 7. 新規追加可能数は`maximumSelectionCount - imageDrafts.count`とし、0なら両画像入力を無効化する。
 8. 写真選択順を保持し、各項目をresolverで非同期処理する。選択解除された項目の処理はcancelする。
 9. プレビューは横スクロールとし、全画像に選択順と個別削除ボタンを表示する。
@@ -322,7 +279,7 @@ public struct ChatImageLoader: Sendable {
 ```text
 ボタン操作
   -> camera: アプリが権限確認とカメラ表示
-  -> photoLibrary: Packageがsystem / inline PhotosPicker表示
+  -> photoLibrary: PackageがOS標準のPhotosPickerを表示
   -> Packageが選択順と最大数を管理
   -> アプリのresolverが各PhotosPickerItemを読み出す
   -> 取得結果を向き補正・縮小・圧縮
@@ -358,7 +315,7 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 
 1. `AltiveChatCore`へ画像値モデルと単体テストを追加する。
 2. 画像ローダー、複数画像バブル、読み込み状態、画像タップを`AltiveChatUI`へ追加する。
-3. system／inline `PhotosPicker`と項目resolverを`AltiveChatUI`へ追加する。
+3. OS標準`PhotosPicker`と項目resolverを`AltiveChatUI`へ追加する。
 4. `ChatComposer`へ先頭アクション、複数プレビュー、統合submissionを追加する。
 5. `AltiveChatRoom`から画像APIを公開し、Previewとアクセシビリティ文言を追加する。
 6. Swift Packageの単体テスト、iOS build、Family Room相当の画面確認を行う。
@@ -368,10 +325,7 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 
 - 画像機能を指定しない既存initializerでボタンが表示されない。
 - 利用可能な取得元に応じて各ボタンが表示され、正しい値をコールバックする。
-- system／inlineの両方で複数選択と選択順が一致する。
-- inlineの上下スワイプとアクセシビリティ操作で拡張／縮小し、selectionを維持する。
-- 写真グリッドの縦スクロールが拡張gestureに奪われない。
-- 横向きや狭い画面で拡張高が利用可能領域を超えない。
+- OS標準Pickerで複数選択と選択順が維持される。
 - 既定上限が4で、アプリ指定上限と残り選択可能数が反映される。
 - 写真とカメラを混在させても合計上限を超えず、上限の動的縮小で既存画像を暗黙に削除しない。
 - 処理中は多重起動と送信ができず、選択解除で処理がcancelされる。
@@ -387,8 +341,5 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 ## 参照するApple API
 
 - [PhotosPicker](https://developer.apple.com/documentation/photosui/photospicker)
-- [Implementing an inline Photos picker](https://developer.apple.com/documentation/photosui/implementing-an-inline-photos-picker)
-- [PhotosPickerStyle.inline](https://developer.apple.com/documentation/photosui/photospickerstyle/inline)
-- [PresentationDetent](https://developer.apple.com/documentation/swiftui/presentationdetent)
 - [UIImagePickerController](https://developer.apple.com/documentation/uikit/uiimagepickercontroller)
 - [Requesting authorization to capture and save media](https://developer.apple.com/documentation/avfoundation/requesting-authorization-to-capture-and-save-media)

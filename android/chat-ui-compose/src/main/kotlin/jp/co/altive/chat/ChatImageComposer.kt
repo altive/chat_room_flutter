@@ -1,7 +1,6 @@
 package jp.co.altive.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,10 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -34,10 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -138,16 +132,11 @@ fun ChatImageComposer(
         if (ChatImageInputSource.PhotoLibrary in availableImageInputSources) {
           IconButton(
             onClick = onRequestPhotoLibrary,
-            enabled = imageDrafts.size < configuration.maximumSelectionCount ||
-              isInlinePhotoLibraryPresented,
+            enabled = imageDrafts.size < configuration.maximumSelectionCount,
             modifier = Modifier.size(44.dp)
               .semantics { contentDescription = strings.photoLibraryButtonLabel },
           ) {
-            Icon(
-              if (isInlinePhotoLibraryPresented) Icons.Default.Keyboard
-              else Icons.Default.PhotoLibrary,
-              contentDescription = null,
-            )
+            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
           }
         }
       }
@@ -199,57 +188,5 @@ fun ChatImageComposer(
       )
     }
 
-    if (isInlinePhotoLibraryPresented) {
-      Column(Modifier.fillMaxWidth().height(inputSurfaceHeight)) {
-        if (configuration.allowsInlineExpansion) {
-          InlinePhotoLibraryHandle(
-            isExpanded = isInlinePhotoLibraryExpanded,
-            expandLabel = strings.expandPhotoLibraryLabel,
-            collapseLabel = strings.collapsePhotoLibraryLabel,
-            onToggle = onToggleInlineExpansion,
-          )
-        }
-        Box(Modifier.fillMaxWidth().weight(1f), content = inlinePhotoLibrary)
-      }
-    }
-  }
-}
-
-@Composable
-private fun InlinePhotoLibraryHandle(
-  isExpanded: Boolean,
-  expandLabel: String,
-  collapseLabel: String,
-  onToggle: () -> Unit,
-) {
-  Box(
-    Modifier.fillMaxWidth().height(28.dp)
-      .pointerInput(isExpanded) {
-        var dragDistance = 0f
-        detectVerticalDragGestures(
-          onDragStart = { dragDistance = 0f },
-          onVerticalDrag = { _, amount -> dragDistance += amount },
-          onDragEnd = {
-            if ((dragDistance < -36f && !isExpanded) ||
-              (dragDistance > 36f && isExpanded)
-            ) {
-              onToggle()
-            }
-          },
-        )
-      }
-      .semantics {
-        contentDescription = if (isExpanded) collapseLabel else expandLabel
-        onClick {
-          onToggle()
-          true
-        }
-      },
-    contentAlignment = Alignment.Center,
-  ) {
-    Box(
-      Modifier.width(38.dp).height(5.dp)
-        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .55f), CircleShape),
-    )
   }
 }

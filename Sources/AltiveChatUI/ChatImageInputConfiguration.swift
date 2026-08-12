@@ -17,6 +17,9 @@ public enum ChatPhotoLibraryPresentationStyle: Hashable, Sendable {
   case system
 
   /// キーボードと同じ入力面へ埋め込むPhotos Picker。
+  ///
+  /// 標準シートへ統一したため、現在は ``system`` と同じ動作をする。
+  @available(*, deprecated, message: "写真ライブラリはシステム標準シートで表示されます")
   case inline
 }
 
@@ -32,7 +35,7 @@ public struct ChatImageInputConfiguration: Hashable, Sendable {
     }
   }
 
-  /// inline表示をドラッグハンドルで拡張できるか。
+  /// 互換性のために残している旧inline表示用の設定。現在は使用しない。
   public var allowsInlineExpansion: Bool
 
   /// 画像入力機能の設定を作成する。

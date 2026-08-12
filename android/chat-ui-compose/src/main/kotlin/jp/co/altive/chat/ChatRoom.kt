@@ -162,10 +162,6 @@ fun AltiveChatRoom(
   var photoUris by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
   var photoDraftIdValues by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
   var resolvingUris by remember { mutableStateOf(emptySet<String>()) }
-  var revokedResolvingUris by remember { mutableStateOf(emptySet<String>()) }
-  var pendingDeselectUris by remember { mutableStateOf(emptySet<String>()) }
-  var isInlinePhotoLibraryPresented by rememberSaveable { mutableStateOf(false) }
-  var isInlinePhotoLibraryExpanded by rememberSaveable { mutableStateOf(false) }
 
   val latestImageDrafts by rememberUpdatedState(imageDrafts)
   val latestOnImageDraftsChange by rememberUpdatedState(onImageDraftsChange)
@@ -174,11 +170,6 @@ fun AltiveChatRoom(
   val photoDraftIds = photoUris.zip(photoDraftIdValues).toMap()
   val mappedPhotoDraftIds = photoDraftIds.values.toSet()
   val cameraDraftCount = imageDrafts.count { it.id !in mappedPhotoDraftIds }
-  val embeddedPhotoMaximum = maxOf(
-    1,
-    photoDraftIds.size,
-    imageInputConfiguration.maximumSelectionCount - cameraDraftCount,
-  )
   val remainingCapacity = (
     imageInputConfiguration.maximumSelectionCount - imageDrafts.size - resolvingUris.size
   ).coerceAtLeast(0)
@@ -188,7 +179,6 @@ fun AltiveChatRoom(
     imageInputConfiguration.maximumSelectionCount
   }
   val multiplePickerMaximum = multiplePhotoPickerLimit(remainingCapacity, platformPickerMaximum)
-  val embeddedAvailable = isEmbeddedPhotoPickerAvailable()
 
   fun updatePhotoDraftIds(values: Map<String, String>) {
     photoUris = ArrayList(values.keys)
@@ -201,21 +191,17 @@ fun AltiveChatRoom(
       .filterNot { it in knownUris }
       .take(remainingCapacity)
     if (acceptedUris.isNotEmpty()) {
-      revokedResolvingUris = revokedResolvingUris - acceptedUris.toSet()
       resolvingUris = resolvingUris + acceptedUris
       coroutineScope.launch {
         val resolved = mutableListOf<Pair<String, ChatImageDraft>>()
-        val rejected = mutableSetOf<String>()
         try {
           for (uri in acceptedUris) {
             try {
               val resolvedDraft = latestResolver(uri)
-              if (uri in revokedResolvingUris) rejected += uri
-              else resolved += uri to resolvedDraft
+              resolved += uri to resolvedDraft
             } catch (cancellation: CancellationException) {
               throw cancellation
             } catch (throwable: Throwable) {
-              rejected += uri
               latestFailureHandler?.invoke(throwable)
             }
           }
@@ -229,25 +215,13 @@ fun AltiveChatRoom(
           val updatedMappings = photoUris.zip(photoDraftIdValues).toMap().toMutableMap()
           for ((uri, resolvedDraft) in resolved) {
             if (resolvedDraft.id in mergedIDs) updatedMappings[uri] = resolvedDraft.id
-            else rejected += uri
           }
           updatePhotoDraftIds(updatedMappings)
-          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + rejected
         } finally {
           resolvingUris = resolvingUris - acceptedUris.toSet()
-          revokedResolvingUris = revokedResolvingUris - acceptedUris.toSet()
         }
       }
     }
-  }
-
-  val revokeUris: (List<String>) -> Unit = { revokedUris ->
-    val revokedSet = revokedUris.toSet()
-    val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
-    val removedDraftIds = revokedSet.mapNotNull(currentMappings::get).toSet()
-    latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id in removedDraftIds })
-    updatePhotoDraftIds(currentMappings.filterKeys { it !in revokedSet })
-    revokedResolvingUris = revokedResolvingUris + revokedSet
   }
 
   val singlePhotoPicker = rememberLauncherForActivityResult(
@@ -280,28 +254,10 @@ fun AltiveChatRoom(
     val staleUris = currentMappings.filterValues { it !in currentIDs }.keys
     if (staleUris.isNotEmpty()) {
       updatePhotoDraftIds(currentMappings.filterKeys { it !in staleUris })
-      if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + staleUris
-    }
-  }
-  LaunchedEffect(
-    effectiveImageInputSources,
-    imageInputConfiguration.photoLibraryPresentationStyle,
-  ) {
-    if (ChatImageInputSource.PhotoLibrary !in effectiveImageInputSources ||
-      imageInputConfiguration.photoLibraryPresentationStyle !=
-      ChatPhotoLibraryPresentationStyle.Inline
-    ) {
-      isInlinePhotoLibraryPresented = false
-      isInlinePhotoLibraryExpanded = false
     }
   }
 
-  BoxWithConstraints(modifier) {
-    val inputSurfaceHeight = ChatInputSurfaceGeometry.photoLibraryHeight(
-      availableHeight = maxHeight.value,
-      isExpanded = isInlinePhotoLibraryExpanded,
-    ).dp
-
+  Box(modifier) {
     Column(Modifier.background(theme.background).imePadding()) {
       LazyColumn(
         state = listState,
@@ -339,9 +295,9 @@ fun AltiveChatRoom(
         imageDrafts = imageDrafts,
         configuration = imageInputConfiguration,
         availableImageInputSources = effectiveImageInputSources,
-        isInlinePhotoLibraryPresented = isInlinePhotoLibraryPresented,
-        isInlinePhotoLibraryExpanded = isInlinePhotoLibraryExpanded,
-        inputSurfaceHeight = inputSurfaceHeight,
+        isInlinePhotoLibraryPresented = false,
+        isInlinePhotoLibraryExpanded = false,
+        inputSurfaceHeight = 0.dp,
         isPreparingImages = resolvingUris.isNotEmpty() || isPreparingCameraImage,
         isPreparingCameraImage = isPreparingCameraImage,
         isSending = isSending,
@@ -354,24 +310,13 @@ fun AltiveChatRoom(
         },
         onRequestPhotoLibrary = {
           focusManager.clearFocus()
-          if (imageInputConfiguration.photoLibraryPresentationStyle ==
-            ChatPhotoLibraryPresentationStyle.Inline && embeddedAvailable
-          ) {
-            isInlinePhotoLibraryPresented = !isInlinePhotoLibraryPresented
-            if (!isInlinePhotoLibraryPresented) isInlinePhotoLibraryExpanded = false
-          } else {
-            launchClassicPhotoPicker()
-          }
+          launchClassicPhotoPicker()
         },
-        onToggleInlineExpansion = {
-          isInlinePhotoLibraryExpanded = !isInlinePhotoLibraryExpanded
-        },
+        onToggleInlineExpansion = {},
         onRemoveImage = { imageId ->
           latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id == imageId })
           val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
-          val removedUris = currentMappings.filterValues { it == imageId }.keys
           updatePhotoDraftIds(currentMappings.filterValues { it != imageId })
-          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + removedUris
         },
         onSubmit = {
           val submission = ChatComposerSubmission.create(
@@ -382,29 +327,10 @@ fun AltiveChatRoom(
           onSubmit(submission)
           onDraftChange("")
           onImageDraftsChange(emptyList())
-          if (embeddedAvailable) pendingDeselectUris = pendingDeselectUris + photoUris
           updatePhotoDraftIds(emptyMap())
-          isInlinePhotoLibraryExpanded = false
         },
         imageContent = imageContent,
-        inlinePhotoLibrary = {
-          ChatEmbeddedPhotoPicker(
-            maximumSelectionCount = embeddedPhotoMaximum,
-            initialSelectedUris = photoDraftIds.keys,
-            isExpanded = isInlinePhotoLibraryExpanded,
-            pendingDeselectUris = pendingDeselectUris,
-            onUrisSelected = { resolveUris(it.map(Uri::parse)) },
-            onUrisDeselected = revokeUris,
-            onPendingDeselectHandled = { handled ->
-              pendingDeselectUris = pendingDeselectUris - handled
-            },
-            onSelectionComplete = {
-              isInlinePhotoLibraryPresented = false
-              isInlinePhotoLibraryExpanded = false
-            },
-            onFailure = { latestFailureHandler?.invoke(it) },
-          )
-        },
+        inlinePhotoLibrary = {},
       )
     }
   }

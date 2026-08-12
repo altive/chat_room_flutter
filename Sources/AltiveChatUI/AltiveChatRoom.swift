@@ -33,8 +33,6 @@ public struct AltiveChatRoom: View {
   @State private var selectedPhotoItems: [PhotosPickerItem] = []
   @State private var photoDraftIDs: [PhotosPickerItem: String] = [:]
   @State private var isPreparingPhotoLibraryItem = false
-  @State private var isInlinePhotoLibraryPresented = false
-  @State private var isInlinePhotoLibraryExpanded = false
 
   /// テキスト送信だけを利用するチャット画面を作成する。
   ///
@@ -122,12 +120,10 @@ public struct AltiveChatRoom: View {
   }
 
   public var body: some View {
-    GeometryReader { geometry in
-      roomContent(availableHeight: geometry.size.height)
-    }
+    roomContent
   }
 
-  private func roomContent(availableHeight: CGFloat) -> some View {
+  private var roomContent: some View {
     ScrollViewReader { proxy in
       ScrollView {
         LazyVStack(spacing: 12) {
@@ -164,7 +160,7 @@ public struct AltiveChatRoom: View {
       .background(theme.background)
       .scrollDismissesKeyboard(.interactively)
       .safeAreaInset(edge: .bottom) {
-        composer(availableHeight: availableHeight)
+        composer
       }
       .onAppear {
         proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
@@ -175,11 +171,6 @@ public struct AltiveChatRoom: View {
           proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
         }
       }
-      .onChange(of: isComposerFocused) { _, isFocused in
-        guard isFocused else { return }
-        isInlinePhotoLibraryPresented = false
-        isInlinePhotoLibraryExpanded = false
-      }
       .task(id: selectedPhotoItems) {
         await synchronizePhotoLibrarySelection()
       }
@@ -187,23 +178,17 @@ public struct AltiveChatRoom: View {
   }
 
   @ViewBuilder
-  private func composer(availableHeight: CGFloat) -> some View {
+  private var composer: some View {
     if let configuration = imageInputConfiguration {
       ChatImageComposer(
         draft: $draft,
         imageDrafts: $imageDrafts,
         selectedPhotoItems: $selectedPhotoItems,
-        isInlinePhotoLibraryPresented: $isInlinePhotoLibraryPresented,
-        isInlinePhotoLibraryExpanded: $isInlinePhotoLibraryExpanded,
         focus: $isComposerFocused,
         configuration: configuration,
         availableImageInputSources: effectiveImageInputSources,
         maximumPhotoSelectionCount: maximumPhotoSelectionCount,
         isPhotoLibrarySelectionEnabled: isPhotoLibrarySelectionEnabled,
-        inputSurfaceHeight: ChatInputSurfaceGeometry.photoLibraryHeight(
-          availableHeight: availableHeight,
-          isExpanded: isInlinePhotoLibraryExpanded
-        ),
         isPreparingImages: isPreparingPhotoLibraryItem || isPreparingCameraImage,
         isPreparingCameraImage: isPreparingCameraImage,
         isSending: isSending,
@@ -358,6 +343,5 @@ public struct AltiveChatRoom: View {
     imageDrafts.removeAll()
     selectedPhotoItems.removeAll()
     photoDraftIDs.removeAll()
-    isInlinePhotoLibraryExpanded = false
   }
 }

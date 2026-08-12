@@ -1,5 +1,11 @@
 import SwiftUI
 
+#if canImport(UIKit)
+  import UIKit
+#elseif canImport(AppKit)
+  import AppKit
+#endif
+
 /// ステッカー一覧の取得状態。
 public enum ChatStickerPickerLoadState: Hashable, Sendable {
   /// 取得開始前。
@@ -200,6 +206,19 @@ where
         }
       }
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(pickerBackground)
+  }
+
+  /// 背後のチャットを透過させない、プラットフォーム標準の入力面背景。
+  private var pickerBackground: Color {
+    #if canImport(UIKit)
+      Color(uiColor: .systemBackground)
+    #elseif canImport(AppKit)
+      Color(nsColor: .windowBackgroundColor)
+    #else
+      Color.primary.colorInvert()
+    #endif
   }
 
   private var selectedPack: ChatStickerPickerPack<Reference, Asset>? {

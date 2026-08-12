@@ -21,6 +21,7 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 - リアクション候補、件数、長押しpopoverと競合を壊さない楽観的更新
 - ステッカーpicker、最近使った項目、アバター、システムイベントの展開表示
 - ステッカーpicker末尾へアプリ固有コンテンツを差し込む表示スロットとスクロール配置
+- ステッカーpicker入力面を背後のタイムラインが透けない不透明背景で覆うこと
 - 課金に依存しない汎用タイムライン境界
 - プラットフォームごとのPreview、Widget test、Screenshot test用fixture
 

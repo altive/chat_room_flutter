@@ -373,42 +373,97 @@ fun ChatMessageRow(
       }
     }
     is ChatMessageContent.Images -> {
-      val own = message.isSentBy(currentUserId)
-      Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = if (own) Arrangement.End else Arrangement.Start,
-      ) {
-        Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
-          if (showsSenderName && !own) {
-            Text(
-              message.sender?.displayName ?: strings.unknownSender,
-              style = MaterialTheme.typography.labelSmall,
-            )
-          }
-          ChatImageGrid(
-            messageId = message.id,
-            images = content.values,
-            imageLabel = strings.imageLabel,
-            onImageTap = onImageTap,
-            imageContent = imageContent,
+      ChatImageMessageRow(
+        message = message,
+        images = content.values,
+        caption = null,
+        currentUserId = currentUserId,
+        theme = theme,
+        strings = strings,
+        showsSenderName = showsSenderName,
+        onRetry = onRetry,
+        onImageTap = onImageTap,
+        imageContent = imageContent,
+      )
+    }
+    is ChatMessageContent.ImagesWithCaption -> {
+      ChatImageMessageRow(
+        message = message,
+        images = content.values,
+        caption = content.caption,
+        currentUserId = currentUserId,
+        theme = theme,
+        strings = strings,
+        showsSenderName = showsSenderName,
+        onRetry = onRetry,
+        onImageTap = onImageTap,
+        imageContent = imageContent,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ChatImageMessageRow(
+  message: ChatMessage,
+  images: List<ChatImage>,
+  caption: String?,
+  currentUserId: String,
+  theme: ChatRoomTheme,
+  strings: ChatRoomStrings,
+  showsSenderName: Boolean,
+  onRetry: (() -> Unit)?,
+  onImageTap: ((messageId: String, imageIndex: Int) -> Unit)?,
+  imageContent: @Composable BoxScope.(ChatImage) -> Unit,
+) {
+  val own = message.isSentBy(currentUserId)
+  Row(
+    Modifier.fillMaxWidth(),
+    horizontalArrangement = if (own) Arrangement.End else Arrangement.Start,
+  ) {
+    Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
+      if (showsSenderName && !own) {
+        Text(
+          message.sender?.displayName ?: strings.unknownSender,
+          style = MaterialTheme.typography.labelSmall,
+        )
+      }
+      ChatImageGrid(
+        messageId = message.id,
+        images = images,
+        imageLabel = strings.imageLabel,
+        onImageTap = onImageTap,
+        imageContent = imageContent,
+      )
+      if (caption != null) {
+        Spacer(Modifier.height(4.dp))
+        ChatMessageBubble(isOwnMessage = own, theme = theme) {
+          Text(
+            caption,
+            Modifier.padding(
+              start = if (own) 14.dp else 22.dp,
+              end = if (own) 22.dp else 14.dp,
+              top = 10.dp,
+              bottom = 10.dp,
+            ),
           )
-          Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-          ) {
-            Text(
-              formatTime(message.createdAtEpochMillis),
-              style = MaterialTheme.typography.labelSmall,
-            )
-            ChatDeliveryIndicator(
-              message.deliveryState,
-              strings.sendingLabel,
-              strings.failedLabel,
-              theme,
-              onRetry,
-            )
-          }
         }
+      }
+      Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+      ) {
+        Text(
+          formatTime(message.createdAtEpochMillis),
+          style = MaterialTheme.typography.labelSmall,
+        )
+        ChatDeliveryIndicator(
+          message.deliveryState,
+          strings.sendingLabel,
+          strings.failedLabel,
+          theme,
+          onRetry,
+        )
       }
     }
   }

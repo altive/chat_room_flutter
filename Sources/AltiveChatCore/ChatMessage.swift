@@ -8,6 +8,9 @@ public enum ChatMessageContent: Hashable, Sendable {
   /// ユーザーが送信した1枚以上の画像。
   case images([ChatImage])
 
+  /// ユーザーが1回の操作で送信した1枚以上の画像と本文。
+  case imagesWithCaption(images: [ChatImage], caption: String)
+
   /// 会話内へ表示するシステム文言。
   case system(String)
 }

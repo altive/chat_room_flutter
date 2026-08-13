@@ -38,13 +38,15 @@ public struct ChatMessageRow: View {
     case .text(let text):
       userMessage(text)
     case .images(let images):
-      imageMessage(images)
+      imageMessage(images, caption: nil)
+    case .imagesWithCaption(let images, let caption):
+      imageMessage(images, caption: caption)
     case .system(let text):
       systemMessage(text)
     }
   }
 
-  private func imageMessage(_ images: [ChatImage]) -> some View {
+  private func imageMessage(_ images: [ChatImage], caption: String?) -> some View {
     let isOwnMessage = message.isSent(by: currentUserID)
 
     return HStack(alignment: .bottom, spacing: 8) {
@@ -68,8 +70,16 @@ public struct ChatMessageRow: View {
           onImageTap: onImageTap
         )
 
+        if let caption {
+          ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
+            Text(caption)
+              .textSelection(.enabled)
+          }
+        }
+
         deliveryMetadata
       }
+      .accessibilityElement(children: .combine)
 
       if !isOwnMessage {
         Spacer(minLength: 8)

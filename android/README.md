@@ -24,7 +24,7 @@ repository URLをこのdirectoryへ向け、次のように依存する。
 
 ```kotlin
 dependencies {
-  implementation("jp.co.altive.chat:chat-ui-compose:1.0.0")
+  implementation("jp.co.altive.chat:chat-ui-compose:1.1.0")
 }
 ```
 
@@ -32,7 +32,7 @@ versionはGradle propertyで上書きできる。
 
 ```bash
 ./gradlew publishAllPublicationsToLocalBuildRepository \
-  -PaltiveChatVersion=1.0.0
+  -PaltiveChatVersion=1.1.0
 ```
 
 ## Remote Mavenへ公開
@@ -49,7 +49,7 @@ versionはGradle propertyで上書きできる。
 
 ```bash
 ./gradlew publishAllPublicationsToRemoteRepository \
-  -PaltiveChatVersion=1.0.0
+  -PaltiveChatVersion=1.1.0
 ```
 
 公開前に `make android_verify` を実行し、core test、Compose lint / test、POM生成を

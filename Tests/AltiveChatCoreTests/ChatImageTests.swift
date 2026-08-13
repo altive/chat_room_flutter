@@ -53,4 +53,17 @@ struct ChatImageTests {
         )
     )
   }
+
+  @Test("画像と本文を同じメッセージ内容として保持する")
+  func keepsImagesAndCaptionTogether() throws {
+    let image = ChatImage(
+      id: "image-1",
+      resource: .remote(try #require(URL(string: "https://example.com/image.jpg")))
+    )
+
+    #expect(
+      ChatMessageContent.imagesWithCaption(images: [image], caption: "故障した画面です")
+        == .imagesWithCaption(images: [image], caption: "故障した画面です")
+    )
+  }
 }

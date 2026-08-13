@@ -104,6 +104,14 @@ class ChatCoreTest {
     )
   }
 
+  @Test fun keepsImagesAndCaptionInOneMessage() {
+    val image = ChatImage("image-1", ChatImageResource.RemoteUrl("https://example.com/image.jpg"))
+    val content = ChatMessageContent.ImagesWithCaption(listOf(image), "故障した画面です")
+
+    assertEquals(listOf(image), content.values)
+    assertEquals("故障した画面です", content.caption)
+  }
+
   @Test fun clampsInputSurfaceGeometry() {
     assertEquals(310f, ChatInputSurfaceGeometry.keyboardContentHeight(344f, 34f))
     assertEquals(261f, ChatInputSurfaceGeometry.inputSurfaceHeight(310f, 49f))

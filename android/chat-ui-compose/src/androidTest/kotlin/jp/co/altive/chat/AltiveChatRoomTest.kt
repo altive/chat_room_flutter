@@ -3,10 +3,12 @@ package jp.co.altive.chat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import org.junit.Assert.assertEquals
@@ -69,5 +71,32 @@ class AltiveChatRoomTest {
     }
     compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("")
     compose.onNodeWithContentDescription("Remove selected image").assertIsNotDisplayed()
+  }
+
+  @Test fun displaysImagesAndCaptionAsOneMessage() {
+    val image = ChatImage("image-1", ChatImageResource.RemoteUrl("https://example.com/image.jpg"))
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = listOf(
+            ChatMessage(
+              id = "message-1",
+              createdAtEpochMillis = 1L,
+              sender = ChatUser("me", "Me"),
+              content = ChatMessageContent.ImagesWithCaption(
+                values = listOf(image),
+                caption = "故障した画面です",
+              ),
+            ),
+          ),
+          currentUserId = "me",
+          draft = "",
+          onDraftChange = {},
+          onSend = {},
+        )
+      }
+    }
+
+    compose.onNodeWithText("故障した画面です").assertIsDisplayed()
   }
 }

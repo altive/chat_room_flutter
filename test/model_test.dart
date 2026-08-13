@@ -53,15 +53,18 @@ void main() {
         createdAt: DateTime(2026, 2, 9),
         sender: _user(id: 'u1'),
         imageUrls: const ['a.jpg', 'b.jpg'],
+        caption: 'before',
         selectedImageIndex: 0,
       );
 
       final updated = base.copyWith(
         imageUrls: const ['x.jpg', 'y.jpg'],
+        caption: 'after',
         selectedImageIndex: 1,
       );
 
       expect(updated.imageUrls, const ['x.jpg', 'y.jpg']);
+      expect(updated.caption, 'after');
       expect(updated.selectedImageIndex, 1);
       expect(updated.sender, base.sender);
       expect(updated.label, base.label);

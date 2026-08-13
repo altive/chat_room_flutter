@@ -727,6 +727,23 @@ class _ImagesMessageBubble extends StatelessWidget {
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           popupMenuEnabled: popupMenuEnabled,
         ),
+        if (message.caption case final caption?) ...[
+          const SizedBox(height: 6),
+          _TextMessageBubbleContents(
+            currentUserId: currentUserId,
+            message: ChatTextMessage(
+              id: message.id,
+              createdAt: message.createdAt,
+              sender: message.sender,
+              text: caption,
+              isRead: message.isRead,
+              label: message.label,
+            ),
+            canSelect: false,
+            contextMenuBuilder: null,
+            onActionButtonTap: null,
+          ),
+        ],
       ],
     );
   }

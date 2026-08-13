@@ -188,6 +188,7 @@ class ChatImagesMessage extends ChatUserMessage {
     required super.sender,
     super.isRead,
     required List<String> imageUrls,
+    this.caption,
     this.selectedImageIndex,
     super.replyTo,
     super.replyImageIndex,
@@ -197,6 +198,9 @@ class ChatImagesMessage extends ChatUserMessage {
 
   /// 画像のURL一覧。
   final List<String> imageUrls;
+
+  /// 画像と同じ送信単位で表示する本文。
+  final String? caption;
 
   /// 初期表示時に選択状態とする画像インデックス。
   final int? selectedImageIndex;
@@ -208,6 +212,7 @@ class ChatImagesMessage extends ChatUserMessage {
     ChatUser? sender,
     bool? isRead,
     List<String>? imageUrls,
+    String? caption,
     int? selectedImageIndex,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
@@ -219,6 +224,7 @@ class ChatImagesMessage extends ChatUserMessage {
       sender: sender ?? this.sender,
       isRead: isRead ?? this.isRead,
       imageUrls: imageUrls ?? this.imageUrls,
+      caption: caption ?? this.caption,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
@@ -233,6 +239,7 @@ class ChatImagesMessage extends ChatUserMessage {
       'createdAt: $createdAt, '
       'sender: $sender, '
       'imageUrls: $imageUrls, '
+      'caption: $caption, '
       'selectedImageIndex: $selectedImageIndex, '
       'replyTo: $replyTo, '
       'replyImageIndex: $replyImageIndex, '
@@ -243,6 +250,7 @@ class ChatImagesMessage extends ChatUserMessage {
   List<Object?> get props => [
     ...super.props,
     imageUrls,
+    caption,
     selectedImageIndex,
   ];
 }
@@ -323,8 +331,7 @@ enum VoiceCallType {
   /// 受信者による応答なし。
   ///
   /// 受信者が時間内に応答しなかった。
-  unanswered
-  ;
+  unanswered;
 
   /// text を実行する。
   String text({required bool isOutgoing}) => switch (this) {

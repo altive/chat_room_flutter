@@ -303,38 +303,40 @@ where
 
   private var stickerGrid: some View {
     ScrollView {
-      if isHistorySelected, recentReferences.isEmpty {
-        ContentUnavailableView(strings.historyEmptyTitle, systemImage: "clock.arrow.circlepath")
-          .padding(.top, 40)
-      } else {
-        LazyVGrid(columns: columns, spacing: 10) {
-          if isHistorySelected {
-            ForEach(recentReferences, id: \.self) { reference in
-              Button {
-                onSelect(reference)
-              } label: {
-                image(.reference(reference))
-                  .frame(minHeight: 88)
+      LazyVStack(spacing: 0) {
+        if isHistorySelected, recentReferences.isEmpty {
+          ContentUnavailableView(strings.historyEmptyTitle, systemImage: "clock.arrow.circlepath")
+            .padding(.top, 40)
+        } else {
+          LazyVGrid(columns: columns, spacing: 10) {
+            if isHistorySelected {
+              ForEach(recentReferences, id: \.self) { reference in
+                Button {
+                  onSelect(reference)
+                } label: {
+                  image(.reference(reference))
+                    .frame(minHeight: 88)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(referenceAccessibilityLabel(reference))
               }
-              .buttonStyle(.plain)
-              .accessibilityLabel(referenceAccessibilityLabel(reference))
-            }
-          } else {
-            ForEach(selectedPack?.stickers ?? []) { sticker in
-              Button {
-                onSelect(sticker.reference)
-              } label: {
-                image(.asset(sticker.asset))
-                  .frame(minHeight: 88)
+            } else {
+              ForEach(selectedPack?.stickers ?? []) { sticker in
+                Button {
+                  onSelect(sticker.reference)
+                } label: {
+                  image(.asset(sticker.asset))
+                    .frame(minHeight: 88)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(sticker.accessibilityLabel)
               }
-              .buttonStyle(.plain)
-              .accessibilityLabel(sticker.accessibilityLabel)
             }
           }
+          .padding(12)
         }
-        .padding(12)
+        footer()
       }
-      footer()
     }
   }
 }

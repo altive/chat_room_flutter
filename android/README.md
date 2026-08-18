@@ -32,7 +32,7 @@ versionはGradle propertyで上書きできる。
 
 ```bash
 ./gradlew publishAllPublicationsToLocalBuildRepository \
-  -PaltiveChatVersion=1.1.0
+  -PaltiveChatVersion=1.1.2
 ```
 
 ## Remote Mavenへ公開
@@ -49,7 +49,7 @@ versionはGradle propertyで上書きできる。
 
 ```bash
 ./gradlew publishAllPublicationsToRemoteRepository \
-  -PaltiveChatVersion=1.1.0
+  -PaltiveChatVersion=1.1.2
 ```
 
 公開前に `make android_verify` を実行し、core test、Compose lint / test、POM生成を

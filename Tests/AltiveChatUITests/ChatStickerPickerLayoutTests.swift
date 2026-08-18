@@ -8,6 +8,20 @@
   @Suite("ステッカーpickerのレイアウト")
   @MainActor
   struct ChatStickerPickerLayoutTests {
+    @Test("狭い画面でも4列分のステッカーを縮小する")
+    func keepsFourColumnsOnNarrowScreens() {
+      let pickerWidth: CGFloat = 390
+      let horizontalPadding: CGFloat = 24
+      let totalColumnSpacing: CGFloat = 30
+      let cellLength =
+        (pickerWidth - horizontalPadding - totalColumnSpacing)
+        / CGFloat(ChatStickerPickerLayout.columnCount)
+
+      #expect(ChatStickerPickerLayout.columnCount == 4)
+      #expect(cellLength < ChatStickerPickerLayout.preferredStickerLength)
+      #expect(ChatStickerPickerLayout.stickerScale(for: cellLength) < 1)
+    }
+
     @Test("末尾コンテンツをスタンプ一覧へ重ねない")
     func keepsFooterBelowStickerGrid() throws {
       let stickers = (0..<24).map { index in

@@ -6,6 +6,15 @@ import SwiftUI
   import AppKit
 #endif
 
+enum ChatStickerPickerLayout {
+  static let columnCount = 4
+  static let preferredStickerLength: CGFloat = 88
+
+  static func stickerScale(for cellLength: CGFloat) -> CGFloat {
+    min(1, max(0, cellLength / preferredStickerLength))
+  }
+}
+
 /// ステッカー一覧の取得状態。
 public enum ChatStickerPickerLoadState: Hashable, Sendable {
   /// 取得開始前。
@@ -150,7 +159,10 @@ where
   private let footer: () -> FooterContent
   private let image: (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
 
-  private let columns = [GridItem(.adaptive(minimum: 88), spacing: 10)]
+  private let columns = Array(
+    repeating: GridItem(.flexible(minimum: 0), spacing: 10),
+    count: ChatStickerPickerLayout.columnCount
+  )
 
   /// ステッカーpickerを作成する。
   public init(
@@ -314,8 +326,7 @@ where
                 Button {
                   onSelect(reference)
                 } label: {
-                  image(.reference(reference))
-                    .frame(minHeight: 88)
+                  stickerImage(.reference(reference))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(referenceAccessibilityLabel(reference))
@@ -325,8 +336,7 @@ where
                 Button {
                   onSelect(sticker.reference)
                 } label: {
-                  image(.asset(sticker.asset))
-                    .frame(minHeight: 88)
+                  stickerImage(.asset(sticker.asset))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(sticker.accessibilityLabel)
@@ -338,6 +348,21 @@ where
         footer()
       }
     }
+  }
+
+  private func stickerImage(
+    _ source: ChatStickerPickerImageSource<Reference, Asset>
+  ) -> some View {
+    GeometryReader { geometry in
+      let length = ChatStickerPickerLayout.preferredStickerLength
+      let scale = ChatStickerPickerLayout.stickerScale(for: geometry.size.width)
+
+      image(source)
+        .frame(width: length, height: length)
+        .scaleEffect(scale)
+        .frame(width: geometry.size.width, height: geometry.size.height)
+    }
+    .frame(height: ChatStickerPickerLayout.preferredStickerLength)
   }
 }
 

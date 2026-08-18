@@ -10,11 +10,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class ChatStickerPickerLoadState { Idle, Loading, Loaded, Unavailable, Failed }
+
+internal const val ChatStickerPickerColumnCount = 4
+private val ChatStickerPreferredLength = 72.dp
+
+internal fun chatStickerScale(availableLength: Dp): Float =
+  (availableLength / ChatStickerPreferredLength).coerceIn(0f, 1f)
 
 data class ChatStickerPickerItem<Reference, Asset>(
   val id: String,
@@ -102,21 +110,36 @@ fun <Reference, Asset> ChatStickerPicker(
     }
     HorizontalDivider()
     if (isHistorySelected && recentReferences.isEmpty()) PickerMessage(strings.historyEmptyTitle)
-    else LazyVerticalGrid(columns = GridCells.Adaptive(88.dp), contentPadding = PaddingValues(12.dp)) {
+    else LazyVerticalGrid(columns = GridCells.Fixed(ChatStickerPickerColumnCount), contentPadding = PaddingValues(12.dp)) {
       if (isHistorySelected) items(recentReferences) { reference ->
-        TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }) {
-          Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+        TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }, contentPadding = PaddingValues(0.dp)) {
+          StickerImage {
             image(ChatStickerPickerImageSource.Reference(reference))
           }
         }
       } else items(selected?.stickers.orEmpty(), key = { it.id }) { sticker ->
-        TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }) {
-          Box(Modifier.size(72.dp), contentAlignment = Alignment.Center) {
+        TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }, contentPadding = PaddingValues(0.dp)) {
+          StickerImage {
             image(ChatStickerPickerImageSource.Asset(sticker.asset))
           }
         }
       }
       item(span = { GridItemSpan(maxLineSpan) }) { footer() }
+    }
+  }
+}
+
+@Composable private fun StickerImage(image: @Composable () -> Unit) {
+  BoxWithConstraints(Modifier.fillMaxWidth().height(ChatStickerPreferredLength), contentAlignment = Alignment.Center) {
+    val scale = chatStickerScale(maxWidth)
+    Box(
+      Modifier.size(ChatStickerPreferredLength).graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+      },
+      contentAlignment = Alignment.Center,
+    ) {
+      image()
     }
   }
 }

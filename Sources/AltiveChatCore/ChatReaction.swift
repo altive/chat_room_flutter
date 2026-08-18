@@ -21,6 +21,9 @@ public struct ChatReaction: Hashable, Identifiable, Sendable {
   /// ハート。
   public static let heart = ChatReaction(id: "heart", symbol: "❤️", accessibilityLabel: "❤️")
 
+  /// いいね。
+  public static let like = ChatReaction(id: "like", symbol: "👍", accessibilityLabel: "👍")
+
   /// お祝い。
   public static let celebrate = ChatReaction(
     id: "celebrate",
@@ -35,7 +38,7 @@ public struct ChatReaction: Hashable, Identifiable, Sendable {
   public static let cheer = ChatReaction(id: "cheer", symbol: "👏", accessibilityLabel: "👏")
 
   /// ファネリーとノコリスで共通利用する標準候補。
-  public static let standard: [ChatReaction] = [.heart, .celebrate, .thanks, .cheer]
+  public static let standard: [ChatReaction] = [.heart, .like, .celebrate, .thanks, .cheer]
 }
 
 /// リアクションと現在件数の組み合わせ。

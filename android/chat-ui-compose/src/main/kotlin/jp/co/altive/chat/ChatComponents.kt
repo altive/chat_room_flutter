@@ -93,6 +93,12 @@ class ChatMessageBubbleShape(
 
 private fun Dp.toPx(density: Density): Float = with(density) { toPx() }
 
+internal fun visibleReactionCounts(
+  counts: List<ChatReactionCount>,
+  loadingReactionId: String?,
+): List<ChatReactionCount> =
+  counts.filter { it.count > 0 || it.reaction.id == loadingReactionId }
+
 @Composable
 fun ChatReactionSummaryBar(
   counts: List<ChatReactionCount>,
@@ -103,7 +109,7 @@ fun ChatReactionSummaryBar(
   theme: ChatRoomTheme = ChatRoomTheme.fanely(),
   onSelect: ((ChatReaction) -> Unit)? = null,
 ) {
-  val visible = counts.filter { it.count > 0 }
+  val visible = visibleReactionCounts(counts, loadingReactionId)
   if (visible.isEmpty()) return
   Row(
     modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),

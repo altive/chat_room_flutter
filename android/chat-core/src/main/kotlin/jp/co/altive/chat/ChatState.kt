@@ -3,10 +3,11 @@ package jp.co.altive.chat
 data class ChatReaction(val id: String, val symbol: String, val accessibilityLabel: String) {
   companion object {
     val Heart = ChatReaction("heart", "❤️", "❤️")
+    val Like = ChatReaction("like", "👍", "👍")
     val Celebrate = ChatReaction("celebrate", "🎉", "🎉")
     val Thanks = ChatReaction("thanks", "🙏", "🙏")
     val Cheer = ChatReaction("cheer", "👏", "👏")
-    val Standard = listOf(Heart, Celebrate, Thanks, Cheer)
+    val Standard = listOf(Heart, Like, Celebrate, Thanks, Cheer)
   }
 }
 

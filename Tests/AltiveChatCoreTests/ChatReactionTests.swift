@@ -6,8 +6,8 @@ import Testing
 struct ChatReactionTests {
   @Test("標準リアクションはAPI用IDと表示記号を保持する")
   func exposesStandardReactions() {
-    #expect(ChatReaction.standard.map(\.id) == ["heart", "celebrate", "thanks", "cheer"])
-    #expect(ChatReaction.standard.map(\.symbol) == ["❤️", "🎉", "🙏", "👏"])
+    #expect(ChatReaction.standard.map(\.id) == ["heart", "like", "celebrate", "thanks", "cheer"])
+    #expect(ChatReaction.standard.map(\.symbol) == ["❤️", "👍", "🎉", "🙏", "👏"])
   }
 
   @Test("自分の楽観的更新が残っている場合だけロールバックする")

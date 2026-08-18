@@ -22,8 +22,8 @@ class ChatCoreTest {
   }
 
   @Test fun exposesStandardReactions() {
-    assertEquals(listOf("heart", "celebrate", "thanks", "cheer"), ChatReaction.Standard.map { it.id })
-    assertEquals(listOf("❤️", "🎉", "🙏", "👏"), ChatReaction.Standard.map { it.symbol })
+    assertEquals(listOf("heart", "like", "celebrate", "thanks", "cheer"), ChatReaction.Standard.map { it.id })
+    assertEquals(listOf("❤️", "👍", "🎉", "🙏", "👏"), ChatReaction.Standard.map { it.symbol })
   }
 
   @Test fun rollsBackOnlyUncontestedOptimisticValue() {

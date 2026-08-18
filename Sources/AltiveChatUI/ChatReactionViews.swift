@@ -1,6 +1,13 @@
 import AltiveChatCore
 import SwiftUI
 
+func visibleReactionCounts(
+  _ counts: [ChatReactionCount],
+  loadingReactionID: String?
+) -> [ChatReactionCount] {
+  counts.filter { $0.count > 0 || $0.id == loadingReactionID }
+}
+
 /// メッセージの左右配置。
 public enum ChatMessageAlignment: Hashable, Sendable {
   /// 相手側へ配置する。
@@ -29,7 +36,7 @@ public struct ChatReactionSummaryBar: View {
     theme: ChatRoomTheme = .fanely,
     onSelect: ((ChatReaction) -> Void)? = nil
   ) {
-    self.counts = counts.filter { $0.count > 0 }
+    self.counts = visibleReactionCounts(counts, loadingReactionID: loadingReactionID)
     self.alignment = alignment
     self.loadingReactionID = loadingReactionID
     self.isEnabled = isEnabled

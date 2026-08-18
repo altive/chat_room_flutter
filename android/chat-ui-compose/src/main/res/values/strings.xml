@@ -7,6 +7,7 @@
   <string name="altive_chat_unknown_sender">Unknown</string>
   <string name="altive_chat_camera">Take a photo</string>
   <string name="altive_chat_photo_library">Photo library</string>
+  <string name="altive_chat_expand_source_buttons">Show attachment buttons</string>
   <string name="altive_chat_remove_image">Remove selected image</string>
   <string name="altive_chat_image">Image</string>
   <string name="altive_chat_expand">Expand events</string>

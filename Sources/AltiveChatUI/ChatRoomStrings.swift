@@ -26,6 +26,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 写真ライブラリボタンのアクセシビリティラベル。
   public var photoLibraryButtonLabel: String
 
+  /// 添付ボタン群を展開するボタンのアクセシビリティラベル。
+  public var expandSourceButtonsLabel: String
+
   /// 選択画像を削除するボタンのアクセシビリティラベル。
   public var removeImageButtonLabel: String
 
@@ -45,6 +48,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
     unknownSender: String,
     cameraButtonLabel: String = "Camera",
     photoLibraryButtonLabel: String = "Photo library",
+    expandSourceButtonsLabel: String = "Show attachment buttons",
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
     imageLoadingFailedLabel: String = "Failed to load image"
@@ -57,6 +61,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.unknownSender = unknownSender
     self.cameraButtonLabel = cameraButtonLabel
     self.photoLibraryButtonLabel = photoLibraryButtonLabel
+    self.expandSourceButtonsLabel = expandSourceButtonsLabel
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
     self.imageLoadingFailedLabel = imageLoadingFailedLabel
@@ -73,6 +78,10 @@ public struct ChatRoomStrings: Equatable, Sendable {
       unknownSender: String(localized: "chat.sender.unknown", bundle: .module),
       cameraButtonLabel: String(localized: "chat.composer.camera", bundle: .module),
       photoLibraryButtonLabel: String(localized: "chat.composer.photoLibrary", bundle: .module),
+      expandSourceButtonsLabel: String(
+        localized: "chat.composer.expandSourceButtons",
+        bundle: .module
+      ),
       removeImageButtonLabel: String(localized: "chat.composer.removeImage", bundle: .module),
       imageLabel: String(localized: "chat.image.label", bundle: .module),
       imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module)

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -26,14 +27,24 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+
+internal fun shouldShowChatComposerSourceButtons(
+  isFocused: Boolean,
+  isExpandedWhileFocused: Boolean,
+): Boolean = !isFocused || isExpandedWhileFocused
 
 @Composable
 fun ChatImageComposer(
@@ -53,7 +64,7 @@ fun ChatImageComposer(
   onRemoveImage: (String) -> Unit,
   onSubmit: () -> Unit,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
-  additionalSourceContent: @Composable () -> Unit = {},
+  additionalSourceContent: (@Composable () -> Unit)? = null,
 ) {
   val canSend = ChatComposerSendPolicy.canSend(
     draft = draft,
@@ -62,6 +73,13 @@ fun ChatImageComposer(
     isPreparingImages = isPreparingImages,
     isSending = isSending,
     draftPolicy = draftPolicy,
+  )
+  var isComposerFocused by rememberSaveable { mutableStateOf(false) }
+  var isSourceButtonsExpandedWhileFocused by rememberSaveable { mutableStateOf(false) }
+  val hasSourceButtons = additionalSourceContent != null || availableImageInputSources.isNotEmpty()
+  val showsSourceButtons = shouldShowChatComposerSourceButtons(
+    isFocused = isComposerFocused,
+    isExpandedWhileFocused = isSourceButtonsExpandedWhileFocused,
   )
 
   Column(
@@ -109,28 +127,41 @@ fun ChatImageComposer(
       verticalAlignment = Alignment.Bottom,
       horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
-      Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-        additionalSourceContent()
-        if (ChatImageInputSource.Camera in availableImageInputSources) {
-          IconButton(
-            onClick = onRequestCamera,
-            enabled = imageDrafts.size < configuration.maximumSelectionCount &&
-              !isPreparingCameraImage,
-            modifier = Modifier.size(44.dp)
-              .semantics { contentDescription = strings.cameraButtonLabel },
-          ) {
-            if (isPreparingCameraImage) CircularProgressIndicator(Modifier.size(18.dp))
-            else Icon(Icons.Default.CameraAlt, contentDescription = null)
+      if (hasSourceButtons) {
+        if (showsSourceButtons) {
+          Row(horizontalArrangement = Arrangement.spacedBy(1.dp)) {
+            additionalSourceContent?.invoke()
+            if (ChatImageInputSource.Camera in availableImageInputSources) {
+              IconButton(
+                onClick = onRequestCamera,
+                enabled = imageDrafts.size < configuration.maximumSelectionCount &&
+                  !isPreparingCameraImage,
+                modifier = Modifier.size(44.dp)
+                  .semantics { contentDescription = strings.cameraButtonLabel },
+              ) {
+                if (isPreparingCameraImage) CircularProgressIndicator(Modifier.size(18.dp))
+                else Icon(Icons.Default.CameraAlt, contentDescription = null)
+              }
+            }
+            if (ChatImageInputSource.PhotoLibrary in availableImageInputSources) {
+              IconButton(
+                onClick = onRequestPhotoLibrary,
+                enabled = imageDrafts.size < configuration.maximumSelectionCount,
+                modifier = Modifier.size(44.dp)
+                  .semantics { contentDescription = strings.photoLibraryButtonLabel },
+              ) {
+                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+              }
+            }
           }
-        }
-        if (ChatImageInputSource.PhotoLibrary in availableImageInputSources) {
+        } else {
           IconButton(
-            onClick = onRequestPhotoLibrary,
-            enabled = imageDrafts.size < configuration.maximumSelectionCount,
+            onClick = { isSourceButtonsExpandedWhileFocused = true },
             modifier = Modifier.size(44.dp)
-              .semantics { contentDescription = strings.photoLibraryButtonLabel },
+              .testTag("AltiveChatUI.ExpandSourceButtons")
+              .semantics { contentDescription = strings.expandSourceButtonsLabel },
           ) {
-            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
           }
         }
       }
@@ -141,6 +172,13 @@ fun ChatImageComposer(
         modifier = Modifier.weight(1f)
           .background(theme.composerField, RoundedCornerShape(24.dp))
           .testTag("AltiveChatUI.Composer")
+          .onFocusChanged { focusState ->
+            val gainedFocus = focusState.isFocused && !isComposerFocused
+            isComposerFocused = focusState.isFocused
+            if (gainedFocus) {
+              isSourceButtonsExpandedWhileFocused = false
+            }
+          }
           .padding(horizontal = 14.dp, vertical = 12.dp),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
           color = MaterialTheme.colorScheme.onSurface,

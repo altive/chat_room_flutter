@@ -13,4 +13,11 @@ struct ChatComposerTests {
   func rejectsBlankDraft() {
     #expect(ChatDraftPolicy.unrestricted.normalizedText(from: " \n\t") == nil)
   }
+
+  @Test("入力欄のフォーカス中は展開操作まで添付ボタンを閉じる")
+  func controlsLeadingButtonVisibility() {
+    #expect(!showsChatComposerSourceButtons(isFocused: true, isExpandedWhileFocused: false))
+    #expect(showsChatComposerSourceButtons(isFocused: true, isExpandedWhileFocused: true))
+    #expect(showsChatComposerSourceButtons(isFocused: false, isExpandedWhileFocused: false))
+  }
 }

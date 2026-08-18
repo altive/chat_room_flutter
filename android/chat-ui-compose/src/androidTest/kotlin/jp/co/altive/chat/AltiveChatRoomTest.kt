@@ -73,6 +73,36 @@ class AltiveChatRoomTest {
     compose.onNodeWithContentDescription("Remove selected image").assertIsNotDisplayed()
   }
 
+  @Test fun `入力欄のフォーカス時に添付ボタンを閉じ展開操作で戻す`() {
+    compose.setContent {
+      var draft by remember { mutableStateOf("") }
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = emptyList(),
+          currentUserId = "me",
+          draft = draft,
+          onDraftChange = { draft = it },
+          imageDrafts = emptyList(),
+          onImageDraftsChange = {},
+          resolvePhotoLibraryUri = { error("not used") },
+          strings = ChatRoomStrings("", "Message", "Send", "", "", ""),
+          onSubmit = {},
+        )
+      }
+    }
+
+    compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
+
+    compose.onNodeWithTag("AltiveChatUI.Composer").performClick()
+
+    compose.onNodeWithContentDescription("Camera").assertIsNotDisplayed()
+    compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").assertIsDisplayed()
+
+    compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").performClick()
+
+    compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
+  }
+
   @Test fun displaysImagesAndCaptionAsOneMessage() {
     val image = ChatImage("image-1", ChatImageResource.RemoteUrl("https://example.com/image.jpg"))
     compose.setContent {

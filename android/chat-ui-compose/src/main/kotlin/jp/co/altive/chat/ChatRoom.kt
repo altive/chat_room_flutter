@@ -47,6 +47,7 @@ data class ChatRoomStrings(
   val unknownSender: String,
   val cameraButtonLabel: String = "Camera",
   val photoLibraryButtonLabel: String = "Photo library",
+  val expandSourceButtonsLabel: String = "Show attachment buttons",
   val removeImageButtonLabel: String = "Remove image",
   val imageLabel: String = "Image",
 ) {
@@ -61,6 +62,7 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_unknown_sender),
         stringResource(R.string.altive_chat_camera),
         stringResource(R.string.altive_chat_photo_library),
+        stringResource(R.string.altive_chat_expand_source_buttons),
         stringResource(R.string.altive_chat_remove_image),
         stringResource(R.string.altive_chat_image),
       )

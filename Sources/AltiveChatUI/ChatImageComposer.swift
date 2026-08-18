@@ -2,6 +2,13 @@ import AltiveChatCore
 import PhotosUI
 import SwiftUI
 
+func showsChatComposerSourceButtons(
+  isFocused: Bool,
+  isExpandedWhileFocused: Bool
+) -> Bool {
+  !isFocused || isExpandedWhileFocused
+}
+
 /// テキストまたは画像を送信できるかを判定する純粋な方針。
 public enum ChatComposerSendPolicy {
   /// 入力の準備中・送信中ではなく、テキストか画像が存在する場合に `true`。
@@ -24,6 +31,7 @@ public struct ChatImageComposer: View {
   @Binding var draft: String
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
+  @State private var isSourceButtonsExpandedWhileFocused = false
 
   let focus: FocusState<Bool>.Binding
   let configuration: ChatImageInputConfiguration
@@ -90,7 +98,23 @@ public struct ChatImageComposer: View {
       previewStrip
 
       HStack(alignment: .bottom, spacing: 7) {
-        sourceButtons
+        if hasSourceButtons {
+          if showsSourceButtons {
+            sourceButtons
+          } else {
+            Button {
+              isSourceButtonsExpandedWhileFocused = true
+            } label: {
+              Image(systemName: "chevron.forward")
+                .font(.system(size: 19, weight: .medium))
+                .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .accessibilityLabel(strings.expandSourceButtonsLabel)
+            .accessibilityIdentifier("AltiveChatUI.ExpandSourceButtons")
+          }
+        }
 
         TextField(strings.messagePlaceholder, text: limitedDraft, axis: .vertical)
           .lineLimit(1...5)
@@ -104,6 +128,11 @@ public struct ChatImageComposer: View {
               .stroke(theme.composerFieldBorder, lineWidth: 0.5)
           }
           .accessibilityIdentifier("AltiveChatUI.Composer")
+          .onChange(of: focus.wrappedValue) { _, isFocused in
+            if isFocused {
+              isSourceButtonsExpandedWhileFocused = false
+            }
+          }
 
         Button(action: onSubmit) {
           if isPreparingImages || isSending {
@@ -244,6 +273,17 @@ public struct ChatImageComposer: View {
       isPreparingImages: isPreparingImages,
       isSending: isSending,
       draftPolicy: draftPolicy
+    )
+  }
+
+  private var hasSourceButtons: Bool {
+    additionalSourceButton != nil || !availableImageInputSources.isEmpty
+  }
+
+  private var showsSourceButtons: Bool {
+    showsChatComposerSourceButtons(
+      isFocused: focus.wrappedValue,
+      isExpandedWhileFocused: isSourceButtonsExpandedWhileFocused
     )
   }
 

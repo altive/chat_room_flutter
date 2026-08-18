@@ -92,13 +92,23 @@ class _BottomWidgetState extends State<BottomWidget> {
     if (widget.textEditingController == null) {
       _controller = TextEditingController();
     }
+    focusNode.addListener(_handleFocusChange);
   }
 
   @override
   void dispose() {
+    focusNode.removeListener(_handleFocusChange);
     _controller?.dispose();
     focusNode.dispose();
     super.dispose();
+  }
+
+  void _handleFocusChange() {
+    if (focusNode.hasFocus && _showLeadingWidgets) {
+      setState(() {
+        _showLeadingWidgets = false;
+      });
+    }
   }
 
   @override
@@ -202,14 +212,11 @@ class _BottomWidgetState extends State<BottomWidget> {
                                 children: suffixWidgets,
                               ),
                       ),
-                      onChanged: (text) {
-                        setState(() {
-                          _showLeadingWidgets = false;
-                        });
+                      onChanged: (_) {
+                        setState(() {});
                       },
                       onTap: () {
                         setState(() {
-                          _showLeadingWidgets = false;
                           messageTypeNotifier.value = MessageInputType.text;
                         });
                       },

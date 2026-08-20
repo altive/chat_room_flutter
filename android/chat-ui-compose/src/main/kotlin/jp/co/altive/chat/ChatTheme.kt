@@ -26,6 +26,11 @@ data class ChatRoomTheme(
   val avatarFallbackForeground: Color,
   val deliveryFailure: Color,
   val timelineBoundaryForeground: Color,
+  val celebrationCardBackgroundStart: Color = Color(0xFFFFF3E0),
+  val celebrationCardBackgroundEnd: Color = Color(0xFFFCE4EC),
+  val celebrationCardBorder: Color = Color(0x66F57C00),
+  val celebrationCardForeground: Color = Color(0xFF241A14),
+  val celebrationCardAccent: Color = Color(0xFFF57C00),
 ) {
   companion object {
     @Composable
@@ -50,6 +55,11 @@ data class ChatRoomTheme(
         avatarFallbackForeground = colors.onSurfaceVariant,
         deliveryFailure = colors.error,
         timelineBoundaryForeground = colors.onSurfaceVariant,
+        celebrationCardBackgroundStart = colors.tertiaryContainer.copy(alpha = .62f),
+        celebrationCardBackgroundEnd = colors.secondaryContainer.copy(alpha = .5f),
+        celebrationCardBorder = colors.tertiary.copy(alpha = .42f),
+        celebrationCardForeground = colors.onTertiaryContainer,
+        celebrationCardAccent = colors.tertiary,
       )
     }
 

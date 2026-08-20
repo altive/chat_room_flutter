@@ -48,6 +48,11 @@ class AltiveChatRoomTheme extends Equatable {
     this.messageActionButtonStyle,
     this.inputDecorationTheme,
     this.inputBackgroundColor,
+    this.celebrationCardBackgroundStart,
+    this.celebrationCardBackgroundEnd,
+    this.celebrationCardBorder,
+    this.celebrationCardForeground,
+    this.celebrationCardAccent,
     this.popupMenuConfig = const PopupMenuConfig(),
   });
 
@@ -237,6 +242,21 @@ class AltiveChatRoomTheme extends Equatable {
   /// テキストフィールドを表示するボトムの背景色。
   final Color? inputBackgroundColor;
 
+  /// celebrationカードのgradient開始色。
+  final Color? celebrationCardBackgroundStart;
+
+  /// celebrationカードのgradient終了色。
+  final Color? celebrationCardBackgroundEnd;
+
+  /// celebrationカードの境界線色。
+  final Color? celebrationCardBorder;
+
+  /// celebrationカードの前景色。
+  final Color? celebrationCardForeground;
+
+  /// celebrationカードの装飾色。
+  final Color? celebrationCardAccent;
+
   /// ポップアップメニューの設定
   final PopupMenuConfig popupMenuConfig;
 
@@ -276,6 +296,11 @@ class AltiveChatRoomTheme extends Equatable {
     messageActionButtonStyle,
     inputDecorationTheme,
     inputBackgroundColor,
+    celebrationCardBackgroundStart,
+    celebrationCardBackgroundEnd,
+    celebrationCardBorder,
+    celebrationCardForeground,
+    celebrationCardAccent,
     popupMenuConfig,
   ];
 }

@@ -2,9 +2,8 @@
 
 ## Status
 
-本書はtarget designであり、`ChatMessageCard`は未実装である。公開API、theme、layout、
-accessibility、visual test、release条件まで確定しており、Flutter、SwiftUI、
-Jetpack Composeの実装着手が可能な状態とする。3実装とtestが揃ってから`implemented`へ変更する。
+`ChatMessageCard`はFlutter、SwiftUI、Jetpack Composeで実装済みである。本書を3実装の
+公開API、theme、layout、accessibility、visual test、release条件の正本とする。
 
 ## 目的
 
@@ -132,7 +131,8 @@ nullableとする。
 | `celebrationCardAccent` | 紙吹雪などの装飾色 |
 
 SwiftUI / Compose / Flutterで同じtoken名と意味を使用する。既存consumerのtheme初期化を
-壊さないよう、SwiftとFlutterはinitializer default、Composeはdata class defaultを持つ。
+壊さないよう、SwiftとComposeはinitializer defaultを持ち、Flutterはnullable tokenを
+component内で`ColorScheme`の意味色へ解決する。
 
 ## Layoutと操作
 

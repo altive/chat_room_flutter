@@ -24,7 +24,7 @@ Flutter パッケージは従来どおりリポジトリルートの `lib/`、`t
 - チャット画面ウィジェット: `AltiveChatRoom`
 - テキスト、画像、スタンプ、音声通話、システムメッセージ
 - `AltiveChatRoomTheme` によるテーマカスタマイズ
-- メッセージバブル、ポップアップメニュー、アクションの拡張コールバック
+- メッセージバブル、汎用メッセージカード、ポップアップメニュー、アクションの拡張コールバック
 
 ### ローカル参照
 
@@ -91,7 +91,7 @@ Swift Package Manager は次の2製品を提供します。
 
 SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
 吹き出し、入力欄、送信状態と再送導線、リアクションと長押し操作、ステッカーpicker、
-アバター、システムイベントの展開、複数画像メッセージ、OS標準の複数選択Photos Picker、
+アバター、システムイベントの展開、汎用メッセージカード、複数画像メッセージ、OS標準の複数選択Photos Picker、
 キーボードとスタンプ入力面のレイアウト計算を
 共通コンポーネントとして提供します。各アプリ固有のStore、権限、外部I/O、課金、
 画面遷移はパッケージへ持ち込みません。
@@ -101,7 +101,7 @@ SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザ
 ```swift
 .package(
   url: "https://github.com/altive/altive-chat.git",
-  from: "1.1.0"
+  from: "1.2.0"
 )
 ```
 
@@ -196,7 +196,7 @@ Android実装はFlutter exampleから独立した`android/` Gradle projectです
 - `chat-core`: UI frameworkに依存しない表示モデル、入力方針、送信状態、
   リアクションの楽観的更新、最近使った項目。
 - `chat-ui-compose`: Room、Composer、再送UI、リアクション、ステッカーpicker、
-  アバター、システムイベント、タイムライン境界、複数画像入力と画像メッセージ。
+  アバター、システムイベント、汎用メッセージカード、タイムライン境界、複数画像入力と画像メッセージ。
 
 開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
 composite buildとして追加し、`jp.co.altive.chat:chat-core`と

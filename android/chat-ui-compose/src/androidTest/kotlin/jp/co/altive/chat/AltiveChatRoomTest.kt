@@ -1,6 +1,7 @@
 package jp.co.altive.chat
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsDisplayed
@@ -128,5 +129,25 @@ class AltiveChatRoomTest {
     }
 
     compose.onNodeWithText("故障した画面です").assertIsDisplayed()
+  }
+
+  @Test fun `汎用メッセージカードの内容と読み上げラベルを表示する`() {
+    compose.setContent {
+      MaterialTheme {
+        ChatMessageCard(
+          style = ChatMessageCardStyle.Celebration,
+          isOwnMessage = false,
+          accessibilityLabel = "お祝いカード",
+          header = { Text("お誕生日おめでとう") },
+          content = { Text("すてきな一年になりますように") },
+          footer = { Text("補足") },
+        )
+      }
+    }
+
+    compose.onNodeWithContentDescription("お祝いカード").assertIsDisplayed()
+    compose.onNodeWithText("お誕生日おめでとう").assertIsDisplayed()
+    compose.onNodeWithText("すてきな一年になりますように").assertIsDisplayed()
+    compose.onNodeWithText("補足").assertIsDisplayed()
   }
 }

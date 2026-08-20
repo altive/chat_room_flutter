@@ -1,3 +1,8 @@
+## 1.2.0 - 2026-08-20
+
+- Flutter、SwiftUI、Composeへ、アプリが内容を構築できる汎用メッセージカードを追加。
+- celebrationカードのgradient、境界線、前景色、装飾色を共通themeで変更可能にした。
+
 ## 1.1.0 - 2026-08-13
 
 - Flutter、SwiftUI、Composeで画像と本文を1メッセージとして表示できるようにした。

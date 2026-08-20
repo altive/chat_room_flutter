@@ -65,6 +65,21 @@ public struct ChatRoomTheme {
   /// タイムライン境界の前景色。
   public var timelineBoundaryForeground: Color
 
+  /// celebrationカードのgradient開始色。
+  public var celebrationCardBackgroundStart: Color
+
+  /// celebrationカードのgradient終了色。
+  public var celebrationCardBackgroundEnd: Color
+
+  /// celebrationカードの境界線色。
+  public var celebrationCardBorder: Color
+
+  /// celebrationカードの前景色。
+  public var celebrationCardForeground: Color
+
+  /// celebrationカードの装飾色。
+  public var celebrationCardAccent: Color
+
   /// チャット画面の配色を作成する。
   public init(
     background: Color = .clear,
@@ -85,7 +100,12 @@ public struct ChatRoomTheme {
     avatarFallbackBackground: Color = .secondary.opacity(0.14),
     avatarFallbackForeground: Color = .secondary,
     deliveryFailure: Color = .red,
-    timelineBoundaryForeground: Color = .secondary
+    timelineBoundaryForeground: Color = .secondary,
+    celebrationCardBackgroundStart: Color = .orange.opacity(0.16),
+    celebrationCardBackgroundEnd: Color = .pink.opacity(0.12),
+    celebrationCardBorder: Color = .orange.opacity(0.38),
+    celebrationCardForeground: Color = .primary,
+    celebrationCardAccent: Color = .orange
   ) {
     self.background = background
     self.outgoingBubble = outgoingBubble
@@ -106,6 +126,11 @@ public struct ChatRoomTheme {
     self.avatarFallbackForeground = avatarFallbackForeground
     self.deliveryFailure = deliveryFailure
     self.timelineBoundaryForeground = timelineBoundaryForeground
+    self.celebrationCardBackgroundStart = celebrationCardBackgroundStart
+    self.celebrationCardBackgroundEnd = celebrationCardBackgroundEnd
+    self.celebrationCardBorder = celebrationCardBorder
+    self.celebrationCardForeground = celebrationCardForeground
+    self.celebrationCardAccent = celebrationCardAccent
   }
 
   /// ファネリーの Family Room を正本とする標準テーマ。

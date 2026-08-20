@@ -347,8 +347,8 @@ fun ChatMessageRow(
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
       Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(content.value, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-        Text(formatTime(message.createdAtEpochMillis), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(content.value, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+        Text(formatTime(message.createdAtEpochMillis), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
       }
     }
     is ChatMessageContent.Text -> {

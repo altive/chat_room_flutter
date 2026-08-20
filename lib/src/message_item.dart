@@ -422,26 +422,28 @@ class _SystemMessageItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.widthOf(context) * .75,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: colorScheme.inverseSurface.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          _TimeText.systemMessage(dateTime: message.createdAt),
-          Text(
-            message.text,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium!.copyWith(
-              color: colorScheme.onInverseSurface,
+    return Center(
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.widthOf(context) * .75,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colorScheme.inverseSurface.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            _TimeText.systemMessage(dateTime: message.createdAt),
+            Text(
+              message.text,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium!.copyWith(
+                color: colorScheme.onInverseSurface,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

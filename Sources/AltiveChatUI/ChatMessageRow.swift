@@ -142,10 +142,12 @@ public struct ChatMessageRow: View {
         Text(text)
           .font(.footnote)
           .multilineTextAlignment(.center)
+          .frame(maxWidth: .infinity, alignment: .center)
 
         Text(message.createdAt.formatted(date: .omitted, time: .shortened))
           .font(.caption2)
           .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .center)
       }
     }
     .frame(maxWidth: .infinity)

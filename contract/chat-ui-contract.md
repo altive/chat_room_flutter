@@ -20,6 +20,7 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 - Character / UTF-16を選択できる入力長方針
 - テーマとアクセシビリティ上の意味付け
 - ファネリーのFamily Roomを正本とする吹き出し、システムイベントカード、入力欄
+- アプリ固有の用途や永続化schemaに依存しない汎用メッセージカード
 - キーボードとスタンプ入力面を切り替える際の共通レイアウト計算
 - リアクション候補、件数、長押しpopoverと競合を壊さない楽観的更新
 - ステッカーpicker、最近使った項目、アバター、システムイベントの展開表示
@@ -42,6 +43,8 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 - アバターURL、ステッカーcatalog・assetの取得とキャッシュ
 - ステッカーpicker末尾に差し込む販促内容、画像、外部リンクと遷移
 - システムイベントの業務上の意味付けとアクション実行
+- 永続化されたカード種別・design IDから汎用メッセージカードstyleへの変換
+- カードの見出し、本文、補足表示のローカライズと業務上の意味付け
 
 ## Swiftのモジュール境界
 
@@ -71,6 +74,18 @@ Store、Repository、Entityへ依存させない。
 
 状態、操作結果、アクセシビリティ上の意味を揃える。コンテキストメニュー、触覚、
 キーボード挙動などは各OSの標準体験を優先し、ピクセル単位の一致を要求しない。
+
+## 汎用メッセージカード
+
+通常の吹き出しとシステムイベントカードの中間にあたる、送信者付きの強調表示には
+`ChatMessageCard`を使用する。ライブラリはカードの外観、slot配置、テーマ、
+アクセシビリティを所有し、利用アプリは用途、永続化payload、表示文言を所有する。
+
+Firestoreの`messageKind`や`card.kind`など、利用アプリの保存値をAltiveChatの公開APIへ
+持ち込まない。利用アプリが保存値を検証して`ChatMessageCardStyle`へ変換する。
+
+公開API、style、fallback、test条件の正本は
+[`message-card-contract.md`](message-card-contract.md)とする。
 
 ## SwiftUIデザインの正本
 

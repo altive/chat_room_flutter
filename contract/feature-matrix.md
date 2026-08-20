@@ -7,6 +7,7 @@
 | --- | --- | --- | --- |
 | テキストメッセージ | implemented | implemented | implemented |
 | システムメッセージ | implemented | implemented | implemented |
+| 汎用メッセージカード | planned | planned | planned |
 | 画像メッセージ | implemented | implemented | implemented |
 | 画像＋本文の複合メッセージ | implemented | implemented | implemented |
 | スタンプメッセージ | implemented | planned | planned |

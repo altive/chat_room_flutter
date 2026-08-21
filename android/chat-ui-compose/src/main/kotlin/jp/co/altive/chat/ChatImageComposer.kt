@@ -16,10 +16,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -27,15 +27,20 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -76,11 +81,19 @@ fun ChatImageComposer(
   )
   var isComposerFocused by rememberSaveable { mutableStateOf(false) }
   var isSourceButtonsExpandedWhileFocused by rememberSaveable { mutableStateOf(false) }
+  val focusRequester = remember { FocusRequester() }
+  val keyboardController = LocalSoftwareKeyboardController.current
   val hasSourceButtons = additionalSourceContent != null || availableImageInputSources.isNotEmpty()
   val showsSourceButtons = shouldShowChatComposerSourceButtons(
     isFocused = isComposerFocused,
     isExpandedWhileFocused = isSourceButtonsExpandedWhileFocused,
   )
+  LaunchedEffect(isSourceButtonsExpandedWhileFocused) {
+    if (isSourceButtonsExpandedWhileFocused) {
+      focusRequester.requestFocus()
+      keyboardController?.show()
+    }
+  }
 
   Column(
     Modifier.fillMaxWidth()
@@ -161,7 +174,7 @@ fun ChatImageComposer(
               .testTag("AltiveChatUI.ExpandSourceButtons")
               .semantics { contentDescription = strings.expandSourceButtonsLabel },
           ) {
-            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
           }
         }
       }
@@ -172,6 +185,7 @@ fun ChatImageComposer(
         modifier = Modifier.weight(1f)
           .background(theme.composerField, RoundedCornerShape(24.dp))
           .testTag("AltiveChatUI.Composer")
+          .focusRequester(focusRequester)
           .onFocusChanged { focusState ->
             val gainedFocus = focusState.isFocused && !isComposerFocused
             isComposerFocused = focusState.isFocused

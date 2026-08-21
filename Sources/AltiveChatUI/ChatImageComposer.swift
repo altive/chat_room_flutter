@@ -102,9 +102,7 @@ public struct ChatImageComposer: View {
           if showsSourceButtons {
             sourceButtons
           } else {
-            Button {
-              isSourceButtonsExpandedWhileFocused = true
-            } label: {
+            Button(action: expandSourceButtons) {
               Image(systemName: "chevron.forward")
                 .font(.system(size: 19, weight: .medium))
                 .frame(width: 44, height: 44)
@@ -285,6 +283,14 @@ public struct ChatImageComposer: View {
       isFocused: focus.wrappedValue,
       isExpandedWhileFocused: isSourceButtonsExpandedWhileFocused
     )
+  }
+
+  private func expandSourceButtons() {
+    isSourceButtonsExpandedWhileFocused = true
+    Task { @MainActor in
+      await Task.yield()
+      focus.wrappedValue = true
+    }
   }
 
   private var limitedDraft: Binding<String> {

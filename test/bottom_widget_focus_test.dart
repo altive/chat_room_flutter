@@ -31,6 +31,7 @@ void main() {
 
     expect(find.byKey(const Key('先頭ボタン')), findsOneWidget);
     expect(find.byKey(const Key('展開ボタン')), findsNothing);
+    expect(textField.focusNode!.hasFocus, isTrue);
   });
 }
 

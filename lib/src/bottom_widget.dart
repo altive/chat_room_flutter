@@ -194,6 +194,11 @@ class _BottomWidgetState extends State<BottomWidget> {
                         setState(() {
                           _showLeadingWidgets = true;
                         });
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            focusNode.requestFocus();
+                          }
+                        });
                       },
                     ),
                   const SizedBox(width: 8),

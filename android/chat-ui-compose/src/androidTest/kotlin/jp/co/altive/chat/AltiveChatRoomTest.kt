@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -102,6 +103,7 @@ class AltiveChatRoomTest {
     compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").performClick()
 
     compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused()
   }
 
   @Test fun displaysImagesAndCaptionAsOneMessage() {

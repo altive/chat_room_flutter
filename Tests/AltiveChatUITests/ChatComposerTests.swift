@@ -20,4 +20,26 @@ struct ChatComposerTests {
     #expect(showsChatComposerSourceButtons(isFocused: true, isExpandedWhileFocused: true))
     #expect(showsChatComposerSourceButtons(isFocused: false, isExpandedWhileFocused: false))
   }
+
+  @Test("手動展開に伴うフォーカス復元では添付ボタンを閉じない")
+  func preservesLeadingButtonsWhileRestoringFocus() {
+    #expect(
+      !shouldCollapseChatComposerSourceButtons(
+        wasFocused: false,
+        isFocused: true,
+        isRestoringFocusAfterExpansion: true
+      )
+    )
+  }
+
+  @Test("通常のフォーカス獲得では添付ボタンを閉じる")
+  func collapsesLeadingButtonsOnRegularFocusGain() {
+    #expect(
+      shouldCollapseChatComposerSourceButtons(
+        wasFocused: false,
+        isFocused: true,
+        isRestoringFocusAfterExpansion: false
+      )
+    )
+  }
 }

@@ -9,6 +9,14 @@ func showsChatComposerSourceButtons(
   !isFocused || isExpandedWhileFocused
 }
 
+func shouldCollapseChatComposerSourceButtons(
+  wasFocused: Bool,
+  isFocused: Bool,
+  isRestoringFocusAfterExpansion: Bool
+) -> Bool {
+  !wasFocused && isFocused && !isRestoringFocusAfterExpansion
+}
+
 /// テキストまたは画像を送信できるかを判定する純粋な方針。
 public enum ChatComposerSendPolicy {
   /// 入力の準備中・送信中ではなく、テキストか画像が存在する場合に `true`。
@@ -32,6 +40,7 @@ public struct ChatImageComposer: View {
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
   @State private var isSourceButtonsExpandedWhileFocused = false
+  @State private var isRestoringFocusAfterSourceButtonExpansion = false
 
   let focus: FocusState<Bool>.Binding
   let configuration: ChatImageInputConfiguration
@@ -126,8 +135,15 @@ public struct ChatImageComposer: View {
               .stroke(theme.composerFieldBorder, lineWidth: 0.5)
           }
           .accessibilityIdentifier("AltiveChatUI.Composer")
-          .onChange(of: focus.wrappedValue) { _, isFocused in
-            if isFocused {
+          .onChange(of: focus.wrappedValue) { wasFocused, isFocused in
+            let shouldCollapseSourceButtons = shouldCollapseChatComposerSourceButtons(
+              wasFocused: wasFocused,
+              isFocused: isFocused,
+              isRestoringFocusAfterExpansion: isRestoringFocusAfterSourceButtonExpansion
+            )
+            if !wasFocused && isFocused && isRestoringFocusAfterSourceButtonExpansion {
+              isRestoringFocusAfterSourceButtonExpansion = false
+            } else if shouldCollapseSourceButtons {
               isSourceButtonsExpandedWhileFocused = false
             }
           }
@@ -286,10 +302,13 @@ public struct ChatImageComposer: View {
   }
 
   private func expandSourceButtons() {
+    isRestoringFocusAfterSourceButtonExpansion = true
     isSourceButtonsExpandedWhileFocused = true
     Task { @MainActor in
       await Task.yield()
       focus.wrappedValue = true
+      await Task.yield()
+      isRestoringFocusAfterSourceButtonExpansion = false
     }
   }
 

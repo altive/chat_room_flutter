@@ -129,10 +129,19 @@ public struct ChatImageComposer: View {
           .textFieldStyle(.plain)
           .padding(.horizontal, 14)
           .padding(.vertical, 11)
-          .background(theme.composerField, in: Capsule(style: .continuous))
+          .background(
+            theme.composerField,
+            in: RoundedRectangle(
+              cornerRadius: chatComposerCornerRadius,
+              style: .continuous
+            )
+          )
           .overlay {
-            Capsule(style: .continuous)
-              .stroke(theme.composerFieldBorder, lineWidth: 0.5)
+            RoundedRectangle(
+              cornerRadius: chatComposerCornerRadius,
+              style: .continuous
+            )
+            .stroke(theme.composerFieldBorder, lineWidth: 0.5)
           }
           .accessibilityIdentifier("AltiveChatUI.Composer")
           .onChange(of: focus.wrappedValue) { wasFocused, isFocused in

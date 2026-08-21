@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
 
+let chatComposerCornerRadius: CGFloat = 22
+
 /// ファネリーの Family Room を基準にしたチャット入力欄。
 ///
 /// 入力値の永続化や送信状態はアプリ側が所有します。`onSend` には前後の空白と
@@ -109,10 +111,19 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
             .accessibilityHint(inputSurfaceButtonHint ?? "")
           }
         }
-        .background(theme.composerField, in: Capsule(style: .continuous))
+        .background(
+          theme.composerField,
+          in: RoundedRectangle(
+            cornerRadius: chatComposerCornerRadius,
+            style: .continuous
+          )
+        )
         .overlay {
-          Capsule(style: .continuous)
-            .stroke(theme.composerFieldBorder, lineWidth: 0.5)
+          RoundedRectangle(
+            cornerRadius: chatComposerCornerRadius,
+            style: .continuous
+          )
+          .stroke(theme.composerFieldBorder, lineWidth: 0.5)
         }
 
         Button(action: sendDraft) {

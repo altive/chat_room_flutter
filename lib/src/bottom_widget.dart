@@ -78,6 +78,7 @@ class BottomWidget extends StatefulWidget {
 
 class _BottomWidgetState extends State<BottomWidget> {
   var _showLeadingWidgets = true;
+  var _isLeadingWidgetsManuallyExpanded = false;
 
   // ステッカーからテキストに切り替えたときにテキストフィールドにフォーカスを当てるために使用する。
   final focusNode = FocusNode();
@@ -104,7 +105,11 @@ class _BottomWidgetState extends State<BottomWidget> {
   }
 
   void _handleFocusChange() {
-    if (focusNode.hasFocus && _showLeadingWidgets) {
+    if (!focusNode.hasFocus) {
+      _isLeadingWidgetsManuallyExpanded = false;
+      return;
+    }
+    if (_showLeadingWidgets && !_isLeadingWidgetsManuallyExpanded) {
       setState(() {
         _showLeadingWidgets = false;
       });
@@ -192,10 +197,12 @@ class _BottomWidgetState extends State<BottomWidget> {
                       visualDensity: VisualDensity.compact,
                       onPressed: () {
                         setState(() {
+                          _isLeadingWidgetsManuallyExpanded = true;
                           _showLeadingWidgets = true;
                         });
                         WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) {
+                          if (mounted && !focusNode.hasFocus) {
+                            _isLeadingWidgetsManuallyExpanded = true;
                             focusNode.requestFocus();
                           }
                         });

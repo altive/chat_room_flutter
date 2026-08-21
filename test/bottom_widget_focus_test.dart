@@ -25,12 +25,48 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('展開ボタン')));
-    await tester.pump();
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'メッセージ');
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('先頭ボタン')), findsOneWidget);
     expect(find.byKey(const Key('展開ボタン')), findsNothing);
+    expect(textField.focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('手動展開後のフォーカス通知では先頭ボタンを閉じない', (tester) async {
+    await tester.pumpWidget(_testApp());
+
+    final textField = tester.widget<TextField>(find.byType(TextField));
+    textField.focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('展開ボタン')));
+    await tester.pumpAndSettle();
+    textField.focusNode!.notifyListeners();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('先頭ボタン')), findsOneWidget);
+    expect(find.byKey(const Key('展開ボタン')), findsNothing);
+    expect(textField.focusNode!.hasFocus, isTrue);
+  });
+
+  testWidgets('手動展開後にフォーカスし直すと先頭ボタンを閉じる', (tester) async {
+    await tester.pumpWidget(_testApp());
+
+    final textField = tester.widget<TextField>(find.byType(TextField));
+    textField.focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('展開ボタン')));
+    await tester.pumpAndSettle();
+
+    textField.focusNode!.unfocus();
+    await tester.pumpAndSettle();
+    textField.focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('先頭ボタン')), findsNothing);
+    expect(find.byKey(const Key('展開ボタン')), findsOneWidget);
     expect(textField.focusNode!.hasFocus, isTrue);
   });
 }

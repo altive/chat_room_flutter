@@ -11,15 +11,22 @@
     @Test("狭い画面でも4列分のステッカーを縮小する")
     func keepsFourColumnsOnNarrowScreens() {
       let pickerWidth: CGFloat = 390
-      let horizontalPadding: CGFloat = 24
-      let totalColumnSpacing: CGFloat = 30
+      let horizontalPadding = ChatStickerPickerLayout.horizontalPadding * 2
+      let totalColumnSpacing =
+        ChatStickerPickerLayout.columnSpacing
+        * CGFloat(ChatStickerPickerLayout.minimumColumnCount - 1)
       let cellLength =
         (pickerWidth - horizontalPadding - totalColumnSpacing)
-        / CGFloat(ChatStickerPickerLayout.columnCount)
+        / CGFloat(ChatStickerPickerLayout.minimumColumnCount)
 
-      #expect(ChatStickerPickerLayout.columnCount == 4)
+      #expect(ChatStickerPickerLayout.columnCount(for: pickerWidth) == 4)
       #expect(cellLength < ChatStickerPickerLayout.preferredStickerLength)
       #expect(ChatStickerPickerLayout.stickerScale(for: cellLength) < 1)
+    }
+
+    @Test("横幅に余裕がある場合はスタンプの列数を増やす")
+    func increasesColumnsOnWideScreens() {
+      #expect(ChatStickerPickerLayout.columnCount(for: 834) == 8)
     }
 
     @Test("末尾コンテンツをスタンプ一覧へ重ねない")

@@ -18,8 +18,19 @@ import androidx.compose.ui.unit.dp
 
 enum class ChatStickerPickerLoadState { Idle, Loading, Loaded, Unavailable, Failed }
 
-internal const val ChatStickerPickerColumnCount = 4
+internal const val ChatStickerPickerMinimumColumnCount = 4
+private val ChatStickerPreferredCellLength = 88.dp
 private val ChatStickerPreferredLength = 72.dp
+private val ChatStickerGridPadding = 12.dp
+private val ChatStickerColumnSpacing = 10.dp
+
+internal fun chatStickerColumnCount(availableLength: Dp): Int {
+  val contentLength = (availableLength - ChatStickerGridPadding * 2).coerceAtLeast(0.dp)
+  val fittingCount =
+    ((contentLength + ChatStickerColumnSpacing) /
+      (ChatStickerPreferredCellLength + ChatStickerColumnSpacing)).toInt()
+  return maxOf(ChatStickerPickerMinimumColumnCount, fittingCount)
+}
 
 internal fun chatStickerScale(availableLength: Dp): Float =
   (availableLength / ChatStickerPreferredLength).coerceIn(0f, 1f)
@@ -110,21 +121,28 @@ fun <Reference, Asset> ChatStickerPicker(
     }
     HorizontalDivider()
     if (isHistorySelected && recentReferences.isEmpty()) PickerMessage(strings.historyEmptyTitle)
-    else LazyVerticalGrid(columns = GridCells.Fixed(ChatStickerPickerColumnCount), contentPadding = PaddingValues(12.dp)) {
-      if (isHistorySelected) items(recentReferences) { reference ->
-        TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }, contentPadding = PaddingValues(0.dp)) {
-          StickerImage {
-            image(ChatStickerPickerImageSource.Reference(reference))
+    else BoxWithConstraints(Modifier.weight(1f)) {
+      LazyVerticalGrid(
+        columns = GridCells.Fixed(chatStickerColumnCount(maxWidth)),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(ChatStickerGridPadding),
+        horizontalArrangement = Arrangement.spacedBy(ChatStickerColumnSpacing),
+      ) {
+        if (isHistorySelected) items(recentReferences) { reference ->
+          TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }, contentPadding = PaddingValues(0.dp)) {
+            StickerImage {
+              image(ChatStickerPickerImageSource.Reference(reference))
+            }
+          }
+        } else items(selected?.stickers.orEmpty(), key = { it.id }) { sticker ->
+          TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }, contentPadding = PaddingValues(0.dp)) {
+            StickerImage {
+              image(ChatStickerPickerImageSource.Asset(sticker.asset))
+            }
           }
         }
-      } else items(selected?.stickers.orEmpty(), key = { it.id }) { sticker ->
-        TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }, contentPadding = PaddingValues(0.dp)) {
-          StickerImage {
-            image(ChatStickerPickerImageSource.Asset(sticker.asset))
-          }
-        }
+        item(span = { GridItemSpan(maxLineSpan) }) { footer() }
       }
-      item(span = { GridItemSpan(maxLineSpan) }) { footer() }
     }
   }
 }

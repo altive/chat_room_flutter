@@ -314,26 +314,42 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
           Expanded(
             child: CustomScrollView(
               slivers: [
-                SliverGrid.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    childAspectRatio: 73 / 58,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemCount: _selectedStickerPackage?.stickers.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final sticker = _selectedStickerPackage?.stickers[index];
-                    if (sticker == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return GestureDetector(
-                      onTap: () {
-                        widget.onStickerSelected.call(sticker);
-                      },
-                      child: CommonCachedNetworkImage(
-                        imageUrl: sticker.imageUrl,
+                SliverLayoutBuilder(
+                  builder: (context, constraints) {
+                    const minimumColumnCount = 4;
+                    const preferredCellWidth = 73.0;
+                    const crossAxisSpacing = 16.0;
+                    final fittingColumnCount =
+                        ((constraints.crossAxisExtent + crossAxisSpacing) /
+                                (preferredCellWidth + crossAxisSpacing))
+                            .floor();
+                    final columnCount = fittingColumnCount < minimumColumnCount
+                        ? minimumColumnCount
+                        : fittingColumnCount;
+
+                    return SliverGrid.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columnCount,
+                        childAspectRatio: 73 / 58,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: crossAxisSpacing,
                       ),
+                      itemCount: _selectedStickerPackage?.stickers.length ?? 0,
+                      itemBuilder: (context, index) {
+                        final sticker =
+                            _selectedStickerPackage?.stickers[index];
+                        if (sticker == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return GestureDetector(
+                          onTap: () {
+                            widget.onStickerSelected.call(sticker);
+                          },
+                          child: CommonCachedNetworkImage(
+                            imageUrl: sticker.imageUrl,
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

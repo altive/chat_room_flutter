@@ -7,8 +7,18 @@ import SwiftUI
 #endif
 
 enum ChatStickerPickerLayout {
-  static let columnCount = 4
+  static let minimumColumnCount = 4
   static let preferredStickerLength: CGFloat = 88
+  static let columnSpacing: CGFloat = 10
+  static let horizontalPadding: CGFloat = 12
+
+  static func columnCount(for availableWidth: CGFloat) -> Int {
+    let contentWidth = max(0, availableWidth - horizontalPadding * 2)
+    let fittingCount = Int(
+      (contentWidth + columnSpacing) / (preferredStickerLength + columnSpacing)
+    )
+    return max(minimumColumnCount, fittingCount)
+  }
 
   static func stickerScale(for cellLength: CGFloat) -> CGFloat {
     min(1, max(0, cellLength / preferredStickerLength))
@@ -158,11 +168,6 @@ where
   private let onRetry: () -> Void
   private let footer: () -> FooterContent
   private let image: (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
-
-  private let columns = Array(
-    repeating: GridItem(.flexible(minimum: 0), spacing: 10),
-    count: ChatStickerPickerLayout.columnCount
-  )
 
   /// ステッカーpickerを作成する。
   public init(
@@ -314,38 +319,45 @@ where
   }
 
   private var stickerGrid: some View {
-    ScrollView {
-      LazyVStack(spacing: 0) {
-        if isHistorySelected, recentReferences.isEmpty {
-          ContentUnavailableView(strings.historyEmptyTitle, systemImage: "clock.arrow.circlepath")
-            .padding(.top, 40)
-        } else {
-          LazyVGrid(columns: columns, spacing: 10) {
-            if isHistorySelected {
-              ForEach(recentReferences, id: \.self) { reference in
-                Button {
-                  onSelect(reference)
-                } label: {
-                  stickerImage(.reference(reference))
+    GeometryReader { geometry in
+      let columns = Array(
+        repeating: GridItem(.flexible(minimum: 0), spacing: ChatStickerPickerLayout.columnSpacing),
+        count: ChatStickerPickerLayout.columnCount(for: geometry.size.width)
+      )
+
+      ScrollView {
+        LazyVStack(spacing: 0) {
+          if isHistorySelected, recentReferences.isEmpty {
+            ContentUnavailableView(strings.historyEmptyTitle, systemImage: "clock.arrow.circlepath")
+              .padding(.top, 40)
+          } else {
+            LazyVGrid(columns: columns, spacing: ChatStickerPickerLayout.columnSpacing) {
+              if isHistorySelected {
+                ForEach(recentReferences, id: \.self) { reference in
+                  Button {
+                    onSelect(reference)
+                  } label: {
+                    stickerImage(.reference(reference))
+                  }
+                  .buttonStyle(.plain)
+                  .accessibilityLabel(referenceAccessibilityLabel(reference))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(referenceAccessibilityLabel(reference))
-              }
-            } else {
-              ForEach(selectedPack?.stickers ?? []) { sticker in
-                Button {
-                  onSelect(sticker.reference)
-                } label: {
-                  stickerImage(.asset(sticker.asset))
+              } else {
+                ForEach(selectedPack?.stickers ?? []) { sticker in
+                  Button {
+                    onSelect(sticker.reference)
+                  } label: {
+                    stickerImage(.asset(sticker.asset))
+                  }
+                  .buttonStyle(.plain)
+                  .accessibilityLabel(sticker.accessibilityLabel)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(sticker.accessibilityLabel)
               }
             }
+            .padding(ChatStickerPickerLayout.horizontalPadding)
           }
-          .padding(12)
+          footer()
         }
-        footer()
       }
     }
   }

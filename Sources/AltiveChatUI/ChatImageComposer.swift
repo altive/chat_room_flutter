@@ -2,18 +2,8 @@ import AltiveChatCore
 import PhotosUI
 import SwiftUI
 
-func showsChatComposerSourceButtons(
-  isFocused: Bool,
-  isExpandedWhileFocused: Bool
-) -> Bool {
-  !isFocused || isExpandedWhileFocused
-}
-
-func shouldCollapseChatComposerSourceButtons(
-  wasFocused: Bool,
-  isFocused: Bool
-) -> Bool {
-  !wasFocused && isFocused
+func showsChatComposerSourceButtons(isFocused: Bool) -> Bool {
+  !isFocused
 }
 
 /// テキストまたは画像を送信できるかを判定する純粋な方針。
@@ -38,8 +28,6 @@ public struct ChatImageComposer: View {
   @Binding var draft: String
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
-  @State private var isSourceButtonsExpandedWhileFocused = false
-
   let focus: FocusState<Bool>.Binding
   let configuration: ChatImageInputConfiguration
   let availableImageInputSources: Set<ChatImageInputSource>
@@ -109,7 +97,9 @@ public struct ChatImageComposer: View {
           if showsSourceButtons {
             sourceButtons
           } else {
-            Button(action: expandSourceButtons) {
+            Button {
+              focus.wrappedValue = false
+            } label: {
               Image(systemName: "chevron.forward")
                 .font(.system(size: 19, weight: .medium))
                 .frame(width: 44, height: 44)
@@ -142,15 +132,6 @@ public struct ChatImageComposer: View {
             .stroke(theme.composerFieldBorder, lineWidth: 0.5)
           }
           .accessibilityIdentifier("AltiveChatUI.Composer")
-          .onChange(of: focus.wrappedValue) { wasFocused, isFocused in
-            let shouldCollapseSourceButtons = shouldCollapseChatComposerSourceButtons(
-              wasFocused: wasFocused,
-              isFocused: isFocused
-            )
-            if shouldCollapseSourceButtons {
-              isSourceButtonsExpandedWhileFocused = false
-            }
-          }
 
         Button(action: onSubmit) {
           if isPreparingImages || isSending {
@@ -299,14 +280,7 @@ public struct ChatImageComposer: View {
   }
 
   private var showsSourceButtons: Bool {
-    showsChatComposerSourceButtons(
-      isFocused: focus.wrappedValue,
-      isExpandedWhileFocused: isSourceButtonsExpandedWhileFocused
-    )
-  }
-
-  private func expandSourceButtons() {
-    isSourceButtonsExpandedWhileFocused = true
+    showsChatComposerSourceButtons(isFocused: focus.wrappedValue)
   }
 
   private var limitedDraft: Binding<String> {

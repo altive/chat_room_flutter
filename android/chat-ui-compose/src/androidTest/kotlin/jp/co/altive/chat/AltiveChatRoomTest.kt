@@ -5,7 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -75,7 +75,7 @@ class AltiveChatRoomTest {
     compose.onNodeWithContentDescription("Remove selected image").assertIsNotDisplayed()
   }
 
-  @Test fun `入力欄のフォーカス時に添付ボタンを閉じ展開操作で戻す`() {
+  @Test fun `展開操作で入力欄のフォーカスを外して添付ボタンを戻す`() {
     compose.setContent {
       var draft by remember { mutableStateOf("") }
       MaterialTheme {
@@ -103,7 +103,7 @@ class AltiveChatRoomTest {
     compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").performClick()
 
     compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
-    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused()
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsNotFocused()
   }
 
   @Test fun displaysImagesAndCaptionAsOneMessage() {

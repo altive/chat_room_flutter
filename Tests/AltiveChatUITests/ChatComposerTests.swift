@@ -14,30 +14,9 @@ struct ChatComposerTests {
     #expect(ChatDraftPolicy.unrestricted.normalizedText(from: " \n\t") == nil)
   }
 
-  @Test("入力欄のフォーカス中は展開操作まで添付ボタンを閉じる")
+  @Test("入力欄のフォーカス中だけ添付ボタンを閉じる")
   func controlsLeadingButtonVisibility() {
-    #expect(!showsChatComposerSourceButtons(isFocused: true, isExpandedWhileFocused: false))
-    #expect(showsChatComposerSourceButtons(isFocused: true, isExpandedWhileFocused: true))
-    #expect(showsChatComposerSourceButtons(isFocused: false, isExpandedWhileFocused: false))
-  }
-
-  @Test("フォーカスを維持したままの展開では添付ボタンを閉じない")
-  func preservesLeadingButtonsWhileFocusIsUnchanged() {
-    #expect(
-      !shouldCollapseChatComposerSourceButtons(
-        wasFocused: true,
-        isFocused: true
-      )
-    )
-  }
-
-  @Test("通常のフォーカス獲得では添付ボタンを閉じる")
-  func collapsesLeadingButtonsOnRegularFocusGain() {
-    #expect(
-      shouldCollapseChatComposerSourceButtons(
-        wasFocused: false,
-        isFocused: true
-      )
-    )
+    #expect(!showsChatComposerSourceButtons(isFocused: true))
+    #expect(showsChatComposerSourceButtons(isFocused: false))
   }
 }

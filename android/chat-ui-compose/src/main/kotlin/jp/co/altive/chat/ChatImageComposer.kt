@@ -30,15 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,13 +45,7 @@ import androidx.compose.ui.unit.dp
 
 internal fun shouldShowChatComposerSourceButtons(
   isFocused: Boolean,
-  isExpandedWhileFocused: Boolean,
-): Boolean = !isFocused || isExpandedWhileFocused
-
-internal fun shouldCollapseChatComposerSourceButtons(
-  wasFocused: Boolean,
-  isFocused: Boolean,
-): Boolean = !wasFocused && isFocused
+): Boolean = !isFocused
 
 @Composable
 fun ChatImageComposer(
@@ -82,13 +75,12 @@ fun ChatImageComposer(
     isSending = isSending,
     draftPolicy = draftPolicy,
   )
-  var isComposerFocused by rememberSaveable { mutableStateOf(false) }
-  var isSourceButtonsExpandedWhileFocused by rememberSaveable { mutableStateOf(false) }
-  val focusRequester = remember { FocusRequester() }
+  var isComposerFocused by remember { mutableStateOf(false) }
+  val focusManager = LocalFocusManager.current
+  val keyboardController = LocalSoftwareKeyboardController.current
   val hasSourceButtons = additionalSourceContent != null || availableImageInputSources.isNotEmpty()
   val showsSourceButtons = shouldShowChatComposerSourceButtons(
     isFocused = isComposerFocused,
-    isExpandedWhileFocused = isSourceButtonsExpandedWhileFocused,
   )
   Column(
     Modifier.fillMaxWidth()
@@ -164,7 +156,10 @@ fun ChatImageComposer(
           }
         } else {
           IconButton(
-            onClick = { isSourceButtonsExpandedWhileFocused = true },
+            onClick = {
+              focusManager.clearFocus(force = true)
+              keyboardController?.hide()
+            },
             modifier = Modifier.size(44.dp)
               .testTag("AltiveChatUI.ExpandSourceButtons")
               .semantics { contentDescription = strings.expandSourceButtonsLabel },
@@ -180,16 +175,8 @@ fun ChatImageComposer(
         modifier = Modifier.weight(1f)
           .background(theme.composerField, RoundedCornerShape(24.dp))
           .testTag("AltiveChatUI.Composer")
-          .focusRequester(focusRequester)
           .onFocusChanged { focusState ->
-            val shouldCollapseSourceButtons = shouldCollapseChatComposerSourceButtons(
-              wasFocused = isComposerFocused,
-              isFocused = focusState.isFocused,
-            )
             isComposerFocused = focusState.isFocused
-            if (shouldCollapseSourceButtons) {
-              isSourceButtonsExpandedWhileFocused = false
-            }
           }
           .padding(horizontal = 14.dp, vertical = 12.dp),
         textStyle = MaterialTheme.typography.bodyLarge.copy(

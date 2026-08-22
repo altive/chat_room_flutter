@@ -26,12 +26,11 @@ class ChatComposerVisibilityTest {
     )
   }
 
-  @Test fun `手動展開に伴うフォーカス復元では添付ボタンを閉じない`() {
+  @Test fun `フォーカスを維持したままの展開では添付ボタンを閉じない`() {
     assertFalse(
       shouldCollapseChatComposerSourceButtons(
-        wasFocused = false,
+        wasFocused = true,
         isFocused = true,
-        isRestoringFocusAfterExpansion = true,
       ),
     )
   }
@@ -41,7 +40,6 @@ class ChatComposerVisibilityTest {
       shouldCollapseChatComposerSourceButtons(
         wasFocused = false,
         isFocused = true,
-        isRestoringFocusAfterExpansion = false,
       ),
     )
   }

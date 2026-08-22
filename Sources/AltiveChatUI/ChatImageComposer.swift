@@ -11,10 +11,9 @@ func showsChatComposerSourceButtons(
 
 func shouldCollapseChatComposerSourceButtons(
   wasFocused: Bool,
-  isFocused: Bool,
-  isRestoringFocusAfterExpansion: Bool
+  isFocused: Bool
 ) -> Bool {
-  !wasFocused && isFocused && !isRestoringFocusAfterExpansion
+  !wasFocused && isFocused
 }
 
 /// テキストまたは画像を送信できるかを判定する純粋な方針。
@@ -40,7 +39,6 @@ public struct ChatImageComposer: View {
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
   @State private var isSourceButtonsExpandedWhileFocused = false
-  @State private var isRestoringFocusAfterSourceButtonExpansion = false
 
   let focus: FocusState<Bool>.Binding
   let configuration: ChatImageInputConfiguration
@@ -147,12 +145,9 @@ public struct ChatImageComposer: View {
           .onChange(of: focus.wrappedValue) { wasFocused, isFocused in
             let shouldCollapseSourceButtons = shouldCollapseChatComposerSourceButtons(
               wasFocused: wasFocused,
-              isFocused: isFocused,
-              isRestoringFocusAfterExpansion: isRestoringFocusAfterSourceButtonExpansion
+              isFocused: isFocused
             )
-            if !wasFocused && isFocused && isRestoringFocusAfterSourceButtonExpansion {
-              isRestoringFocusAfterSourceButtonExpansion = false
-            } else if shouldCollapseSourceButtons {
+            if shouldCollapseSourceButtons {
               isSourceButtonsExpandedWhileFocused = false
             }
           }
@@ -311,14 +306,7 @@ public struct ChatImageComposer: View {
   }
 
   private func expandSourceButtons() {
-    isRestoringFocusAfterSourceButtonExpansion = true
     isSourceButtonsExpandedWhileFocused = true
-    Task { @MainActor in
-      await Task.yield()
-      focus.wrappedValue = true
-      await Task.yield()
-      isRestoringFocusAfterSourceButtonExpansion = false
-    }
   }
 
   private var limitedDraft: Binding<String> {

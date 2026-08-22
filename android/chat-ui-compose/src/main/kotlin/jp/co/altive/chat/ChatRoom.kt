@@ -169,6 +169,7 @@ fun AltiveChatRoom(
   onImagePreparationFailure: ((Throwable) -> Unit)? = null,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
   onRetry: ((String) -> Unit)? = null,
+  focusRequester: FocusRequester = remember { FocusRequester() },
   imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
       Text(strings.imageLabel)
@@ -318,6 +319,7 @@ fun AltiveChatRoom(
         strings = strings,
         draftPolicy = draftPolicy,
         theme = theme,
+        focusRequester = focusRequester,
         onRequestCamera = {
           focusManager.clearFocus()
           onRequestCamera?.invoke()

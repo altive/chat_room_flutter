@@ -34,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
@@ -66,6 +68,7 @@ fun ChatImageComposer(
   onSubmit: () -> Unit,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
   additionalSourceContent: (@Composable () -> Unit)? = null,
+  focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
   val canSend = ChatComposerSendPolicy.canSend(
     draft = draft,
@@ -157,6 +160,7 @@ fun ChatImageComposer(
         } else {
           IconButton(
             onClick = {
+              isComposerFocused = false
               focusManager.clearFocus(force = true)
               keyboardController?.hide()
             },
@@ -175,6 +179,7 @@ fun ChatImageComposer(
         modifier = Modifier.weight(1f)
           .background(theme.composerField, RoundedCornerShape(24.dp))
           .testTag("AltiveChatUI.Composer")
+          .focusRequester(focusRequester)
           .onFocusChanged { focusState ->
             isComposerFocused = focusState.isFocused
           }

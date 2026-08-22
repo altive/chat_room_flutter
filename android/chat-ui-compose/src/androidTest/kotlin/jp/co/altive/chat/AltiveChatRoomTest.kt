@@ -3,8 +3,10 @@ package jp.co.altive.chat
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -22,8 +24,8 @@ class AltiveChatRoomTest {
 
   @Test fun sendsNormalizedTextAndClearsDraft() {
     var sent: String? = null
+    var draft by mutableStateOf("")
     compose.setContent {
-      var draft by remember { mutableStateOf("") }
       MaterialTheme {
         AltiveChatRoom(
           messages = emptyList(),
@@ -38,14 +40,16 @@ class AltiveChatRoomTest {
     compose.onNodeWithTag("AltiveChatUI.Composer").performTextInput("  Hello  ")
     compose.onNodeWithTag("AltiveChatUI.SendButton").performClick()
 
-    compose.runOnIdle { assertEquals("Hello", sent) }
-    compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("")
+    compose.runOnIdle {
+      assertEquals("Hello", sent)
+      assertEquals("", draft)
+    }
   }
 
   @Test fun sendsTextAndImagesAsOneSubmissionAndClearsBothDrafts() {
     var submission: ChatComposerSubmission? = null
+    var draft by mutableStateOf("")
     compose.setContent {
-      var draft by remember { mutableStateOf("") }
       var imageDrafts by remember {
         mutableStateOf(listOf(ChatImageDraft("image-1", "content://chat/image-1")))
       }
@@ -70,14 +74,16 @@ class AltiveChatRoomTest {
     compose.runOnIdle {
       assertEquals("caption", submission?.text)
       assertEquals(listOf("image-1"), submission?.images?.map(ChatImageDraft::id))
+      assertEquals("", draft)
     }
-    compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("")
     compose.onNodeWithContentDescription("Remove selected image").assertIsNotDisplayed()
   }
 
   @Test fun `展開操作で入力欄のフォーカスを外して添付ボタンを戻す`() {
+    lateinit var focusRequester: FocusRequester
     compose.setContent {
       var draft by remember { mutableStateOf("") }
+      focusRequester = remember { FocusRequester() }
       MaterialTheme {
         AltiveChatRoom(
           messages = emptyList(),
@@ -88,22 +94,29 @@ class AltiveChatRoomTest {
           onImageDraftsChange = {},
           resolvePhotoLibraryUri = { error("not used") },
           strings = ChatRoomStrings("", "Message", "Send", "", "", ""),
+          focusRequester = focusRequester,
+          onRequestCamera = {},
           onSubmit = {},
         )
       }
     }
 
-    compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
-
     compose.onNodeWithTag("AltiveChatUI.Composer").performClick()
 
     compose.onNodeWithContentDescription("Camera").assertIsNotDisplayed()
     compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").assertIsDisplayed()
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused().performTextInput("こんにちは")
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("こんにちは")
 
     compose.onNodeWithTag("AltiveChatUI.ExpandSourceButtons").performClick()
 
     compose.onNodeWithContentDescription("Camera").assertIsDisplayed()
     compose.onNodeWithTag("AltiveChatUI.Composer").assertIsNotFocused()
+
+    compose.runOnIdle { focusRequester.requestFocus() }
+
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused().performTextInput("世界")
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("こんにちは世界")
   }
 
   @Test fun displaysImagesAndCaptionAsOneMessage() {

@@ -33,6 +33,7 @@ public struct AltiveChatRoom: View {
   @State private var selectedPhotoItems: [PhotosPickerItem] = []
   @State private var photoDraftIDs: [PhotosPickerItem: String] = [:]
   @State private var isPreparingPhotoLibraryItem = false
+  @State private var hasPresentedMessages = false
 
   /// テキスト送信だけを利用するチャット画面を作成する。
   ///
@@ -158,15 +159,28 @@ public struct AltiveChatRoom: View {
         .padding(.top, 12)
       }
       .background(theme.background)
+      .defaultScrollAnchor(.bottom)
       .scrollDismissesKeyboard(.interactively)
       .safeAreaInset(edge: .bottom) {
         composer
       }
       .onAppear {
-        proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
+        hasPresentedMessages = !messages.isEmpty
       }
       .onChange(of: messages.last?.id) { previousID, currentID in
         guard previousID != currentID else { return }
+
+        guard currentID != nil else {
+          hasPresentedMessages = false
+          return
+        }
+
+        guard hasPresentedMessages else {
+          hasPresentedMessages = true
+          proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
+          return
+        }
+
         withAnimation(.easeOut(duration: 0.2)) {
           proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
         }

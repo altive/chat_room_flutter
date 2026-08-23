@@ -3,7 +3,7 @@ description: |
   altive_chat_room provides the UI used for chatting.
   One-to-one chats like DM and group chats are possible.
   Text and image messages can also be sent.
-version: 1.2.7
+version: 1.2.8
 publish_to: none
 workspace:
   - example

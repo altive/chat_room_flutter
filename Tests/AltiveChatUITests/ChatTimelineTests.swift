@@ -50,4 +50,18 @@ struct ChatTimelineTests {
       )
     )
   }
+
+  @Test("初期位置の対象変更を別の位置決めスコープとして扱う")
+  func changesScopeWhenInitialTargetChanges() {
+    let latest = ChatTimelinePositioningScope(
+      timelineID: AnyHashable("room-a"),
+      initialPosition: ChatTimelineInitialPosition<String>.latest
+    )
+    let specified = ChatTimelinePositioningScope(
+      timelineID: AnyHashable("room-a"),
+      initialPosition: .item("message-a")
+    )
+
+    #expect(latest != specified)
+  }
 }

@@ -32,8 +32,12 @@ public struct ChatTimelineProxy {
     while operation: @MainActor () async -> Void
   ) async {
     await operation()
-    await Task.yield()
-    scrollProxy.scrollTo(id, anchor: anchor)
+    await waitForTimelineLayout()
+    var transaction = Transaction()
+    transaction.disablesAnimations = true
+    withTransaction(transaction) {
+      scrollProxy.scrollTo(id, anchor: anchor)
+    }
   }
 
   private func perform(animation: Animation?, action: () -> Void) {
@@ -42,6 +46,29 @@ public struct ChatTimelineProxy {
     } else {
       action()
     }
+  }
+
+  private func waitForTimelineLayout() async {
+    await withCheckedContinuation { continuation in
+      DispatchQueue.main.async {
+        DispatchQueue.main.async {
+          continuation.resume()
+        }
+      }
+    }
+  }
+}
+
+/// タイムラインを最初に表示する位置。
+public enum ChatTimelineInitialPosition<ID: Hashable>: Hashable {
+  /// 最新項目が見える末尾。
+  case latest
+  /// 指定項目と配置anchor。
+  case item(ID, anchor: UnitPoint)
+
+  /// 指定項目を中央へ表示する初期位置を返す。
+  public static func item(_ id: ID) -> Self {
+    .item(id, anchor: .center)
   }
 }
 
@@ -132,10 +159,9 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
 /// 利用アプリが所有する。
 @MainActor
 public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View>: View {
-  private let positioningScope: AnyHashable
+  private let timelineID: AnyHashable
   private let isReadyForInitialPositioning: Bool
-  private let initialTargetID: ID?
-  private let initialTargetAnchor: UnitPoint
+  private let initialPosition: ChatTimelineInitialPosition<ID>
   private let followLatestTrigger: FollowTrigger
   private let followLatestAnimation: Animation?
   private let history: ChatTimelineHistoryConfiguration<ID>
@@ -153,8 +179,40 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
 
   /// 汎用タイムラインを作成する。
   ///
-  /// `initialTargetID` が `nil` の場合は末尾から表示する。通知などで指定項目を
-  /// 表示するときだけ対象IDと `.center` を渡す。
+  /// 通常起動では`initialPosition`へ`.latest`を、通知などで指定項目を表示するときは
+  /// `.item(id)`を渡す。
+  public init(
+    timelineID: AnyHashable,
+    isReadyForInitialPositioning: Bool,
+    initialPosition: ChatTimelineInitialPosition<ID> = .latest,
+    followLatestTrigger: FollowTrigger,
+    followLatestAnimation: Animation? = .easeOut(duration: 0.2),
+    history: ChatTimelineHistoryConfiguration<ID> = .disabled,
+    spacing: CGFloat = 12,
+    contentInsets: EdgeInsets = EdgeInsets(),
+    maximumContentWidth: CGFloat? = nil,
+    onInitialPositioning: @escaping (ChatTimelineProxy) -> Void = { _ in },
+    @ViewBuilder content: @escaping (ChatTimelineProxy) -> Content
+  ) {
+    self.timelineID = timelineID
+    self.isReadyForInitialPositioning = isReadyForInitialPositioning
+    self.initialPosition = initialPosition
+    self.followLatestTrigger = followLatestTrigger
+    self.followLatestAnimation = followLatestAnimation
+    self.history = history
+    self.spacing = spacing
+    self.contentInsets = contentInsets
+    self.maximumContentWidth = maximumContentWidth
+    self.onInitialPositioning = onInitialPositioning
+    self.content = content
+  }
+
+  /// 従来の位置指定引数から汎用タイムラインを作成する。
+  @available(
+    *,
+    deprecated,
+    message: "timelineIDとChatTimelineInitialPositionを使用してください。"
+  )
   public init(
     positioningScope: AnyHashable,
     isReadyForInitialPositioning: Bool,
@@ -169,18 +227,21 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     onInitialPositioning: @escaping (ChatTimelineProxy) -> Void = { _ in },
     @ViewBuilder content: @escaping (ChatTimelineProxy) -> Content
   ) {
-    self.positioningScope = positioningScope
-    self.isReadyForInitialPositioning = isReadyForInitialPositioning
-    self.initialTargetID = initialTargetID
-    self.initialTargetAnchor = initialTargetAnchor
-    self.followLatestTrigger = followLatestTrigger
-    self.followLatestAnimation = followLatestAnimation
-    self.history = history
-    self.spacing = spacing
-    self.contentInsets = contentInsets
-    self.maximumContentWidth = maximumContentWidth
-    self.onInitialPositioning = onInitialPositioning
-    self.content = content
+    self.init(
+      timelineID: positioningScope,
+      isReadyForInitialPositioning: isReadyForInitialPositioning,
+      initialPosition: initialTargetID.map {
+        .item($0, anchor: initialTargetAnchor)
+      } ?? .latest,
+      followLatestTrigger: followLatestTrigger,
+      followLatestAnimation: followLatestAnimation,
+      history: history,
+      spacing: spacing,
+      contentInsets: contentInsets,
+      maximumContentWidth: maximumContentWidth,
+      onInitialPositioning: onInitialPositioning,
+      content: content
+    )
   }
 
   public var body: some View {
@@ -216,9 +277,6 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         positionInitiallyIfNeeded(using: timelineProxy)
       }
       .onChange(of: isReadyForInitialPositioning) { _, _ in
-        positionInitiallyIfNeeded(using: timelineProxy)
-      }
-      .onChange(of: initialTargetID) { _, _ in
         positionInitiallyIfNeeded(using: timelineProxy)
       }
       .onChange(of: followLatestTrigger) { previousTrigger, trigger in
@@ -319,23 +377,46 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       )
     else { return }
 
-    if let initialTargetID {
-      proxy.scrollTo(initialTargetID, anchor: initialTargetAnchor)
-    } else {
-      proxy.scrollToBottom()
-    }
+    applyInitialPosition(using: proxy)
     Task { @MainActor in
-      await Task.yield()
+      await waitForInitialLayout()
       guard positioningState.positionedScope == positioningScope else { return }
-      if let initialTargetID {
-        proxy.scrollTo(initialTargetID, anchor: initialTargetAnchor)
-      } else {
-        proxy.scrollToBottom()
-      }
+      applyInitialPosition(using: proxy)
       onInitialPositioning(proxy)
       requestAutomaticHistoryIfNeeded(using: proxy)
     }
   }
+
+  private var positioningScope: AnyHashable {
+    AnyHashable(
+      ChatTimelinePositioningScope(
+        timelineID: timelineID,
+        initialPosition: initialPosition
+      )
+    )
+  }
+
+  private func applyInitialPosition(using proxy: ChatTimelineProxy) {
+    switch initialPosition {
+    case .latest:
+      proxy.scrollToBottom()
+    case .item(let id, let anchor):
+      proxy.scrollTo(id, anchor: anchor)
+    }
+  }
+
+  private func waitForInitialLayout() async {
+    await withCheckedContinuation { continuation in
+      DispatchQueue.main.async {
+        continuation.resume()
+      }
+    }
+  }
+}
+
+struct ChatTimelinePositioningScope<ID: Hashable>: Hashable {
+  let timelineID: AnyHashable
+  let initialPosition: ChatTimelineInitialPosition<ID>
 }
 
 extension ChatTimelineHistoryControlStyle {

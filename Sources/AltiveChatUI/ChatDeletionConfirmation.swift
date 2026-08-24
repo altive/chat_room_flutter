@@ -47,10 +47,8 @@ extension View {
     let isPresented = Binding(
       get: { item.wrappedValue != nil },
       set: { isPresented in
-        if !isPresented {
-          item.wrappedValue = nil
-          onCancel()
-        }
+        guard !isPresented else { return }
+        ChatDeletionConfirmationAction.dismiss(item: item, onCancel: onCancel)
       }
     )
     switch style {
@@ -99,11 +97,14 @@ extension View {
     onCancel: @escaping () -> Void
   ) -> some View {
     Button(strings.deleteButton, role: .destructive) {
-      onDelete(selectedItem)
+      ChatDeletionConfirmationAction.delete(
+        selectedItem,
+        item: item,
+        onDelete: onDelete
+      )
     }
     Button(strings.cancelButton, role: .cancel) {
-      item.wrappedValue = nil
-      onCancel()
+      ChatDeletionConfirmationAction.cancel(item: item, onCancel: onCancel)
     }
   }
 
@@ -112,5 +113,26 @@ extension View {
     if let message {
       Text(message)
     }
+  }
+}
+
+enum ChatDeletionConfirmationAction {
+  static func delete<Item>(
+    _ selectedItem: Item,
+    item: Binding<Item?>,
+    onDelete: (Item) -> Void
+  ) {
+    item.wrappedValue = nil
+    onDelete(selectedItem)
+  }
+
+  static func cancel<Item>(item: Binding<Item?>, onCancel: () -> Void) {
+    guard item.wrappedValue != nil else { return }
+    item.wrappedValue = nil
+    onCancel()
+  }
+
+  static func dismiss<Item>(item: Binding<Item?>, onCancel: () -> Void) {
+    cancel(item: item, onCancel: onCancel)
   }
 }

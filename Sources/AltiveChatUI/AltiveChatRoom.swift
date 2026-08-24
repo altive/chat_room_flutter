@@ -125,9 +125,9 @@ public struct AltiveChatRoom: View {
   private var roomContent: some View {
     ChatRoomLayout {
       ChatTimeline(
-        positioningScope: "AltiveChatRoom",
+        timelineID: "AltiveChatRoom",
         isReadyForInitialPositioning: true,
-        initialTargetID: Optional<String>.none,
+        initialPosition: ChatTimelineInitialPosition<String>.latest,
         followLatestTrigger: messages.last?.id,
         followLatestAnimation: hasPresentedMessages ? .easeOut(duration: 0.2) : nil,
         spacing: 12,

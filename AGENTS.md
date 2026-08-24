@@ -11,7 +11,8 @@
 ## Fanely・Nokorisへの横断反映
 
 - 利用アプリの正本repositoryは、Fanelyが`altive/fanely`、Nokorisが
-  `altive/restock`である。Nokorisはアプリ名、`restock`はrepository名として扱う。
+  `altive/nokoris`である。Nokorisはアプリ名、`restock`はローカルcheckoutの
+  directory名として扱う。
 - 利用アプリへ変更を加える前に、既存checkoutのtop-levelと`origin`が正本repositoryを
   指すことを確認する。アプリ名からcheckout pathを推測してcloneしない。正本checkoutが
   見つからない、または`origin`が一致しない場合は、代替checkoutを作成せず作業を止めて

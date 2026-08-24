@@ -1,25 +1,42 @@
 import Foundation
 import SwiftUI
 
+/// タイムライン区切りの外観。
+public enum ChatTimelineSeparatorStyle: Hashable, Sendable {
+  /// 日付などを明確に示す強調表示。
+  case emphasized
+  /// 未読位置などへ馴染ませる控えめな表示。
+  case subtle
+}
+
 /// 日付や未読位置をタイムライン内で区切る共通表示。
 @MainActor
 public struct ChatTimelineSeparator: View {
   private let text: String
   private let accessibilityIdentifier: String?
+  private let style: ChatTimelineSeparatorStyle
 
   /// タイムライン区切りを作成する。
-  public init(text: String, accessibilityIdentifier: String? = nil) {
+  public init(
+    text: String,
+    accessibilityIdentifier: String? = nil,
+    style: ChatTimelineSeparatorStyle = .emphasized
+  ) {
     self.text = text
     self.accessibilityIdentifier = accessibilityIdentifier
+    self.style = style
   }
 
   public var body: some View {
-    HStack(spacing: 12) {
+    HStack(spacing: style == .emphasized ? 12 : nil) {
       Divider()
       Text(verbatim: text)
-        .font(.caption.weight(.semibold))
+        .font(style == .emphasized ? .caption.weight(.semibold) : .caption)
         .foregroundStyle(.secondary)
-        .fixedSize()
+        .fixedSize(
+          horizontal: style == .emphasized,
+          vertical: style == .emphasized
+        )
       Divider()
     }
     .accessibilityElement(children: .combine)

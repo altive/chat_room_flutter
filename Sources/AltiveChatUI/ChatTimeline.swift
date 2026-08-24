@@ -53,6 +53,14 @@ public enum ChatTimelineHistoryLoadingMode: Hashable, Sendable {
   case automatic
 }
 
+/// 履歴読み込み操作の外観。
+public enum ChatTimelineHistoryControlStyle: Hashable, Sendable {
+  /// テキスト中心の簡潔な表示。
+  case plain
+  /// システム画像と枠線を持つボタン表示。
+  case bordered(systemImage: String)
+}
+
 /// タイムラインの履歴追加設定。
 @MainActor
 public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
@@ -61,6 +69,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
   fileprivate let isLoading: Bool
   fileprivate let anchorID: ID?
   fileprivate let loadOlderLabel: String
+  fileprivate let controlStyle: ChatTimelineHistoryControlStyle
   fileprivate let onLoadOlder: () async -> Void
 
   /// 履歴追加を使用しない設定。
@@ -71,6 +80,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
       isLoading: false,
       anchorID: nil,
       loadOlderLabel: "",
+      controlStyle: .plain,
       onLoadOlder: {}
     )
   }
@@ -81,6 +91,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
     isLoading: Bool,
     anchorID: ID?,
     loadOlderLabel: String,
+    controlStyle: ChatTimelineHistoryControlStyle = .plain,
     onLoadOlder: @escaping () async -> Void
   ) -> Self {
     .init(
@@ -89,6 +100,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
       isLoading: isLoading,
       anchorID: anchorID,
       loadOlderLabel: loadOlderLabel,
+      controlStyle: controlStyle,
       onLoadOlder: onLoadOlder
     )
   }
@@ -99,6 +111,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
     isLoading: Bool,
     anchorID: ID?,
     loadOlderLabel: String,
+    controlStyle: ChatTimelineHistoryControlStyle = .plain,
     onLoadOlder: @escaping () async -> Void
   ) -> Self {
     .init(
@@ -107,6 +120,7 @@ public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
       isLoading: isLoading,
       anchorID: anchorID,
       loadOlderLabel: loadOlderLabel,
+      controlStyle: controlStyle,
       onLoadOlder: onLoadOlder
     )
   }
@@ -228,26 +242,46 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   @ViewBuilder
   private func historyControl(using proxy: ChatTimelineProxy) -> some View {
     if history.mode != nil, history.canLoadOlder {
-      Button {
-        requestHistory(using: proxy)
-      } label: {
-        if history.isLoading {
-          ProgressView()
-        } else {
-          Text(history.loadOlderLabel)
-        }
-      }
-      .disabled(history.isLoading || isHistoryLoadScheduled)
-      .background {
-        if history.mode == .automatic {
-          GeometryReader { geometry in
-            Color.clear.preference(
-              key: ChatTimelineHistoryTopOffsetKey.self,
-              value: geometry.frame(in: .named(historyCoordinateSpaceID)).minY
-            )
+      historyButton(using: proxy)
+        .background {
+          if history.mode == .automatic {
+            GeometryReader { geometry in
+              Color.clear.preference(
+                key: ChatTimelineHistoryTopOffsetKey.self,
+                value: geometry.frame(in: .named(historyCoordinateSpaceID)).minY
+              )
+            }
           }
         }
+    }
+  }
+
+  @ViewBuilder
+  private func historyButton(using proxy: ChatTimelineProxy) -> some View {
+    let button = Button {
+      requestHistory(using: proxy)
+    } label: {
+      if history.isLoading {
+        ProgressView()
+          .padding(.bottom, history.controlStyle.isBordered ? 4 : 0)
+      } else {
+        switch history.controlStyle {
+        case .plain:
+          Text(history.loadOlderLabel)
+        case .bordered(let systemImage):
+          Label(history.loadOlderLabel, systemImage: systemImage)
+        }
       }
+    }
+    .disabled(history.isLoading || isHistoryLoadScheduled)
+
+    switch history.controlStyle {
+    case .plain:
+      button
+    case .bordered:
+      button
+        .buttonStyle(.bordered)
+        .frame(maxWidth: .infinity)
     }
   }
 
@@ -301,6 +335,13 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       onInitialPositioning(proxy)
       requestAutomaticHistoryIfNeeded(using: proxy)
     }
+  }
+}
+
+extension ChatTimelineHistoryControlStyle {
+  fileprivate var isBordered: Bool {
+    if case .bordered = self { return true }
+    return false
   }
 }
 

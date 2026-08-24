@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// 削除確認の表示形式。
+public enum ChatDeletionConfirmationStyle: Hashable, Sendable {
+  /// 画面下部などへ選択肢を表示する。
+  case confirmationDialog
+  /// 警告として画面中央へ表示する。
+  case alert
+}
+
 /// 削除確認で使用する文言。
 public struct ChatDeletionConfirmationStrings: Hashable, Sendable {
   /// 確認タイトル。
@@ -28,37 +36,81 @@ public struct ChatDeletionConfirmationStrings: Hashable, Sendable {
 extension View {
   /// 選択中の項目に共通の削除確認を表示する。
   @MainActor
+  @ViewBuilder
   public func chatDeletionConfirmation<Item>(
     item: Binding<Item?>,
     strings: ChatDeletionConfirmationStrings,
+    style: ChatDeletionConfirmationStyle = .confirmationDialog,
     onDelete: @escaping (Item) -> Void,
     onCancel: @escaping () -> Void = {}
   ) -> some View {
-    confirmationDialog(
-      strings.title,
-      isPresented: Binding(
-        get: { item.wrappedValue != nil },
-        set: { isPresented in
-          if !isPresented {
-            item.wrappedValue = nil
-            onCancel()
-          }
+    let isPresented = Binding(
+      get: { item.wrappedValue != nil },
+      set: { isPresented in
+        if !isPresented {
+          item.wrappedValue = nil
+          onCancel()
         }
-      ),
-      titleVisibility: .visible,
-      presenting: item.wrappedValue
-    ) { selectedItem in
-      Button(strings.deleteButton, role: .destructive) {
-        onDelete(selectedItem)
       }
-      Button(strings.cancelButton, role: .cancel) {
-        item.wrappedValue = nil
-        onCancel()
+    )
+    switch style {
+    case .confirmationDialog:
+      confirmationDialog(
+        strings.title,
+        isPresented: isPresented,
+        titleVisibility: .visible,
+        presenting: item.wrappedValue
+      ) { selectedItem in
+        deletionConfirmationActions(
+          selectedItem: selectedItem,
+          item: item,
+          strings: strings,
+          onDelete: onDelete,
+          onCancel: onCancel
+        )
+      } message: { _ in
+        deletionConfirmationMessage(strings.message)
       }
-    } message: { _ in
-      if let message = strings.message {
-        Text(message)
+    case .alert:
+      alert(
+        strings.title,
+        isPresented: isPresented,
+        presenting: item.wrappedValue
+      ) { selectedItem in
+        deletionConfirmationActions(
+          selectedItem: selectedItem,
+          item: item,
+          strings: strings,
+          onDelete: onDelete,
+          onCancel: onCancel
+        )
+      } message: { _ in
+        deletionConfirmationMessage(strings.message)
       }
+    }
+  }
+
+  @ViewBuilder
+  private func deletionConfirmationActions<Item>(
+    selectedItem: Item,
+    item: Binding<Item?>,
+    strings: ChatDeletionConfirmationStrings,
+    onDelete: @escaping (Item) -> Void,
+    onCancel: @escaping () -> Void
+  ) -> some View {
+    Button(strings.deleteButton, role: .destructive) {
+      onDelete(selectedItem)
+    }
+    Button(strings.cancelButton, role: .cancel) {
+      item.wrappedValue = nil
+      onCancel()
+    }
+  }
+
+  @ViewBuilder
+  private func deletionConfirmationMessage(_ message: String?) -> some View {
+    if let message {
+      Text(message)
     }
   }
 }

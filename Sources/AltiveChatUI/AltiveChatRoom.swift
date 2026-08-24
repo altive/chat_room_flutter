@@ -5,8 +5,6 @@ import SwiftUI
 /// メッセージ一覧と入力欄を表示するチャット画面。
 @MainActor
 public struct AltiveChatRoom: View {
-  private static let bottomAnchorID = "AltiveChatUI.BottomAnchor"
-
   private let messages: [ChatMessage]
   private let currentUserID: String
   private let theme: ChatRoomTheme
@@ -125,69 +123,51 @@ public struct AltiveChatRoom: View {
   }
 
   private var roomContent: some View {
-    ScrollViewReader { proxy in
-      ScrollView {
-        LazyVStack(spacing: 12) {
-          if messages.isEmpty {
-            Text(strings.emptyMessage)
-              .foregroundStyle(.secondary)
-              .frame(maxWidth: .infinity)
-              .padding(.vertical, 48)
-          } else {
-            ForEach(messages) { message in
-              ChatMessageRow(
-                message: message,
-                currentUserID: currentUserID,
-                theme: theme,
-                strings: strings,
-                showsSenderName: showsSenderName,
-                imageLoader: imageLoader,
-                onImageTap: onImageTap,
-                onRetry: onRetry.map { retry in
-                  { retry(message.id) }
-                }
-              )
-              .id(message.id)
-            }
+    ChatRoomLayout {
+      ChatTimeline(
+        positioningScope: "AltiveChatRoom",
+        isReadyForInitialPositioning: true,
+        initialTargetID: Optional<String>.none,
+        followLatestTrigger: messages.last?.id,
+        followLatestAnimation: hasPresentedMessages ? .easeOut(duration: 0.2) : nil,
+        spacing: 12,
+        contentInsets: EdgeInsets(top: 12, leading: 16, bottom: 0, trailing: 16)
+      ) { _ in
+        if messages.isEmpty {
+          Text(strings.emptyMessage)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 48)
+        } else {
+          ForEach(messages) { message in
+            ChatMessageRow(
+              message: message,
+              currentUserID: currentUserID,
+              theme: theme,
+              strings: strings,
+              showsSenderName: showsSenderName,
+              imageLoader: imageLoader,
+              onImageTap: onImageTap,
+              onRetry: onRetry.map { retry in
+                { retry(message.id) }
+              }
+            )
+            .id(message.id)
           }
-
-          Color.clear
-            .frame(height: 1)
-            .id(Self.bottomAnchorID)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
       }
       .background(theme.background)
-      .defaultScrollAnchor(.bottom)
-      .scrollDismissesKeyboard(.interactively)
-      .safeAreaInset(edge: .bottom) {
-        composer
-      }
       .onAppear {
         hasPresentedMessages = !messages.isEmpty
       }
-      .onChange(of: messages.last?.id) { previousID, currentID in
-        guard previousID != currentID else { return }
-
-        guard currentID != nil else {
-          hasPresentedMessages = false
-          return
-        }
-
-        guard hasPresentedMessages else {
-          hasPresentedMessages = true
-          proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
-          return
-        }
-
-        withAnimation(.easeOut(duration: 0.2)) {
-          proxy.scrollTo(Self.bottomAnchorID, anchor: .bottom)
-        }
+      .onChange(of: messages.last?.id) { _, currentID in
+        hasPresentedMessages = currentID != nil
       }
-      .task(id: selectedPhotoItems) {
-        await synchronizePhotoLibrarySelection()
-      }
+    } composer: {
+      composer
+    }
+    .task(id: selectedPhotoItems) {
+      await synchronizePhotoLibrarySelection()
     }
   }
 

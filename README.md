@@ -90,6 +90,35 @@ Swift Package Manager は次の2製品を提供します。
 - `AltiveChatUI`: `AltiveChatCore`を利用するSwiftUIコンポーネント。
 
 SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
+
+アプリ固有の行を表示するRoomでは、`ChatRoomLayout`と`ChatTimeline`を組み合わせます。
+通常起動の末尾表示、指定項目の中央表示、末尾追従、手動／自動の履歴追加、履歴追加時の
+位置保持を共通化できます。データ取得、権限、課金、navigationはアプリ側が担当します。
+
+```swift
+ChatRoomLayout {
+  ChatTimeline(
+    positioningScope: roomID,
+    isReadyForInitialPositioning: hasLoaded,
+    initialTargetID: highlightedItemID,
+    followLatestTrigger: pendingMessageIDs,
+    history: .automatic(
+      canLoadOlder: canLoadOlder,
+      isLoading: isLoadingOlder,
+      anchorID: items.first?.id,
+      loadOlderLabel: "以前のメッセージを読み込む",
+      onLoadOlder: loadOlder
+    )
+  ) { _ in
+    ForEach(items) { item in
+      AppSpecificChatRow(item: item)
+        .id(item.id)
+    }
+  }
+} composer: {
+  AppSpecificComposer()
+}
+```
 吹き出し、入力欄、送信状態と再送導線、リアクションと長押し操作、ステッカーpicker、
 アバター、システムイベントの展開、汎用メッセージカード、複数画像メッセージ、OS標準の複数選択Photos Picker、
 キーボードとスタンプ入力面のレイアウト計算を

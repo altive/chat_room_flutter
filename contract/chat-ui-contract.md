@@ -32,6 +32,7 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 - ステッカーpicker末尾へアプリ固有コンテンツを差し込む表示スロットとスクロール配置
 - ステッカーpicker入力面を背後のタイムラインが透けない不透明背景で覆うこと
 - 課金に依存しない汎用タイムライン境界
+- アプリ固有の行を受け入れるタイムラインの初期位置、末尾追従、履歴追加時の位置保持
 - プラットフォームごとのPreview、Widget test、Screenshot test用fixture
 
 ## アプリが所有する責務
@@ -40,6 +41,7 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 - Firestore、Storage、Cloud Functionsなどへの接続
 - メッセージの永続化、実際の再送、削除、非表示
 - ページング、既読更新、Push通知、Analytics
+- 履歴追加の開始条件、取得処理、loading・retry・課金境界の表示
 - アプリ固有ドメインモデルから表示モデルへの変換
 - 権限判定と操作可否
 - カメラ画面、画像の正規化・圧縮、一時ファイル、画像取得とキャッシュ

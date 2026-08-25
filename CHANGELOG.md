@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 1.4.0 - 2026-08-25
+
+- 1.3.5で追加したメッセージ内リンク機能を、新機能追加に適したminor versionとして
+  再リリースした。
+
 ## 1.3.5 - 2026-08-25
 
 - Flutter、SwiftUI、Jetpack Composeで、通常本文、画像caption、システムメッセージ内の

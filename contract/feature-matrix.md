@@ -29,11 +29,11 @@
 | 汎用タイムライン境界 | app | implemented | implemented |
 | Roomシェル・入力面配置 | app | implemented | implemented |
 | 初期位置・末尾追従 | implemented | implemented | implemented |
-| 手動・自動の履歴追加UI | implemented | implemented | planned |
-| 履歴追加時の位置保持 | implemented | implemented | planned |
-| 日付・未読区切り | app | implemented | planned |
-| 削除確認UI | app | implemented | planned |
-| 過去メッセージ取得処理 | implemented | app | planned |
+| 手動・自動の履歴追加UI | implemented | implemented | implemented |
+| 履歴追加時の位置保持 | implemented | implemented | implemented |
+| 日付・未読区切り | app | implemented | implemented |
+| 削除確認UI | app | implemented | implemented |
+| 過去メッセージ取得処理 | implemented | app | app |
 | 既読管理 | app | app | app |
 | 永続化・実際の再送 | app | app | app |
 

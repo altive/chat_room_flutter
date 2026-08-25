@@ -8,10 +8,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -37,30 +34,6 @@ import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-
-@Composable
-private fun rememberChatRoomListState(messages: List<ChatMessage>): LazyListState {
-  val listState = rememberLazyListState(
-    initialFirstVisibleItemIndex = messages.lastIndex.coerceAtLeast(0),
-  )
-  var hasPresentedMessages by remember { mutableStateOf(false) }
-
-  LaunchedEffect(messages.lastOrNull()?.id) {
-    if (messages.isEmpty()) {
-      hasPresentedMessages = false
-      return@LaunchedEffect
-    }
-
-    if (hasPresentedMessages) {
-      listState.animateScrollToItem(messages.lastIndex)
-    } else {
-      listState.scrollToItem(messages.lastIndex)
-      hasPresentedMessages = true
-    }
-  }
-
-  return listState
-}
 
 @Immutable
 data class ChatRoomStrings(
@@ -109,10 +82,14 @@ fun AltiveChatRoom(
   onRetry: ((String) -> Unit)? = null,
   onSend: (String) -> Unit,
 ) {
-  val listState = rememberChatRoomListState(messages)
   Column(modifier.background(theme.background).imePadding()) {
-    LazyColumn(
-      state = listState,
+    ChatTimeline(
+      timelineId = Unit,
+      itemIds = messages.map(ChatMessage::id),
+      itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
+      latestItemIndex = messages.lastIndex.coerceAtLeast(0),
+      isReadyForInitialPositioning = true,
+      followLatestTrigger = messages.lastOrNull()?.id,
       modifier = Modifier.weight(1f).fillMaxWidth(),
       contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -177,7 +154,6 @@ fun AltiveChatRoom(
   },
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
-  val listState = rememberChatRoomListState(messages)
   val coroutineScope = rememberCoroutineScope()
   val focusManager = LocalFocusManager.current
   var photoUris by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
@@ -277,8 +253,13 @@ fun AltiveChatRoom(
 
   Box(modifier) {
     Column(Modifier.background(theme.background).imePadding()) {
-      LazyColumn(
-        state = listState,
+      ChatTimeline(
+        timelineId = Unit,
+        itemIds = messages.map(ChatMessage::id),
+        itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
+        latestItemIndex = messages.lastIndex.coerceAtLeast(0),
+        isReadyForInitialPositioning = true,
+        followLatestTrigger = messages.lastOrNull()?.id,
         modifier = Modifier.weight(1f).fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

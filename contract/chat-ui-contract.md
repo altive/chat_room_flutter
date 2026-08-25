@@ -3,7 +3,7 @@
 ## 目的
 
 Altive Chatは、アプリ固有のデータ契約を共有せず、チャットの表示状態と操作契約を
-SwiftUI、Flutter、将来のJetpack Composeで揃える。
+SwiftUI、Flutter、Jetpack Composeで揃える。
 
 ## ライブラリが所有する責務
 
@@ -67,6 +67,15 @@ SwiftUI、Flutter、将来のJetpack Composeで揃える。
 
 ライブラリへは安定したIDと表示に必要な値だけを渡す。Firebase SDKやアプリ固有の
 Store、Repository、Entityへ依存させない。
+
+## Kotlinのモジュール境界
+
+- `chat-core`はAndroid frameworkへ依存せず、表示値、入力方針、送信状態、
+  楽観的更新などの純粋な値と遷移を所有する。
+- `chat-ui-compose`はCompose表示と一時的なスクロール・dialog状態だけを所有する。
+- `ChatTimeline`はSwiftUI版と同じ型付き初期位置、末尾追従、手動・自動の履歴追加、
+  履歴追加時の位置保持を提供し、アプリ固有行は`LazyListScope`で受け入れる。
+- Store、Repository、Firebase SDK、課金状態、権限、navigationは利用アプリが所有する。
 
 ## 並び順と識別子
 

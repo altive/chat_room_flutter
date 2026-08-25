@@ -1,0 +1,325 @@
+package jp.co.altive.chat
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
+
+/** タイムライン項目をviewport内へ配置する位置。 */
+enum class ChatTimelineItemAnchor {
+  /** viewport先頭。 */
+  Start,
+
+  /** viewport中央。 */
+  Center,
+
+  /** viewport末尾。 */
+  End,
+}
+
+/** タイムラインを最初に表示する位置。 */
+sealed interface ChatTimelineInitialPosition<out ID> {
+  /** 最新項目が見える末尾。 */
+  data object Latest : ChatTimelineInitialPosition<Nothing>
+
+  /** 指定項目と配置位置。 */
+  data class Item<ID>(
+    val id: ID,
+    val anchor: ChatTimelineItemAnchor = ChatTimelineItemAnchor.Center,
+  ) : ChatTimelineInitialPosition<ID>
+}
+
+/** タイムライン上端で履歴を追加する方法。 */
+enum class ChatTimelineHistoryLoadingMode {
+  /** 利用者の操作で追加する。 */
+  Manual,
+
+  /** 上端へ到達したとき自動で追加する。 */
+  Automatic,
+}
+
+/** 履歴追加操作の外観。 */
+enum class ChatTimelineHistoryControlStyle {
+  /** テキスト操作。 */
+  Plain,
+
+  /** Materialのボタン操作。 */
+  Bordered,
+}
+
+/** タイムラインの履歴追加設定。 */
+class ChatTimelineHistoryConfiguration<ID> private constructor(
+  internal val mode: ChatTimelineHistoryLoadingMode?,
+  internal val canLoadOlder: Boolean,
+  internal val isLoading: Boolean,
+  internal val anchorId: ID?,
+  internal val loadOlderLabel: String,
+  internal val controlStyle: ChatTimelineHistoryControlStyle,
+  internal val onLoadOlder: suspend () -> Unit,
+) {
+  companion object {
+    /** 履歴追加を無効にする設定。 */
+    fun <ID> disabled(): ChatTimelineHistoryConfiguration<ID> =
+      ChatTimelineHistoryConfiguration(null, false, false, null, "", ChatTimelineHistoryControlStyle.Plain) {}
+
+    /** 手動で履歴を追加する設定を作成する。 */
+    fun <ID> manual(
+      canLoadOlder: Boolean,
+      isLoading: Boolean,
+      anchorId: ID? = null,
+      loadOlderLabel: String,
+      controlStyle: ChatTimelineHistoryControlStyle = ChatTimelineHistoryControlStyle.Plain,
+      onLoadOlder: suspend () -> Unit,
+    ): ChatTimelineHistoryConfiguration<ID> = ChatTimelineHistoryConfiguration(
+      ChatTimelineHistoryLoadingMode.Manual,
+      canLoadOlder,
+      isLoading,
+      anchorId,
+      loadOlderLabel,
+      controlStyle,
+      onLoadOlder,
+    )
+
+    /** 上端で自動的に履歴を追加する設定を作成する。 */
+    fun <ID> automatic(
+      canLoadOlder: Boolean,
+      isLoading: Boolean,
+      anchorId: ID? = null,
+      loadOlderLabel: String,
+      controlStyle: ChatTimelineHistoryControlStyle = ChatTimelineHistoryControlStyle.Plain,
+      onLoadOlder: suspend () -> Unit,
+    ): ChatTimelineHistoryConfiguration<ID> = ChatTimelineHistoryConfiguration(
+      ChatTimelineHistoryLoadingMode.Automatic,
+      canLoadOlder,
+      isLoading,
+      anchorId,
+      loadOlderLabel,
+      controlStyle,
+      onLoadOlder,
+    )
+  }
+}
+
+/** 汎用タイムラインのスクロール状態。 */
+@Stable
+class ChatTimelineState internal constructor(
+  /** Composeのリスト状態。 */
+  val listState: LazyListState,
+) {
+  internal var positionedScope: Any? by mutableStateOf(null)
+  internal var contentPrefixCount: Int = 0
+  internal var latestContentIndex: Int? = null
+
+  /** 初期位置の適用が完了しているか返す。 */
+  val hasPositioned: Boolean get() = positionedScope != null
+
+  /** 最新項目が見える末尾へ移動する。 */
+  suspend fun scrollToLatest(animated: Boolean = true) {
+    val contentIndex = latestContentIndex ?: return
+    val index = contentPrefixCount + contentIndex
+    if (animated) listState.animateScrollToItem(index) else listState.scrollToItem(index)
+  }
+}
+
+/** 汎用タイムラインのスクロール状態を保持する。 */
+@Composable
+fun rememberChatTimelineState(): ChatTimelineState {
+  val listState = rememberLazyListState()
+  return remember(listState) { ChatTimelineState(listState) }
+}
+
+private data class ChatTimelinePositioningScope<ID>(
+  val timelineId: Any,
+  val initialPosition: ChatTimelineInitialPosition<ID>,
+)
+
+private data class ChatTimelineHistoryAnchor<ID>(
+  val id: ID,
+  val offset: Int,
+)
+
+/**
+ * アプリ固有の行を差し込める、チャット向けの汎用タイムライン。
+ *
+ * 初期位置、末尾追従、履歴追加時の位置保持を共通化し、行の内容やページング判断は
+ * 利用アプリが所有する。`itemIndex`と`latestItemIndex`は`content`内の0始まりindexを渡す。
+ */
+@Composable
+fun <ID, FollowTrigger> ChatTimeline(
+  timelineId: Any,
+  itemIds: List<ID>,
+  itemIndex: (ID) -> Int?,
+  latestItemIndex: Int?,
+  isReadyForInitialPositioning: Boolean,
+  initialPosition: ChatTimelineInitialPosition<ID> = ChatTimelineInitialPosition.Latest,
+  followLatestTrigger: FollowTrigger,
+  modifier: Modifier = Modifier,
+  state: ChatTimelineState = rememberChatTimelineState(),
+  history: ChatTimelineHistoryConfiguration<ID> = ChatTimelineHistoryConfiguration.disabled(),
+  contentPadding: PaddingValues = PaddingValues(0.dp),
+  verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(12.dp),
+  onInitialPositioning: (ChatTimelineState) -> Unit = {},
+  content: LazyListScope.() -> Unit,
+) {
+  val coroutineScope = rememberCoroutineScope()
+  val positioningScope = remember(timelineId, initialPosition) {
+    ChatTimelinePositioningScope(timelineId, initialPosition)
+  }
+  val historyItemCount = if (history.mode != null && history.canLoadOlder) 1 else 0
+  val currentItemIndex by rememberUpdatedState(itemIndex)
+  val currentHistoryItemCount by rememberUpdatedState(historyItemCount)
+  state.contentPrefixCount = historyItemCount
+  state.latestContentIndex = latestItemIndex
+  var previousFollowTrigger by remember(timelineId) { mutableStateOf(followLatestTrigger) }
+  var observedPositioningScope by remember(state) { mutableStateOf<Any?>(null) }
+  var isHistoryLoadScheduled by remember(timelineId) { mutableStateOf(false) }
+
+  suspend fun waitForLayout() {
+    withFrameNanos { }
+    withFrameNanos { }
+  }
+
+  fun fullIndex(id: ID): Int? = currentItemIndex(id)
+    ?.takeIf { it >= 0 }
+    ?.let { currentHistoryItemCount + it }
+
+  suspend fun positionItem(id: ID, anchor: ChatTimelineItemAnchor) {
+    val index = fullIndex(id) ?: return
+    state.listState.scrollToItem(index)
+    waitForLayout()
+    val item = state.listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return
+    val layout = state.listState.layoutInfo
+    val offset = when (anchor) {
+      ChatTimelineItemAnchor.Start -> 0
+      ChatTimelineItemAnchor.Center -> {
+        val viewportSize = (layout.viewportEndOffset - layout.viewportStartOffset).coerceAtLeast(0)
+        -(layout.viewportStartOffset + ((viewportSize - item.size).coerceAtLeast(0) / 2))
+      }
+      ChatTimelineItemAnchor.End -> {
+        -(layout.viewportEndOffset - item.size).coerceAtLeast(0)
+      }
+    }
+    state.listState.scrollToItem(index, offset)
+  }
+
+  suspend fun applyInitialPosition() {
+    when (val position = initialPosition) {
+      ChatTimelineInitialPosition.Latest -> state.scrollToLatest(animated = false)
+      is ChatTimelineInitialPosition.Item -> positionItem(position.id, position.anchor)
+    }
+  }
+
+  suspend fun requestHistory() {
+    if (
+      state.positionedScope != positioningScope ||
+      !history.canLoadOlder ||
+      history.isLoading ||
+      isHistoryLoadScheduled
+    ) return
+
+    isHistoryLoadScheduled = true
+    try {
+      val anchor = history.anchorId?.let { id ->
+        val index = fullIndex(id)
+        val offset = index?.let { target ->
+          state.listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == target }?.offset
+        } ?: 0
+        ChatTimelineHistoryAnchor(id, offset)
+      }
+      history.onLoadOlder()
+      waitForLayout()
+      if (anchor != null) {
+        // LazyListStateのscrollOffsetは項目の表示offsetと符号が逆になる。
+        fullIndex(anchor.id)?.let { state.listState.scrollToItem(it, -anchor.offset) }
+      }
+    } finally {
+      isHistoryLoadScheduled = false
+    }
+  }
+
+  LaunchedEffect(positioningScope, isReadyForInitialPositioning, itemIds) {
+    if (observedPositioningScope != positioningScope) {
+      observedPositioningScope = positioningScope
+      state.positionedScope = null
+      previousFollowTrigger = followLatestTrigger
+    }
+    if (!isReadyForInitialPositioning || state.positionedScope == positioningScope) return@LaunchedEffect
+    state.positionedScope = positioningScope
+    applyInitialPosition()
+    waitForLayout()
+    if (state.positionedScope == positioningScope) {
+      applyInitialPosition()
+      onInitialPositioning(state)
+    }
+  }
+
+  LaunchedEffect(followLatestTrigger) {
+    val previous = previousFollowTrigger
+    previousFollowTrigger = followLatestTrigger
+    if (state.positionedScope != positioningScope || previous == followLatestTrigger) return@LaunchedEffect
+    state.scrollToLatest(animated = true)
+    waitForLayout()
+    if (state.positionedScope == positioningScope) state.scrollToLatest(animated = false)
+  }
+
+  LaunchedEffect(history.mode, history.canLoadOlder, positioningScope) {
+    if (history.mode != ChatTimelineHistoryLoadingMode.Automatic) return@LaunchedEffect
+    snapshotFlow {
+      state.positionedScope == positioningScope &&
+        state.listState.firstVisibleItemIndex == 0 &&
+        state.listState.firstVisibleItemScrollOffset <= 1
+    }
+      .distinctUntilChanged()
+      .filter { it }
+      .collect { requestHistory() }
+  }
+
+  LazyColumn(
+    state = state.listState,
+    modifier = modifier.fillMaxSize(),
+    contentPadding = contentPadding,
+    verticalArrangement = verticalArrangement,
+  ) {
+    if (historyItemCount == 1) {
+      item(key = "AltiveChatUI.HistoryControl") {
+        when {
+          history.isLoading || isHistoryLoadScheduled -> CircularProgressIndicator()
+          history.controlStyle == ChatTimelineHistoryControlStyle.Bordered -> OutlinedButton(
+            onClick = { coroutineScope.launch { requestHistory() } },
+            modifier = Modifier.testTag("AltiveChatUI.HistoryControl"),
+          ) { Text(history.loadOlderLabel) }
+          else -> TextButton(
+            onClick = { coroutineScope.launch { requestHistory() } },
+            modifier = Modifier.testTag("AltiveChatUI.HistoryControl"),
+          ) { Text(history.loadOlderLabel) }
+        }
+      }
+    }
+    content()
+  }
+}

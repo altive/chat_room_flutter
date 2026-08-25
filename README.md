@@ -98,9 +98,9 @@ SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザ
 ```swift
 ChatRoomLayout {
   ChatTimeline(
-    positioningScope: roomID,
+    timelineID: roomID,
     isReadyForInitialPositioning: hasLoaded,
-    initialTargetID: highlightedItemID,
+    initialPosition: highlightedItemID.map(ChatTimelineInitialPosition.item) ?? .latest,
     followLatestTrigger: pendingMessageIDs,
     history: .automatic(
       canLoadOlder: canLoadOlder,
@@ -226,6 +226,35 @@ Android実装はFlutter exampleから独立した`android/` Gradle projectです
   リアクションの楽観的更新、最近使った項目。
 - `chat-ui-compose`: Room、Composer、再送UI、リアクション、ステッカーpicker、
   アバター、システムイベント、汎用メッセージカード、タイムライン境界、複数画像入力と画像メッセージ。
+
+アプリ固有の行を表示するRoomでは、SwiftUI版と同じ責務分担で`ChatTimeline`を使用します。
+通常起動は`Latest`、通知・ディープリンクは`Item(id)`を渡し、末尾追従、手動／自動の
+履歴追加、追加後の位置保持をライブラリへ任せます。取得処理と行の内容はアプリ側が所有します。
+
+```kotlin
+val initialPosition = highlightedItemId
+  ?.let { ChatTimelineInitialPosition.Item(it) }
+  ?: ChatTimelineInitialPosition.Latest
+
+ChatTimeline(
+  timelineId = roomId,
+  itemIds = items.map(Item::id),
+  itemIndex = { id -> items.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
+  latestItemIndex = items.lastIndex,
+  isReadyForInitialPositioning = hasLoaded,
+  initialPosition = initialPosition,
+  followLatestTrigger = pendingMessageIds,
+  history = ChatTimelineHistoryConfiguration.automatic(
+    canLoadOlder = canLoadOlder,
+    isLoading = isLoadingOlder,
+    anchorId = items.firstOrNull()?.id,
+    loadOlderLabel = "以前のメッセージを読み込む",
+    onLoadOlder = ::loadOlder,
+  ),
+) {
+  items(items, key = Item::id) { item -> AppSpecificChatRow(item) }
+}
+```
 
 開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
 composite buildとして追加し、`jp.co.altive.chat:chat-core`と

@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 1.3.5 - 2026-08-25
+
+- Flutter、SwiftUI、Jetpack Composeで、通常本文、画像caption、システムメッセージ内の
+  Web URL、メールアドレス、電話番号をリンクとして表示し、OS標準アプリで開けるようにした。
+- schemeのない電話番号から、電話またはSMSを選択できる操作UIを追加した。
+
 ## 1.3.4 - 2026-08-25
 
 - SwiftUI、Jetpack Compose、Flutterのステッカーpickerへ、ロック表示、履歴を含む

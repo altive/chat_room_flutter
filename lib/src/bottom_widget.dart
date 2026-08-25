@@ -26,6 +26,8 @@ class BottomWidget extends StatefulWidget {
     required this.replyToMessageBar,
     required this.stickerPackages,
     required this.stickerPickerFooter,
+    required this.onLockedStickerTap,
+    required this.lockedStickerSemanticLabel,
     required this.selectedSticker,
     required this.onStickerSelected,
   });
@@ -65,6 +67,12 @@ class BottomWidget extends StatefulWidget {
 
   /// ステッカー一覧の最下部に表示するWidget。
   final Widget? stickerPickerFooter;
+
+  /// ロック中のステッカーをタップした時の処理。
+  final VoidCallback? onLockedStickerTap;
+
+  /// ロック中の項目へ付与する読み上げ文。
+  final String? lockedStickerSemanticLabel;
 
   /// 現在選択中のステッカー。
   final Sticker? selectedSticker;
@@ -234,6 +242,8 @@ class _BottomWidgetState extends State<BottomWidget> {
               _StickerSelectionView(
                 stickerPackages: widget.stickerPackages,
                 footer: widget.stickerPickerFooter,
+                onLockedStickerTap: widget.onLockedStickerTap,
+                lockedStickerSemanticLabel: widget.lockedStickerSemanticLabel,
                 onStickerSelected: widget.onStickerSelected,
               ),
           ],
@@ -248,11 +258,15 @@ class _StickerSelectionView extends StatefulWidget {
   const _StickerSelectionView({
     required this.stickerPackages,
     required this.footer,
+    required this.onLockedStickerTap,
+    required this.lockedStickerSemanticLabel,
     required this.onStickerSelected,
   });
 
   final List<StickerPackage> stickerPackages;
   final Widget? footer;
+  final VoidCallback? onLockedStickerTap;
+  final String? lockedStickerSemanticLabel;
   final ValueChanged<Sticker> onStickerSelected;
 
   @override
@@ -297,10 +311,25 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
                       color: _selectedStickerPackage == stickerPackage
                           ? colorScheme.primaryContainer
                           : colorScheme.surface.withValues(alpha: 0),
-                      child: CommonCachedNetworkImage(
-                        imageUrl: stickerPackage.tabStickerImageUrl,
-                        width: 32,
-                        height: 32,
+                      child: Semantics(
+                        label: stickerPackage.isLocked
+                            ? widget.lockedStickerSemanticLabel
+                            : null,
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            Opacity(
+                              opacity: stickerPackage.isLocked ? 0.55 : 1,
+                              child: CommonCachedNetworkImage(
+                                imageUrl: stickerPackage.tabStickerImageUrl,
+                                width: 32,
+                                height: 32,
+                              ),
+                            ),
+                            if (stickerPackage.isLocked)
+                              const _StickerLockBadge(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -342,12 +371,33 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
                         if (sticker == null) {
                           return const SizedBox.shrink();
                         }
+                        final isLocked =
+                            _selectedStickerPackage?.isLocked ?? false;
                         return GestureDetector(
                           onTap: () {
-                            widget.onStickerSelected.call(sticker);
+                            if (isLocked) {
+                              widget.onLockedStickerTap?.call();
+                            } else {
+                              widget.onStickerSelected.call(sticker);
+                            }
                           },
-                          child: CommonCachedNetworkImage(
-                            imageUrl: sticker.imageUrl,
+                          child: Semantics(
+                            label: isLocked
+                                ? widget.lockedStickerSemanticLabel
+                                : null,
+                            button: true,
+                            child: Stack(
+                              alignment: Alignment.bottomRight,
+                              children: [
+                                Opacity(
+                                  opacity: isLocked ? 0.55 : 1,
+                                  child: CommonCachedNetworkImage(
+                                    imageUrl: sticker.imageUrl,
+                                  ),
+                                ),
+                                if (isLocked) const _StickerLockBadge(),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -360,6 +410,26 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StickerLockBadge extends StatelessWidget {
+  const _StickerLockBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.inverseSurface.withValues(alpha: 0.82),
+        shape: BoxShape.circle,
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(3),
+        child: Icon(Icons.lock, size: 12, color: Colors.white),
       ),
     );
   }

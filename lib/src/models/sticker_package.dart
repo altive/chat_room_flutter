@@ -13,6 +13,7 @@ class StickerPackage extends Equatable {
     required this.id,
     required this.tabStickerImageUrl,
     required this.stickers,
+    this.isLocked = false,
   });
 
   /// パッケージを一意に識別するID。
@@ -24,14 +25,18 @@ class StickerPackage extends Equatable {
   /// ステッカー一覧。
   final List<Sticker> stickers;
 
+  /// 選択時にアプリ側の利用導線を表示するかどうか。
+  final bool isLocked;
+
   @override
   String toString() =>
       'StickerPackage('
       'id: $id, '
       'tabStickerImageUrl: $tabStickerImageUrl, '
-      'stickers: $stickers'
+      'stickers: $stickers, '
+      'isLocked: $isLocked'
       ')';
 
   @override
-  List<Object?> get props => [id, tabStickerImageUrl, stickers];
+  List<Object?> get props => [id, tabStickerImageUrl, stickers, isLocked];
 }

@@ -49,6 +49,8 @@ class AltiveChatRoom extends StatefulWidget {
     this.replyToMessageBar,
     this.stickerPackages = const [],
     this.stickerPickerFooter,
+    this.onLockedStickerTap,
+    this.lockedStickerSemanticLabel,
     this.outgoingTextMessagePopupMenuLayout,
     this.outgoingImageMessagePopupMenuLayout,
     this.outgoingStickerMessagePopupMenuLayout,
@@ -180,6 +182,12 @@ class AltiveChatRoom extends StatefulWidget {
   ///
   /// アプリ固有の案内や導線を、ステッカー一覧と一緒にスクロールして表示する場合に使用する。
   final Widget? stickerPickerFooter;
+
+  /// ロック中のステッカーをタップした時の処理。
+  final VoidCallback? onLockedStickerTap;
+
+  /// ロック中のパッケージとステッカーへ付与する読み上げ文。
+  final String? lockedStickerSemanticLabel;
 
   /// ログインユーザーが送信したテキストメッセージのポップアップメニューで使用するタップ可能なアイテムの配列。
   ///
@@ -401,6 +409,9 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                     replyToMessageBar: widget.replyToMessageBar,
                     stickerPackages: widget.stickerPackages,
                     stickerPickerFooter: widget.stickerPickerFooter,
+                    onLockedStickerTap: widget.onLockedStickerTap,
+                    lockedStickerSemanticLabel:
+                        widget.lockedStickerSemanticLabel,
                     selectedSticker: _selectedSticker,
                     onStickerSelected: (sticker) {
                       setState(() {

@@ -101,6 +101,58 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('ロック中のスタンプは選択せず利用導線を呼び出す', (tester) async {
+    var lockedTapCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AltiveChatRoom(
+            theme: const AltiveChatRoomTheme(),
+            currentUserId: 'current-user',
+            messages: const [],
+            onSendIconPressed: (_) {},
+            textFieldSuffixBuilder: (_) => const Icon(
+              Icons.emoji_emotions_outlined,
+              key: Key('ロックテスト入力切替'),
+            ),
+            stickerPackages: const [
+              StickerPackage(
+                id: 1,
+                tabStickerImageUrl: 'https://example.com/tray.png',
+                stickers: [
+                  Sticker(
+                    id: 1,
+                    imageUrl: 'https://example.com/sticker.png',
+                  ),
+                ],
+                isLocked: true,
+              ),
+            ],
+            lockedStickerSemanticLabel: 'Premiumで利用できます',
+            onLockedStickerTap: () {
+              lockedTapCount += 1;
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('ロックテスト入力切替')));
+    await tester.pump();
+    final lockedItems = find.bySemanticsLabel('Premiumで利用できます');
+    expect(lockedItems, findsNWidgets(2));
+
+    await tester.tap(lockedItems.last);
+    await tester.pump();
+
+    expect(lockedTapCount, 1);
+    expect(find.byIcon(Icons.send), findsNothing);
+
+    await tester.pump(const Duration(seconds: 11));
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('スタンプ一覧を最下部までスクロールすると末尾Widgetを表示する', (tester) async {
     final stickers = List.generate(
       24,

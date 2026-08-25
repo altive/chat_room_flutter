@@ -309,9 +309,17 @@ void main() {
         tabStickerImageUrl: 'https://example.com/other-tab.png',
         stickers: stickers,
       );
+      const locked = StickerPackage(
+        id: 10,
+        tabStickerImageUrl: 'https://example.com/tab.png',
+        stickers: stickers,
+        isLocked: true,
+      );
 
       expect(base == differentId, isFalse);
       expect(base == differentTab, isFalse);
+      expect(base == locked, isFalse);
+      expect(base.isLocked, isFalse);
     });
 
     test('同一内容なら == / hashCode が一致する', () {

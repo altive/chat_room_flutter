@@ -82,17 +82,22 @@ where Reference: Hashable & Sendable, Asset: Sendable {
   /// パックに含まれるステッカー。
   public let stickers: [ChatStickerPickerItem<Reference, Asset>]
 
+  /// 選択時にアプリ側の利用導線を表示するかどうか。
+  public let isLocked: Bool
+
   /// ステッカーパック表示値を作成する。
   public init(
     id: String,
     displayName: String,
     trayIcon: Asset,
-    stickers: [ChatStickerPickerItem<Reference, Asset>]
+    stickers: [ChatStickerPickerItem<Reference, Asset>],
+    isLocked: Bool = false
   ) {
     self.id = id
     self.displayName = displayName
     self.trayIcon = trayIcon
     self.stickers = stickers
+    self.isLocked = isLocked
   }
 }
 
@@ -126,6 +131,9 @@ public struct ChatStickerPickerStrings: Hashable, Sendable {
   /// 再試行ボタンの文言。
   public let retryLabel: String
 
+  /// ロック中の項目へ付与するアクセシビリティ上の説明。
+  public let lockedAccessibilityHint: String?
+
   /// ステッカーpickerの文言を作成する。
   public init(
     historyLabel: String,
@@ -133,7 +141,8 @@ public struct ChatStickerPickerStrings: Hashable, Sendable {
     unavailableTitle: String,
     unavailableDescription: String? = nil,
     failedTitle: String,
-    retryLabel: String
+    retryLabel: String,
+    lockedAccessibilityHint: String? = nil
   ) {
     self.historyLabel = historyLabel
     self.historyEmptyTitle = historyEmptyTitle
@@ -141,6 +150,7 @@ public struct ChatStickerPickerStrings: Hashable, Sendable {
     self.unavailableDescription = unavailableDescription
     self.failedTitle = failedTitle
     self.retryLabel = retryLabel
+    self.lockedAccessibilityHint = lockedAccessibilityHint
   }
 }
 
@@ -162,9 +172,11 @@ where
   private let recentReferences: [Reference]
   private let strings: ChatStickerPickerStrings
   private let referenceAccessibilityLabel: (Reference) -> String
+  private let isReferenceLocked: (Reference) -> Bool
   private let onSelectHistory: () -> Void
   private let onSelectPack: (String) -> Void
   private let onSelect: (Reference) -> Void
+  private let onSelectLocked: () -> Void
   private let onRetry: () -> Void
   private let footer: () -> FooterContent
   private let image: (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
@@ -180,9 +192,11 @@ where
     recentReferences: [Reference],
     strings: ChatStickerPickerStrings,
     referenceAccessibilityLabel: @escaping (Reference) -> String = { String(describing: $0) },
+    isReferenceLocked: @escaping (Reference) -> Bool = { _ in false },
     onSelectHistory: @escaping () -> Void,
     onSelectPack: @escaping (String) -> Void,
     onSelect: @escaping (Reference) -> Void,
+    onSelectLocked: @escaping () -> Void = {},
     onRetry: @escaping () -> Void,
     @ViewBuilder footer: @escaping () -> FooterContent,
     @ViewBuilder image: @escaping (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
@@ -196,9 +210,11 @@ where
     self.recentReferences = recentReferences
     self.strings = strings
     self.referenceAccessibilityLabel = referenceAccessibilityLabel
+    self.isReferenceLocked = isReferenceLocked
     self.onSelectHistory = onSelectHistory
     self.onSelectPack = onSelectPack
     self.onSelect = onSelect
+    self.onSelectLocked = onSelectLocked
     self.onRetry = onRetry
     self.footer = footer
     self.image = image
@@ -300,16 +316,23 @@ where
           Button {
             onSelectPack(pack.id)
           } label: {
-            image(.asset(pack.trayIcon))
-              .frame(width: 54, height: 44)
-              .padding(6)
-              .background(
-                selectedPackID == pack.id ? Color.accentColor.opacity(0.16) : Color.clear,
-                in: RoundedRectangle(cornerRadius: 12)
-              )
+            ZStack(alignment: .bottomTrailing) {
+              image(.asset(pack.trayIcon))
+                .opacity(pack.isLocked ? 0.55 : 1)
+              if pack.isLocked {
+                lockBadge
+              }
+            }
+            .frame(width: 54, height: 44)
+            .padding(6)
+            .background(
+              selectedPackID == pack.id ? Color.accentColor.opacity(0.16) : Color.clear,
+              in: RoundedRectangle(cornerRadius: 12)
+            )
           }
           .buttonStyle(.plain)
           .accessibilityLabel(pack.displayName)
+          .accessibilityHint(pack.isLocked ? strings.lockedAccessibilityHint ?? "" : "")
         }
       }
       .padding(.horizontal, 16)
@@ -335,22 +358,42 @@ where
               if isHistorySelected {
                 ForEach(recentReferences, id: \.self) { reference in
                   Button {
-                    onSelect(reference)
+                    if isReferenceLocked(reference) {
+                      onSelectLocked()
+                    } else {
+                      onSelect(reference)
+                    }
                   } label: {
-                    stickerImage(.reference(reference))
+                    lockableStickerImage(
+                      .reference(reference),
+                      isLocked: isReferenceLocked(reference)
+                    )
                   }
                   .buttonStyle(.plain)
                   .accessibilityLabel(referenceAccessibilityLabel(reference))
+                  .accessibilityHint(
+                    isReferenceLocked(reference) ? strings.lockedAccessibilityHint ?? "" : ""
+                  )
                 }
               } else {
                 ForEach(selectedPack?.stickers ?? []) { sticker in
                   Button {
-                    onSelect(sticker.reference)
+                    if selectedPack?.isLocked == true {
+                      onSelectLocked()
+                    } else {
+                      onSelect(sticker.reference)
+                    }
                   } label: {
-                    stickerImage(.asset(sticker.asset))
+                    lockableStickerImage(
+                      .asset(sticker.asset),
+                      isLocked: selectedPack?.isLocked == true
+                    )
                   }
                   .buttonStyle(.plain)
                   .accessibilityLabel(sticker.accessibilityLabel)
+                  .accessibilityHint(
+                    selectedPack?.isLocked == true ? strings.lockedAccessibilityHint ?? "" : ""
+                  )
                 }
               }
             }
@@ -376,6 +419,28 @@ where
     }
     .frame(height: ChatStickerPickerLayout.preferredStickerLength)
   }
+
+  private func lockableStickerImage(
+    _ source: ChatStickerPickerImageSource<Reference, Asset>,
+    isLocked: Bool
+  ) -> some View {
+    ZStack(alignment: .bottomTrailing) {
+      stickerImage(source)
+        .opacity(isLocked ? 0.55 : 1)
+      if isLocked {
+        lockBadge.padding(6)
+      }
+    }
+  }
+
+  private var lockBadge: some View {
+    Image(systemName: "lock.fill")
+      .font(.caption2.bold())
+      .foregroundStyle(.white)
+      .padding(5)
+      .background(.black.opacity(0.72), in: Circle())
+      .accessibilityHidden(true)
+  }
 }
 
 extension ChatStickerPicker where FooterContent == EmptyView {
@@ -390,9 +455,11 @@ extension ChatStickerPicker where FooterContent == EmptyView {
     recentReferences: [Reference],
     strings: ChatStickerPickerStrings,
     referenceAccessibilityLabel: @escaping (Reference) -> String = { String(describing: $0) },
+    isReferenceLocked: @escaping (Reference) -> Bool = { _ in false },
     onSelectHistory: @escaping () -> Void,
     onSelectPack: @escaping (String) -> Void,
     onSelect: @escaping (Reference) -> Void,
+    onSelectLocked: @escaping () -> Void = {},
     onRetry: @escaping () -> Void,
     @ViewBuilder image: @escaping (ChatStickerPickerImageSource<Reference, Asset>) -> ImageContent
   ) {
@@ -406,9 +473,11 @@ extension ChatStickerPicker where FooterContent == EmptyView {
       recentReferences: recentReferences,
       strings: strings,
       referenceAccessibilityLabel: referenceAccessibilityLabel,
+      isReferenceLocked: isReferenceLocked,
       onSelectHistory: onSelectHistory,
       onSelectPack: onSelectPack,
       onSelect: onSelect,
+      onSelectLocked: onSelectLocked,
       onRetry: onRetry,
       footer: { EmptyView() },
       image: image

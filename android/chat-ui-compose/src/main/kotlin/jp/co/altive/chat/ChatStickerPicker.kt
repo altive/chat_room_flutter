@@ -47,6 +47,7 @@ data class ChatStickerPickerPack<Reference, Asset>(
   val displayName: String,
   val trayIcon: Asset,
   val stickers: List<ChatStickerPickerItem<Reference, Asset>>,
+  val isLocked: Boolean = false,
 )
 
 sealed interface ChatStickerPickerImageSource<out Reference, out Asset> {
@@ -61,6 +62,7 @@ data class ChatStickerPickerStrings(
   val unavailableDescription: String? = null,
   val failedTitle: String,
   val retryLabel: String,
+  val lockedAccessibilityHint: String? = null,
 )
 
 /**
@@ -84,6 +86,8 @@ fun <Reference, Asset> ChatStickerPicker(
   onRetry: () -> Unit,
   modifier: Modifier = Modifier,
   referenceAccessibilityLabel: (Reference) -> String = { it.toString() },
+  isReferenceLocked: (Reference) -> Boolean = { false },
+  onSelectLocked: () -> Unit = {},
   footer: @Composable () -> Unit = {},
   image: @Composable (ChatStickerPickerImageSource<Reference, Asset>) -> Unit,
 ) {
@@ -112,9 +116,21 @@ fun <Reference, Asset> ChatStickerPicker(
       item { TextButton(onClick = onSelectHistory, modifier = Modifier.semantics { contentDescription = strings.historyLabel }) { Text("◷") } }
       items(packs.size) { index ->
         val pack = packs[index]
-        TextButton(onClick = { onSelectPack(pack.id) }, modifier = Modifier.semantics { contentDescription = pack.displayName }) {
+        TextButton(
+          onClick = { onSelectPack(pack.id) },
+          modifier = Modifier.semantics {
+            contentDescription = accessibilityDescription(
+              pack.displayName,
+              pack.isLocked,
+              strings.lockedAccessibilityHint,
+            )
+          },
+        ) {
           Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
-            image(ChatStickerPickerImageSource.Asset(pack.trayIcon))
+            Box(Modifier.graphicsLayer { alpha = if (pack.isLocked) 0.55f else 1f }) {
+              image(ChatStickerPickerImageSource.Asset(pack.trayIcon))
+            }
+            if (pack.isLocked) LockBadge(Modifier.align(Alignment.BottomEnd))
           }
         }
       }
@@ -129,14 +145,28 @@ fun <Reference, Asset> ChatStickerPicker(
         horizontalArrangement = Arrangement.spacedBy(ChatStickerColumnSpacing),
       ) {
         if (isHistorySelected) items(recentReferences) { reference ->
-          TextButton(onClick = { onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = referenceAccessibilityLabel(reference) }, contentPadding = PaddingValues(0.dp)) {
-            StickerImage {
+          val isLocked = isReferenceLocked(reference)
+          TextButton(onClick = { if (isLocked) onSelectLocked() else onSelect(reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics {
+            contentDescription = accessibilityDescription(
+              referenceAccessibilityLabel(reference),
+              isLocked,
+              strings.lockedAccessibilityHint,
+            )
+          }, contentPadding = PaddingValues(0.dp)) {
+            LockableStickerImage(isLocked) {
               image(ChatStickerPickerImageSource.Reference(reference))
             }
           }
         } else items(selected?.stickers.orEmpty(), key = { it.id }) { sticker ->
-          TextButton(onClick = { onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics { contentDescription = sticker.accessibilityLabel }, contentPadding = PaddingValues(0.dp)) {
-            StickerImage {
+          val isLocked = selected?.isLocked == true
+          TextButton(onClick = { if (isLocked) onSelectLocked() else onSelect(sticker.reference) }, modifier = Modifier.heightIn(min = 88.dp).semantics {
+            contentDescription = accessibilityDescription(
+              sticker.accessibilityLabel,
+              isLocked,
+              strings.lockedAccessibilityHint,
+            )
+          }, contentPadding = PaddingValues(0.dp)) {
+            LockableStickerImage(isLocked) {
               image(ChatStickerPickerImageSource.Asset(sticker.asset))
             }
           }
@@ -144,6 +174,24 @@ fun <Reference, Asset> ChatStickerPicker(
         item(span = { GridItemSpan(maxLineSpan) }) { footer() }
       }
     }
+  }
+}
+
+internal fun accessibilityDescription(label: String, isLocked: Boolean, lockedHint: String?): String =
+  if (isLocked && !lockedHint.isNullOrBlank()) "$label, $lockedHint" else label
+
+@Composable private fun LockableStickerImage(isLocked: Boolean, image: @Composable () -> Unit) {
+  Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    Box(Modifier.graphicsLayer { alpha = if (isLocked) 0.55f else 1f }) {
+      StickerImage(image)
+    }
+    if (isLocked) LockBadge(Modifier.align(Alignment.BottomEnd).padding(8.dp))
+  }
+}
+
+@Composable private fun LockBadge(modifier: Modifier = Modifier) {
+  Surface(modifier, shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.82f)) {
+    Text("🔒", modifier = Modifier.padding(4.dp), style = MaterialTheme.typography.labelSmall)
   }
 }
 

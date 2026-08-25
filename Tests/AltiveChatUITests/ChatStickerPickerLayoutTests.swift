@@ -29,6 +29,26 @@
       #expect(ChatStickerPickerLayout.columnCount(for: 834) == 8)
     }
 
+    @Test("既存パックは既定でロックされない")
+    func keepsExistingPacksUnlockedByDefault() {
+      let pack = ChatStickerPickerPack<Int, Int>(
+        id: "pack",
+        displayName: "パック",
+        trayIcon: 0,
+        stickers: []
+      )
+      let lockedPack = ChatStickerPickerPack<Int, Int>(
+        id: "archive",
+        displayName: "過去パック",
+        trayIcon: 1,
+        stickers: [],
+        isLocked: true
+      )
+
+      #expect(!pack.isLocked)
+      #expect(lockedPack.isLocked)
+    }
+
     @Test("末尾コンテンツをスタンプ一覧へ重ねない")
     func keepsFooterBelowStickerGrid() throws {
       let stickers = (0..<24).map { index in

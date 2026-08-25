@@ -6,6 +6,7 @@
 | 機能 | Flutter | SwiftUI | Compose |
 | --- | --- | --- | --- |
 | テキストメッセージ | implemented | implemented | implemented |
+| メッセージ内リンク・連絡先 | implemented | implemented | implemented |
 | システムメッセージ | implemented | implemented | implemented |
 | 汎用メッセージカード | implemented | implemented | implemented |
 | 画像メッセージ | implemented | implemented | implemented |

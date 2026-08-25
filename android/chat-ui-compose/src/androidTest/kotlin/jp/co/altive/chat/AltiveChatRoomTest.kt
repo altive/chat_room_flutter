@@ -146,6 +146,111 @@ class AltiveChatRoomTest {
     compose.onNodeWithText("故障した画面です").assertIsDisplayed()
   }
 
+  @Test fun `通常本文と画像captionとシステム本文にリンクを表示する`() {
+    val image = ChatImage("image-1", ChatImageResource.RemoteUrl("https://example.com/image.jpg"))
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = listOf(
+            ChatMessage(
+              id = "text",
+              createdAtEpochMillis = 1L,
+              sender = ChatUser("other", "Other"),
+              content = ChatMessageContent.Text("https://example.com"),
+            ),
+            ChatMessage(
+              id = "image",
+              createdAtEpochMillis = 2L,
+              sender = ChatUser("other", "Other"),
+              content = ChatMessageContent.ImagesWithCaption(listOf(image), "help@example.jp"),
+            ),
+            ChatMessage(
+              id = "system",
+              createdAtEpochMillis = 3L,
+              sender = null,
+              content = ChatMessageContent.System("sms:+819012345678"),
+            ),
+          ),
+          currentUserId = "me",
+          draft = "",
+          onDraftChange = {},
+          onSend = {},
+        )
+      }
+    }
+
+    compose.onNodeWithText("https://example.com").assertIsDisplayed()
+    compose.onNodeWithText("help@example.jp").assertIsDisplayed()
+    compose.onNodeWithText("sms:+819012345678").assertIsDisplayed()
+  }
+
+  @Test fun `Webとメールと明示telと明示SMSを直接開く`() {
+    val opened = mutableListOf<String>()
+    compose.setContent {
+      MaterialTheme {
+        androidx.compose.foundation.layout.Column {
+          ChatLinkifiedText("https://example.com", ChatRoomStrings("", "", "", "", "", ""), onOpenLink = opened::add)
+          ChatLinkifiedText("help@example.jp", ChatRoomStrings("", "", "", "", "", ""), onOpenLink = opened::add)
+          ChatLinkifiedText("tel:03-1234-5678", ChatRoomStrings("", "", "", "", "", ""), onOpenLink = opened::add)
+          ChatLinkifiedText("sms:+819012345678", ChatRoomStrings("", "", "", "", "", ""), onOpenLink = opened::add)
+        }
+      }
+    }
+
+    compose.onNodeWithText("https://example.com").performClick()
+    compose.onNodeWithText("help@example.jp").performClick()
+    compose.onNodeWithText("tel:03-1234-5678").performClick()
+    compose.onNodeWithText("sms:+819012345678").performClick()
+
+    compose.runOnIdle {
+      assertEquals(
+        listOf(
+          "https://example.com",
+          "mailto:help@example.jp",
+          "tel:0312345678",
+          "sms:+819012345678",
+        ),
+        opened,
+      )
+    }
+  }
+
+  @Test fun `電話番号から電話とSMSを選択できキャンセルでは開かない`() {
+    val opened = mutableListOf<String>()
+    val strings = ChatRoomStrings(
+      emptyMessage = "",
+      messagePlaceholder = "",
+      sendButtonLabel = "",
+      sendingLabel = "",
+      failedLabel = "",
+      unknownSender = "",
+      phoneActionTitle = "電話番号への連絡",
+      phoneActionMessage = "操作を選択してください",
+      callButtonLabel = "電話",
+      smsButtonLabel = "SMS",
+      cancelButtonLabel = "キャンセル",
+    )
+    compose.setContent {
+      MaterialTheme {
+        ChatLinkifiedText("090-1234-5678", strings, onOpenLink = opened::add)
+      }
+    }
+
+    compose.onNodeWithText("090-1234-5678").performClick()
+    compose.onNodeWithText("キャンセル").performClick()
+    compose.runOnIdle { assertEquals(emptyList<String>(), opened) }
+
+    compose.onNodeWithText("090-1234-5678").performClick()
+    compose.onNodeWithText("SMS").performClick()
+    compose.runOnIdle { assertEquals(listOf("sms:09012345678"), opened) }
+
+    compose.onNodeWithText("090-1234-5678").performClick()
+    compose.onNodeWithText("電話").performClick()
+    compose.runOnIdle {
+      assertEquals(listOf("sms:09012345678", "tel:09012345678"), opened)
+    }
+  }
+
   @Test fun `汎用メッセージカードの内容と読み上げラベルを表示する`() {
     compose.setContent {
       MaterialTheme {

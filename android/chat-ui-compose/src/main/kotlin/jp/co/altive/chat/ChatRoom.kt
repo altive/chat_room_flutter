@@ -48,6 +48,11 @@ data class ChatRoomStrings(
   val expandSourceButtonsLabel: String = "Show attachment buttons",
   val removeImageButtonLabel: String = "Remove image",
   val imageLabel: String = "Image",
+  val phoneActionTitle: String = "Contact phone number",
+  val phoneActionMessage: String = "Choose an action",
+  val callButtonLabel: String = "Call",
+  val smsButtonLabel: String = "SMS",
+  val cancelButtonLabel: String = "Cancel",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -63,6 +68,11 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_expand_source_buttons),
         stringResource(R.string.altive_chat_remove_image),
         stringResource(R.string.altive_chat_image),
+        stringResource(R.string.altive_chat_phone_action_title),
+        stringResource(R.string.altive_chat_phone_action_message),
+        stringResource(R.string.altive_chat_call),
+        stringResource(R.string.altive_chat_sms),
+        stringResource(R.string.altive_chat_cancel),
       )
     }
   }
@@ -349,7 +359,13 @@ fun ChatMessageRow(
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
       Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(content.value, Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+        ChatLinkifiedText(
+          text = content.value,
+          strings = strings,
+          modifier = Modifier.fillMaxWidth(),
+          style = MaterialTheme.typography.bodySmall,
+          textAlign = TextAlign.Center,
+        )
         Text(formatTime(message.createdAtEpochMillis), Modifier.fillMaxWidth(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
       }
     }
@@ -359,9 +375,10 @@ fun ChatMessageRow(
         Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
           if (showsSenderName && !own) Text(message.sender?.displayName ?: strings.unknownSender, style = MaterialTheme.typography.labelSmall)
           ChatMessageBubble(isOwnMessage = own, theme = theme) {
-            Text(
-              content.value,
-              Modifier.padding(
+            ChatLinkifiedText(
+              text = content.value,
+              strings = strings,
+              modifier = Modifier.padding(
                 start = if (own) 14.dp else 22.dp,
                 end = if (own) 22.dp else 14.dp,
                 top = 10.dp,
@@ -442,9 +459,10 @@ private fun ChatImageMessageRow(
       if (caption != null) {
         Spacer(Modifier.height(4.dp))
         ChatMessageBubble(isOwnMessage = own, theme = theme) {
-          Text(
-            caption,
-            Modifier.padding(
+          ChatLinkifiedText(
+            text = caption,
+            strings = strings,
+            modifier = Modifier.padding(
               start = if (own) 14.dp else 22.dp,
               end = if (own) 22.dp else 14.dp,
               top = 10.dp,

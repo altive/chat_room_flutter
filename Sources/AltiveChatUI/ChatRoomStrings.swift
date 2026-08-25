@@ -38,6 +38,18 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 画像の読み込み失敗を示す文言。
   public var imageLoadingFailedLabel: String
 
+  /// 電話番号をタップした際の選択肢タイトル。
+  public var phoneActionTitle: String
+
+  /// 電話をかける操作の文言。
+  public var callActionLabel: String
+
+  /// SMSを送信する操作の文言。
+  public var messageActionLabel: String
+
+  /// 電話番号の操作をキャンセルする文言。
+  public var cancelActionLabel: String
+
   /// チャット画面で使用する文言を作成する。
   public init(
     emptyMessage: String,
@@ -51,7 +63,11 @@ public struct ChatRoomStrings: Equatable, Sendable {
     expandSourceButtonsLabel: String = "Show attachment buttons",
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
-    imageLoadingFailedLabel: String = "Failed to load image"
+    imageLoadingFailedLabel: String = "Failed to load image",
+    phoneActionTitle: String = "Choose an action",
+    callActionLabel: String = "Call",
+    messageActionLabel: String = "Send message",
+    cancelActionLabel: String = "Cancel"
   ) {
     self.emptyMessage = emptyMessage
     self.messagePlaceholder = messagePlaceholder
@@ -65,6 +81,10 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
     self.imageLoadingFailedLabel = imageLoadingFailedLabel
+    self.phoneActionTitle = phoneActionTitle
+    self.callActionLabel = callActionLabel
+    self.messageActionLabel = messageActionLabel
+    self.cancelActionLabel = cancelActionLabel
   }
 
   /// Package内のローカライズ済み文言。
@@ -84,7 +104,11 @@ public struct ChatRoomStrings: Equatable, Sendable {
       ),
       removeImageButtonLabel: String(localized: "chat.composer.removeImage", bundle: .module),
       imageLabel: String(localized: "chat.image.label", bundle: .module),
-      imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module)
+      imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module),
+      phoneActionTitle: String(localized: "chat.link.phone.title", bundle: .module),
+      callActionLabel: String(localized: "chat.link.phone.call", bundle: .module),
+      messageActionLabel: String(localized: "chat.link.phone.message", bundle: .module),
+      cancelActionLabel: String(localized: "chat.link.phone.cancel", bundle: .module)
     )
   }
 }

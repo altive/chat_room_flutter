@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'avatar_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
+import 'message_link.dart';
 import 'models.dart';
 import 'user_message_bubble.dart';
 
@@ -435,12 +438,21 @@ class _SystemMessageItem extends StatelessWidget {
         child: Column(
           children: [
             _TimeText.systemMessage(dateTime: message.createdAt),
-            Text(
-              message.text,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium!.copyWith(
-                color: colorScheme.onInverseSurface,
+            Text.rich(
+              TextSpan(
+                children: buildMessageLinkSpans(
+                  text: message.text,
+                  style: theme.textTheme.bodyMedium!.copyWith(
+                    color: colorScheme.onInverseSurface,
+                  ),
+                  linkStyle: theme.textTheme.bodyMedium!.copyWith(
+                    color: colorScheme.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                  onOpen: (link) => unawaited(openMessageLink(context, link)),
+                ),
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

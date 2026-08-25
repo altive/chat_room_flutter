@@ -10,6 +10,11 @@
   <string name="altive_chat_expand_source_buttons">Show attachment buttons</string>
   <string name="altive_chat_remove_image">Remove selected image</string>
   <string name="altive_chat_image">Image</string>
+  <string name="altive_chat_phone_action_title">Contact phone number</string>
+  <string name="altive_chat_phone_action_message">Choose an action</string>
+  <string name="altive_chat_call">Call</string>
+  <string name="altive_chat_sms">SMS</string>
+  <string name="altive_chat_cancel">Cancel</string>
   <string name="altive_chat_expand">Expand events</string>
   <string name="altive_chat_collapse">Collapse events</string>
 </resources>

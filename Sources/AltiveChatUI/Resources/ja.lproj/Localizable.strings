@@ -9,6 +9,10 @@
 "chat.delivery.failed" = "送信できませんでした";
 "chat.image.label" = "画像";
 "chat.image.loadingFailed" = "画像を読み込めませんでした";
+"chat.link.phone.title" = "操作を選択";
+"chat.link.phone.call" = "電話";
+"chat.link.phone.message" = "SMS";
+"chat.link.phone.cancel" = "キャンセル";
 "chat.sender.unknown" = "不明なユーザー";
 "chat.system.expand" = "まとめられた出来事を表示";
 "chat.system.collapse" = "まとめられた出来事を閉じる";

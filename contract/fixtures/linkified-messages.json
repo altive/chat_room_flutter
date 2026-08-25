@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "Web URLと末尾の句読点",
+      "text": "詳細はhttps://example.com/path?q=chatをご覧ください。",
+      "links": [
+        {
+          "text": "https://example.com/path?q=chat",
+          "destination": "https://example.com/path?q=chat",
+          "kind": "web"
+        }
+      ]
+    },
+    {
+      "name": "wwwとbare domain",
+      "text": "www.example.com または example.jp/support",
+      "links": [
+        {
+          "text": "www.example.com",
+          "destination": "https://www.example.com",
+          "kind": "web"
+        },
+        {
+          "text": "example.jp/support",
+          "destination": "https://example.jp/support",
+          "kind": "web"
+        }
+      ]
+    },
+    {
+      "name": "メールと明示scheme",
+      "text": "support@example.com または mailto:help@example.jp",
+      "links": [
+        {
+          "text": "support@example.com",
+          "destination": "mailto:support@example.com",
+          "kind": "email"
+        },
+        {
+          "text": "mailto:help@example.jp",
+          "destination": "mailto:help@example.jp",
+          "kind": "email"
+        }
+      ]
+    },
+    {
+      "name": "国内電話と国際電話",
+      "text": "090-1234-5678 / +81 90 1234 5678",
+      "links": [
+        {
+          "text": "090-1234-5678",
+          "destination": "tel:09012345678",
+          "kind": "phone"
+        },
+        {
+          "text": "+81 90 1234 5678",
+          "destination": "tel:+819012345678",
+          "kind": "phone"
+        }
+      ]
+    },
+    {
+      "name": "明示的な電話とSMS",
+      "text": "tel:03-1234-5678 sms:+819012345678",
+      "links": [
+        {
+          "text": "tel:03-1234-5678",
+          "destination": "tel:0312345678",
+          "kind": "phone"
+        },
+        {
+          "text": "sms:+819012345678",
+          "destination": "sms:+819012345678",
+          "kind": "sms"
+        }
+      ]
+    },
+    {
+      "name": "リンクにしない値",
+      "text": "2026-08-25、12345678、javascript:alert(1)、javascript:example.com",
+      "links": []
+    }
+  ]
+}

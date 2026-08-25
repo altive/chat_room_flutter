@@ -10,6 +10,11 @@
   <string name="altive_chat_expand_source_buttons">添付ボタンを表示</string>
   <string name="altive_chat_remove_image">選択画像を削除</string>
   <string name="altive_chat_image">画像</string>
+  <string name="altive_chat_phone_action_title">電話番号への連絡</string>
+  <string name="altive_chat_phone_action_message">操作を選択してください</string>
+  <string name="altive_chat_call">電話</string>
+  <string name="altive_chat_sms">SMS</string>
+  <string name="altive_chat_cancel">キャンセル</string>
   <string name="altive_chat_expand">イベントを展開</string>
   <string name="altive_chat_collapse">イベントを折りたたむ</string>
 </resources>

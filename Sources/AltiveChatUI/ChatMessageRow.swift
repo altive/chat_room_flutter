@@ -72,8 +72,8 @@ public struct ChatMessageRow: View {
 
         if let caption {
           ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
-            Text(caption)
-              .textSelection(.enabled)
+            ChatLinkedText(text: caption, strings: strings)
+              .tint(isOwnMessage ? theme.outgoingText : Color.accentColor)
           }
         }
 
@@ -104,8 +104,8 @@ public struct ChatMessageRow: View {
         }
 
         ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
-          Text(text)
-            .textSelection(.enabled)
+          ChatLinkedText(text: text, strings: strings)
+            .tint(isOwnMessage ? theme.outgoingText : Color.accentColor)
         }
 
         deliveryMetadata
@@ -139,8 +139,9 @@ public struct ChatMessageRow: View {
   private func systemMessage(_ text: String) -> some View {
     ChatSystemEventCard(theme: theme) {
       VStack(spacing: 4) {
-        Text(text)
+        ChatLinkedText(text: text, strings: strings)
           .font(.footnote)
+          .tint(.accentColor)
           .multilineTextAlignment(.center)
           .frame(maxWidth: .infinity, alignment: .center)
 

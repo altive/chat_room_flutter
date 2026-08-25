@@ -9,6 +9,10 @@
 "chat.delivery.failed" = "Failed to send";
 "chat.image.label" = "Image";
 "chat.image.loadingFailed" = "Failed to load image";
+"chat.link.phone.title" = "Choose an action";
+"chat.link.phone.call" = "Call";
+"chat.link.phone.message" = "Send message";
+"chat.link.phone.cancel" = "Cancel";
 "chat.sender.unknown" = "Unknown user";
 "chat.system.expand" = "Show grouped events";
 "chat.system.collapse" = "Hide grouped events";

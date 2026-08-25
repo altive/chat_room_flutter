@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
-import 'package:linkify/linkify.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'avatar_image.dart';
 import 'cached_ogp_data.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
+import 'message_link.dart';
 import 'models.dart';
 import 'popup_menu_overlay.dart';
 
@@ -282,42 +280,25 @@ class _TextMessageBubbleContents extends StatelessWidget {
             ?.copyWith(color: textStyleColor);
 
     final linkStyle = TextStyle(
-      color: colorScheme.primary,
+      color: isOutgoing ? colorScheme.onPrimary : colorScheme.primary,
       fontSize: 14,
-      // アンダーラインを表示しない。
-      decoration: TextDecoration.none,
+      decoration: TextDecoration.underline,
     );
     final cursorColor =
         altiveChatRoomTheme.popupMenuConfig.backgroundColor ??
         theme.colorScheme.secondary;
 
-    Future<void> onOpen(LinkableElement link) async {
-      final uri = Uri.tryParse(link.url);
-      final scheme = uri?.scheme.toLowerCase();
-      const allowedSchemes = <String>{
-        'http',
-        'https',
-        'mailto',
-        'tel',
-        'sms',
-      };
-      if (uri == null || scheme == null || !allowedSchemes.contains(scheme)) {
-        return;
-      }
-      await launchUrl(uri);
-    }
+    void onOpen(MessageLink link) => unawaited(openMessageLink(context, link));
 
     final messageButton = message.button;
     final hasPopupMenu = widgetKey != null;
     final replyTo = message.replyTo;
 
-    final linkifiedElements = linkify(message.text);
     // OGP情報を表示するためにメッセージ内のURLを抽出する。
-    final urlElements = linkifiedElements.whereType<UrlElement>();
+    final urlElements = webLinksInMessage(message.text);
 
-    // Linkifyを利用しInlineSpanのリストを生成する。
-    final linkifyInlineSpans = buildTextSpanChildren(
-      linkifiedElements,
+    final messageLinkSpans = buildMessageLinkSpans(
+      text: message.text,
       style: textStyle,
       linkStyle: linkStyle,
       onOpen: onOpen,
@@ -325,7 +306,7 @@ class _TextMessageBubbleContents extends StatelessWidget {
 
     // 複数のテキストスタイルを適用する。
     final inlineSpans = _applyTextStyles(
-      inlineSpans: linkifyInlineSpans,
+      inlineSpans: messageLinkSpans,
       textStyle: textStyle,
       linkStyle: linkStyle,
       emojiTextStyle: emojiTextStyle,
@@ -578,8 +559,8 @@ class _OgpContents extends StatelessWidget {
     required this.textStyleColor,
   });
 
-  final UrlElement urlElement;
-  final ValueChanged<UrlElement> onOpen;
+  final MessageLink urlElement;
+  final ValueChanged<MessageLink> onOpen;
   final bool isOutgoing;
   final Color? textStyleColor;
 
@@ -589,7 +570,7 @@ class _OgpContents extends StatelessWidget {
     final theme = Theme.of(context);
 
     return FutureBuilder(
-      future: cachedOgpData.get(urlElement.url),
+      future: cachedOgpData.get(urlElement.destination.toString()),
       builder: (context, snapshot) {
         final ogpTitleTextStyle =
             (isOutgoing

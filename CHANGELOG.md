@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.3.4 - 2026-08-25
+
 - SwiftUI、Jetpack Compose、Flutterのステッカーpickerへ、ロック表示、履歴を含む
   選択抑止、アプリ固有の利用導線callbackを追加。
 

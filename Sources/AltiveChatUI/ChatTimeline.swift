@@ -1,6 +1,18 @@
 import Foundation
 import SwiftUI
 
+/// viewportと末尾anchorの距離から最新付近を判定する。
+enum ChatTimelineProximity {
+  /// 末尾anchorがviewport末尾から閾値内にあるかを返す。
+  static func isNearBottom(
+    bottomOffset: CGFloat,
+    viewportHeight: CGFloat,
+    threshold: CGFloat
+  ) -> Bool {
+    bottomOffset <= viewportHeight + max(0, threshold)
+  }
+}
+
 /// チャットタイムラインのスクロール操作を提供する。
 @MainActor
 public struct ChatTimelineProxy {
@@ -192,6 +204,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private let followLatestTrigger: FollowTrigger
   private let followLatestAnimation: Animation?
   private let latestFollowingPolicy: ChatTimelineLatestFollowingPolicy
+  private let latestProximityThreshold: CGFloat
   private let forceFollowLatest: Bool
   private let latestControl: ChatTimelineLatestControlConfiguration
   private let history: ChatTimelineHistoryConfiguration<ID>
@@ -209,6 +222,8 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   @State private var visiblePosition: AnyHashable?
   @State private var isNearBottom = true
   @State private var showsLatestControl = false
+  @State private var viewportHeight: CGFloat = 0
+  @State private var bottomOffset: CGFloat?
 
   /// 汎用タイムラインを作成する。
   ///
@@ -220,7 +235,8 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     initialPosition: ChatTimelineInitialPosition<ID> = .latest,
     followLatestTrigger: FollowTrigger,
     followLatestAnimation: Animation? = .easeOut(duration: 0.2),
-    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .always,
+    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .whenNearBottom,
+    latestProximityThreshold: CGFloat = 80,
     forceFollowLatest: Bool = false,
     latestControl: ChatTimelineLatestControlConfiguration = .disabled,
     history: ChatTimelineHistoryConfiguration<ID> = .disabled,
@@ -236,6 +252,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     self.followLatestTrigger = followLatestTrigger
     self.followLatestAnimation = followLatestAnimation
     self.latestFollowingPolicy = latestFollowingPolicy
+    self.latestProximityThreshold = max(0, latestProximityThreshold)
     self.forceFollowLatest = forceFollowLatest
     self.latestControl = latestControl
     self.history = history
@@ -259,7 +276,8 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     initialTargetAnchor: UnitPoint = .center,
     followLatestTrigger: FollowTrigger,
     followLatestAnimation: Animation? = .easeOut(duration: 0.2),
-    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .always,
+    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .whenNearBottom,
+    latestProximityThreshold: CGFloat = 80,
     forceFollowLatest: Bool = false,
     latestControl: ChatTimelineLatestControlConfiguration = .disabled,
     history: ChatTimelineHistoryConfiguration<ID> = .disabled,
@@ -278,6 +296,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       followLatestTrigger: followLatestTrigger,
       followLatestAnimation: followLatestAnimation,
       latestFollowingPolicy: latestFollowingPolicy,
+      latestProximityThreshold: latestProximityThreshold,
       forceFollowLatest: forceFollowLatest,
       latestControl: latestControl,
       history: history,
@@ -302,6 +321,14 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           Color.clear
             .frame(height: 1)
             .id(AnyHashable(bottomAnchorID))
+            .background {
+              GeometryReader { geometry in
+                Color.clear.preference(
+                  key: ChatTimelineBottomOffsetKey.self,
+                  value: geometry.frame(in: .named(historyCoordinateSpaceID)).maxY
+                )
+              }
+            }
         }
         .scrollTargetLayout()
         .frame(maxWidth: maximumContentWidth ?? .infinity)
@@ -309,6 +336,14 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         .frame(maxWidth: .infinity)
       }
       .coordinateSpace(name: historyCoordinateSpaceID)
+      .background {
+        GeometryReader { geometry in
+          Color.clear.preference(
+            key: ChatTimelineViewportHeightKey.self,
+            value: geometry.size.height
+          )
+        }
+      }
       .defaultScrollAnchor(.bottom)
       .scrollPosition(id: $visiblePosition, anchor: .bottom)
       .overlay(alignment: .bottomTrailing) {
@@ -331,11 +366,25 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         historyTopOffset = offset
         requestAutomaticHistoryIfNeeded(using: timelineProxy)
       }
+      .onPreferenceChange(ChatTimelineViewportHeightKey.self) { height in
+        viewportHeight = height
+        updateLatestProximity()
+      }
+      .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { offset in
+        bottomOffset = offset
+        guard offset != nil else {
+          // LazyVStackが末尾anchorを画面外で破棄した場合は、過去閲覧中として扱う。
+          isNearBottom = false
+          return
+        }
+        updateLatestProximity()
+      }
       .onChange(of: visiblePosition) { _, position in
-        let isNear = position == AnyHashable(bottomAnchorID)
-        isNearBottom = isNear
-        if isNear {
+        if position == AnyHashable(bottomAnchorID) {
+          isNearBottom = true
           showsLatestControl = false
+        } else {
+          updateLatestProximity()
         }
       }
       .onAppear {
@@ -373,6 +422,20 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           timelineProxy.scrollToBottom()
         }
       }
+    }
+  }
+
+  /// viewportと末尾anchorの距離から最新付近かを更新する。
+  private func updateLatestProximity() {
+    guard let bottomOffset, viewportHeight > 0 else { return }
+    let isNear = ChatTimelineProximity.isNearBottom(
+      bottomOffset: bottomOffset,
+      viewportHeight: viewportHeight,
+      threshold: latestProximityThreshold
+    )
+    isNearBottom = isNear
+    if isNear {
+      showsLatestControl = false
     }
   }
 
@@ -510,6 +573,22 @@ private struct ChatTimelineBottomAnchorID: Hashable {
 }
 
 private struct ChatTimelineHistoryTopOffsetKey: PreferenceKey {
+  static let defaultValue: CGFloat? = nil
+
+  static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
+    value = nextValue() ?? value
+  }
+}
+
+private struct ChatTimelineViewportHeightKey: PreferenceKey {
+  static let defaultValue: CGFloat = 0
+
+  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    value = nextValue()
+  }
+}
+
+private struct ChatTimelineBottomOffsetKey: PreferenceKey {
   static let defaultValue: CGFloat? = nil
 
   static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {

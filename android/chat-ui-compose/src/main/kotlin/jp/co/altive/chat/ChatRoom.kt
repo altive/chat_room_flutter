@@ -91,11 +91,17 @@ fun AltiveChatRoom(
   strings: ChatRoomStrings = ChatRoomStrings.localized(),
   showsSenderName: Boolean = false,
   draftPolicy: ChatDraftPolicy = ChatDraftPolicy.Unrestricted,
+  singleImageLayout: ChatSingleImageLayout = ChatSingleImageLayout.AdaptiveBounded(),
   multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
   followLatestConfiguration: ChatTimelineFollowLatestConfiguration =
-    ChatTimelineFollowLatestConfiguration(),
-  showsScrollToLatestButton: Boolean = false,
+    ChatTimelineFollowLatestConfiguration(
+      mode = ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
+    ),
+  showsScrollToLatestButton: Boolean = true,
+  onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
   onRetry: ((String) -> Unit)? = null,
+  imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
+  transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   onSend: (String) -> Unit,
 ) {
   val timelineState = rememberChatTimelineState()
@@ -131,8 +137,12 @@ fun AltiveChatRoom(
               theme = theme,
               strings = strings,
               showsSenderName = showsSenderName,
+              singleImageLayout = singleImageLayout,
               multipleImageLayout = multipleImageLayout,
               onRetry = onRetry?.let { { it(message.id) } },
+              onImageTap = onImageTap,
+              imageContent = imageContent,
+              transitioningImageContent = transitioningImageContent,
             )
           }
         }
@@ -182,17 +192,16 @@ fun AltiveChatRoom(
   onRequestCamera: (() -> Unit)? = null,
   onImagePreparationFailure: ((Throwable) -> Unit)? = null,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
+  singleImageLayout: ChatSingleImageLayout = ChatSingleImageLayout.AdaptiveBounded(),
   multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
   followLatestConfiguration: ChatTimelineFollowLatestConfiguration =
-    ChatTimelineFollowLatestConfiguration(),
-  showsScrollToLatestButton: Boolean = false,
+    ChatTimelineFollowLatestConfiguration(
+      mode = ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
+    ),
+  showsScrollToLatestButton: Boolean = true,
   onRetry: ((String) -> Unit)? = null,
   focusRequester: FocusRequester = remember { FocusRequester() },
-  imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      Text(strings.imageLabel)
-    }
-  },
+  imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
@@ -332,6 +341,7 @@ fun AltiveChatRoom(
                 theme = theme,
                 strings = strings,
                 showsSenderName = showsSenderName,
+                singleImageLayout = singleImageLayout,
                 multipleImageLayout = multipleImageLayout,
                 onRetry = onRetry?.let { { it(message.id) } },
                 onImageTap = onImageTap,
@@ -388,7 +398,11 @@ fun AltiveChatRoom(
           onImageDraftsChange(emptyList())
           updatePhotoDraftIds(emptyMap())
         },
-        imageContent = imageContent,
+        imageContent = imageContent ?: {
+          Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(strings.imageLabel)
+          }
+        },
       )
     }
   }
@@ -401,14 +415,11 @@ fun ChatMessageRow(
   theme: ChatRoomTheme = ChatRoomTheme.fanely(),
   strings: ChatRoomStrings = ChatRoomStrings.localized(),
   showsSenderName: Boolean = false,
+  singleImageLayout: ChatSingleImageLayout = ChatSingleImageLayout.AdaptiveBounded(),
   multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
   onRetry: (() -> Unit)? = null,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
-  imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      Text(strings.imageLabel)
-    }
-  },
+  imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
 ) {
   when (val content = message.content) {
@@ -459,6 +470,7 @@ fun ChatMessageRow(
         showsSenderName = showsSenderName,
         onRetry = onRetry,
         onImageTap = onImageTap,
+        singleImageLayout = singleImageLayout,
         multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
         transitioningImageContent = transitioningImageContent,
@@ -475,6 +487,7 @@ fun ChatMessageRow(
         showsSenderName = showsSenderName,
         onRetry = onRetry,
         onImageTap = onImageTap,
+        singleImageLayout = singleImageLayout,
         multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
         transitioningImageContent = transitioningImageContent,
@@ -494,8 +507,9 @@ private fun ChatImageMessageRow(
   showsSenderName: Boolean,
   onRetry: (() -> Unit)?,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)?,
+  singleImageLayout: ChatSingleImageLayout,
   multipleImageLayout: ChatMultipleImageLayout,
-  imageContent: @Composable BoxScope.(ChatImage) -> Unit,
+  imageContent: (@Composable BoxScope.(ChatImage) -> Unit)?,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)?,
 ) {
   val own = message.isSentBy(currentUserId)
@@ -514,6 +528,7 @@ private fun ChatImageMessageRow(
         messageId = message.id,
         images = images,
         imageLabel = strings.imageLabel,
+        singleImageLayout = singleImageLayout,
         multipleImageLayout = multipleImageLayout,
         onImageTap = onImageTap,
         imageContent = imageContent,

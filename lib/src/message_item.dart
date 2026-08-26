@@ -264,7 +264,10 @@ class _UserMessageItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
-    final deliveryState = pendingMessageIds.contains(message.id)
+    final deliveryState =
+        message.deliveryState == ChatMessageDeliveryState.failed
+        ? ChatMessageDeliveryState.failed
+        : pendingMessageIds.contains(message.id)
         ? ChatMessageDeliveryState.sending
         : message.deliveryState;
     final isPending =

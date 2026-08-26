@@ -9,6 +9,7 @@ public struct ChatMessageRow: View {
   private let strings: ChatRoomStrings
   private let showsSenderName: Bool
   private let imageLoader: ChatImageLoader
+  private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
   private let onImageTap: ((String, Int) -> Void)?
   private let onRetry: (() -> Void)?
@@ -21,6 +22,7 @@ public struct ChatMessageRow: View {
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
     imageLoader: ChatImageLoader = .standard,
+    singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     onImageTap: ((String, Int) -> Void)? = nil,
     onRetry: (() -> Void)? = nil
@@ -31,6 +33,7 @@ public struct ChatMessageRow: View {
     self.strings = strings
     self.showsSenderName = showsSenderName
     self.imageLoader = imageLoader
+    self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.onImageTap = onImageTap
     self.onRetry = onRetry
@@ -68,6 +71,7 @@ public struct ChatMessageRow: View {
           messageID: message.id,
           images: images,
           imageLoader: imageLoader,
+          singleImageLayout: singleImageLayout,
           multipleImageLayout: multipleImageLayout,
           imageLabel: strings.imageLabel,
           loadingFailureLabel: strings.imageLoadingFailedLabel,

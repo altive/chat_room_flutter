@@ -23,6 +23,22 @@ enum NewMessageScrollPolicy {
   never,
 }
 
+/// 呼び出し側の並び順に依存せず、Flutterの反転ListView向けに新しい順へ正規化する。
+List<ChatMessage> _newestFirstMessages(List<ChatMessage> messages) {
+  return messages.toList(growable: false)..sort((left, right) {
+    final createdAtOrder = right.createdAt.compareTo(left.createdAt);
+    return createdAtOrder != 0 ? createdAtOrder : right.id.compareTo(left.id);
+  });
+}
+
+/// メッセージ一覧の最新要素を返す。
+ChatMessage? _latestMessage(List<ChatMessage> messages) {
+  if (messages.isEmpty) {
+    return null;
+  }
+  return _newestFirstMessages(messages).first;
+}
+
 /// {@template altive_chat_room.AltiveChatRoom}
 /// チャットルームを表示するWidget。
 ///
@@ -324,12 +340,11 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
           ? ScrollController()
           : null;
     }
-    if (widget.messages.isEmpty ||
-        oldWidget.messages.isEmpty ||
-        widget.messages.first.id == oldWidget.messages.first.id) {
+    final latest = _latestMessage(widget.messages);
+    final previousLatest = _latestMessage(oldWidget.messages);
+    if (latest == null || latest.id == previousLatest?.id) {
       return;
     }
-    final latest = widget.messages.first;
     final shouldFollow = switch (widget.newMessageScrollPolicy) {
       NewMessageScrollPolicy.always => true,
       NewMessageScrollPolicy.never => false,
@@ -366,6 +381,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
   @override
   Widget build(BuildContext context) {
     final lightThemeData = ThemeData.light();
+    final messages = _newestFirstMessages(widget.messages);
     // メッセージリストの高さを計算するために使用するキー。
     final messageListViewKey = GlobalObjectKey(context);
     final child = NotificationListener<ScrollEndNotification>(
@@ -380,7 +396,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
       child: _MessageListView(
         key: messageListViewKey,
         currentUserId: widget.currentUserId,
-        messages: widget.messages,
+        messages: messages,
         isGroupChat: widget.isGroupChat,
         scrollController: _effectiveScrollController,
         selectableTextMessageId: widget.selectableTextMessageId,

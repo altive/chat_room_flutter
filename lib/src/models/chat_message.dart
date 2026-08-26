@@ -205,6 +205,7 @@ class ChatImagesMessage extends ChatUserMessage {
     super.isRead,
     required List<String> imageUrls,
     List<double>? imageAspectRatios,
+    bool? hasExplicitImageAspectRatios,
     this.caption,
     this.selectedImageIndex,
     super.replyTo,
@@ -214,6 +215,8 @@ class ChatImagesMessage extends ChatUserMessage {
        imageAspectRatios = List.unmodifiable(
          imageAspectRatios ?? List.filled(imageUrls.length, 1.0),
        ),
+       hasExplicitImageAspectRatios =
+           hasExplicitImageAspectRatios ?? imageAspectRatios != null,
        assert(imageUrls.isNotEmpty),
        assert(
          imageAspectRatios == null ||
@@ -225,6 +228,11 @@ class ChatImagesMessage extends ChatUserMessage {
 
   /// 各画像の高さを幅で割った縦横比。
   final List<double> imageAspectRatios;
+
+  /// 利用側から実画像の縦横比が明示されたかどうか。
+  ///
+  /// 未指定時は画像自身の寸法でレイアウトするために使用する。
+  final bool hasExplicitImageAspectRatios;
 
   /// 画像と同じ送信単位で表示する本文。
   final String? caption;
@@ -257,6 +265,11 @@ class ChatImagesMessage extends ChatUserMessage {
       imageAspectRatios:
           imageAspectRatios ??
           (imageUrls == null ? this.imageAspectRatios : null),
+      hasExplicitImageAspectRatios: imageAspectRatios != null
+          ? true
+          : imageUrls == null
+          ? this.hasExplicitImageAspectRatios
+          : false,
       caption: caption ?? this.caption,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,
@@ -284,6 +297,7 @@ class ChatImagesMessage extends ChatUserMessage {
     ...super.props,
     imageUrls,
     imageAspectRatios,
+    hasExplicitImageAspectRatios,
     caption,
     selectedImageIndex,
   ];

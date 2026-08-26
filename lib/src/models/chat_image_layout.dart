@@ -2,10 +2,14 @@ import 'package:flutter/widgets.dart';
 
 /// 複数画像メッセージの配置方法。
 enum ChatMultipleImageLayout {
-  /// 奇数枚では先頭を横長にし、残りを2列で表示する。
+  /// 3枚では先頭を横長にし、残りを下段の2列で表示する。
+  ///
+  /// 4枚以上は2×2へ収め、4枚目に超過件数を表示する。
   leadingWideGrid,
 
   /// 3枚では先頭を大きく、残り2枚を右側へ並べる。
+  ///
+  /// 4枚以上は2×2へ収め、4枚目に超過件数を表示する。
   mosaic,
 }
 
@@ -46,7 +50,7 @@ class ChatSingleImageLayout {
 class ChatImageLayoutConfiguration {
   /// チャット画像のレイアウト設定を生成する。
   const ChatImageLayoutConfiguration({
-    this.singleImageLayout = const ChatSingleImageLayout.square(),
+    this.singleImageLayout = const ChatSingleImageLayout.adaptiveBounded(),
     this.multipleImageLayout = ChatMultipleImageLayout.leadingWideGrid,
   });
 

@@ -10,6 +10,14 @@ class ChatTimelineSectioningTest {
   private val zone = ZoneId.of("Asia/Tokyo")
 
   @Test
+  fun `末尾追従は最新付近または強制指定を既定とする`() {
+    assertTrue(
+      ChatTimelineFollowLatestConfiguration().mode ==
+        ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
+    )
+  }
+
+  @Test
   fun `先頭と日付変更時だけ日付区切りを開始する`() {
     val current = epoch(2026, 8, 25, 0, 1)
     assertTrue(ChatTimelineSectioning.startsNewDay(current, null, zone))

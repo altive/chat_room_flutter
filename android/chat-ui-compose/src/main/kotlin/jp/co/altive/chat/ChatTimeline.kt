@@ -86,7 +86,7 @@ enum class ChatTimelineFollowLatestMode {
 
 /** 新着項目への末尾追従設定。 */
 data class ChatTimelineFollowLatestConfiguration(
-  val mode: ChatTimelineFollowLatestMode = ChatTimelineFollowLatestMode.Always,
+  val mode: ChatTimelineFollowLatestMode = ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
   /** 末尾から何項目以内を「末尾付近」とみなすか。 */
   val maximumDistanceFromLatestItems: Int = 1,
 ) {

@@ -14,6 +14,35 @@ struct ChatImageGridTests {
     #expect(ChatImageGridMetrics.overflowCount(for: input) == expected)
   }
 
+  @Test("単一画像は可変比率を既定とし、高さ範囲へ収める")
+  func adaptiveSingleImageHeight() {
+    #expect(
+      ChatImageGridMetrics.singleImageHeight(
+        pixelWidth: 400,
+        pixelHeight: 800,
+        layout: .adaptiveBounded(minHeight: 160, maxHeight: 260)
+      ) == 260
+    )
+    #expect(
+      ChatImageGridMetrics.singleImageHeight(
+        pixelWidth: 800,
+        pixelHeight: 400,
+        layout: .adaptiveBounded(minHeight: 160, maxHeight: 260)
+      ) == 160
+    )
+  }
+
+  @Test("正方形指定は画像比率にかかわらず表示幅を高さに使う")
+  func squareSingleImageHeight() {
+    #expect(
+      ChatImageGridMetrics.singleImageHeight(
+        pixelWidth: 400,
+        pixelHeight: 800,
+        layout: .square
+      ) == 240
+    )
+  }
+
   @Test("ローカル画像表示後のresource切替では旧画像を保持する")
   @MainActor
   func retainsLoadedImageWhileReplacingResource() {

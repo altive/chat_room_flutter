@@ -17,6 +17,29 @@ public enum ChatImageGridMetrics {
   public static func overflowCount(for imageCount: Int) -> Int {
     max(0, imageCount - 4)
   }
+
+  /// 単一画像の縦横比と配置方法から表示高を返す。
+  public static func singleImageHeight(
+    pixelWidth: Int?,
+    pixelHeight: Int?,
+    layout: ChatSingleImageLayout,
+    displayWidth: CGFloat = 240
+  ) -> CGFloat {
+    switch layout {
+    case .square:
+      return displayWidth
+    case .adaptiveBounded(let minHeight, let maxHeight):
+      let normalizedMinHeight = max(1, minHeight)
+      let normalizedMaxHeight = max(normalizedMinHeight, maxHeight)
+      guard let pixelWidth, let pixelHeight, pixelWidth > 0, pixelHeight > 0 else {
+        return min(normalizedMaxHeight, max(normalizedMinHeight, 220))
+      }
+      return min(
+        normalizedMaxHeight,
+        max(normalizedMinHeight, displayWidth / CGFloat(pixelWidth) * CGFloat(pixelHeight))
+      )
+    }
+  }
 }
 
 /// 複数画像をメッセージ内へ配置する方法。
@@ -24,8 +47,17 @@ public enum ChatMultipleImageLayout: Hashable, Sendable {
   /// 3枚では先頭を大きく配置し、右側へ残り2枚を並べる。
   case mosaic
 
-  /// 奇数枚では先頭を横長にし、残りを2列へ配置する。
+  /// 3枚では先頭を横長にし、残りを下段へ配置する。
   case leadingWideGrid
+}
+
+/// 単一画像メッセージの配置方法。
+public enum ChatSingleImageLayout: Hashable, Sendable {
+  /// 元画像の縦横比を指定した高さの範囲で維持する。
+  case adaptiveBounded(minHeight: CGFloat = 160, maxHeight: CGFloat = 260)
+
+  /// 従来互換の正方形表示。
+  case square
 }
 
 /// 画像メッセージを1〜4区画へ配置するグリッド。
@@ -34,6 +66,7 @@ public struct ChatImageGrid: View {
   private let messageID: String
   private let images: [ChatImage]
   private let imageLoader: ChatImageLoader
+  private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
   private let imageLabel: String
   private let loadingFailureLabel: String
@@ -44,6 +77,7 @@ public struct ChatImageGrid: View {
     messageID: String,
     images: [ChatImage],
     imageLoader: ChatImageLoader = .standard,
+    singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     imageLabel: String = "Image",
     loadingFailureLabel: String = "Failed to load image",
@@ -52,6 +86,7 @@ public struct ChatImageGrid: View {
     self.messageID = messageID
     self.images = images
     self.imageLoader = imageLoader
+    self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.imageLabel = imageLabel
     self.loadingFailureLabel = loadingFailureLabel
@@ -125,13 +160,12 @@ public struct ChatImageGrid: View {
   }
 
   private var singleImageHeight: CGFloat {
-    guard let image = visibleImages.first,
-      let width = image.pixelWidth,
-      let height = image.pixelHeight,
-      width > 0,
-      height > 0
-    else { return 220 }
-    return min(260, max(160, 240 / CGFloat(width) * CGFloat(height)))
+    let image = visibleImages.first
+    return ChatImageGridMetrics.singleImageHeight(
+      pixelWidth: image?.pixelWidth,
+      pixelHeight: image?.pixelHeight,
+      layout: singleImageLayout
+    )
   }
 
   private func tile(at index: Int, overflowCount: Int = 0) -> some View {

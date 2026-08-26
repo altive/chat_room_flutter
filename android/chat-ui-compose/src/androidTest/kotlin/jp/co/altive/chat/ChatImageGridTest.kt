@@ -9,10 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -69,6 +71,34 @@ class ChatImageGridTest {
   }
 
   @Test
+  fun `4枚超は2掛ける2へ収めて超過件数を表示する`() {
+    compose.setContent {
+      MaterialTheme {
+        ChatImageGrid(
+          messageId = "message",
+          images = testImages(5),
+          imageLabel = "画像",
+        )
+      }
+    }
+
+    compose.onNodeWithText("+1").assertIsDisplayed()
+  }
+
+  @Test
+  fun `単一画像は可変比率を既定とし正方形も選べる`() {
+    val image = ChatImage(
+      id = "image-1",
+      resource = ChatImageResource.RemoteUrl("https://example.com/image-1"),
+      pixelWidth = 400,
+      pixelHeight = 800,
+    )
+
+    assertEquals(260.dp, singleImageHeight(image, ChatSingleImageLayout.AdaptiveBounded()))
+    assertEquals(240.dp, singleImageHeight(image, ChatSingleImageLayout.Square))
+  }
+
+  @Test
   fun `同じ画像IDのremote切替では準備完了までlocal画像を渡す`() {
     var image by mutableStateOf(
       ChatImage("image-1", ChatImageResource.LocalUri("content://image-1")),
@@ -109,7 +139,7 @@ class ChatImageGridTest {
     compose.runOnIdle { assertNull(observedTransition?.previousImage) }
   }
 
-  private fun testImages(): List<ChatImage> = (1..3).map { index ->
+  private fun testImages(count: Int = 3): List<ChatImage> = (1..count).map { index ->
     ChatImage(
       id = "image-$index",
       resource = ChatImageResource.RemoteUrl("https://example.com/image-$index"),

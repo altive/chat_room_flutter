@@ -4,6 +4,24 @@ import Testing
 
 @Suite("チャットタイムライン位置制御")
 struct ChatTimelineTests {
+  @Test("point単位の閾値内を最新付近と判定する")
+  func detectsLatestProximityByPoints() {
+    #expect(
+      ChatTimelineProximity.isNearBottom(
+        bottomOffset: 680,
+        viewportHeight: 600,
+        threshold: 80
+      )
+    )
+    #expect(
+      !ChatTimelineProximity.isNearBottom(
+        bottomOffset: 681,
+        viewportHeight: 600,
+        threshold: 80
+      )
+    )
+  }
+
   @Test("準備完了後にスコープごとに1回だけ初期位置を決定する")
   func positionsOncePerScope() {
     var state = ChatTimelinePositioningState<String>()

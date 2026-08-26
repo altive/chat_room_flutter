@@ -128,8 +128,9 @@ class _BottomWidgetState extends State<BottomWidget> {
     final textFieldSuffixBuilder = widget.textFieldSuffixBuilder;
     final messageTypeNotifier = widget.messageTypeNotifier;
     final sendButtonWidget = widget.sendButtonWidget;
+    final normalizedText = _effectiveController.text.trim();
     final shouldShowSendButton =
-        _effectiveController.text.isNotEmpty || widget.selectedSticker != null;
+        normalizedText.isNotEmpty || widget.selectedSticker != null;
     final stickerInputEnabled = widget.stickerPackages.isNotEmpty;
 
     final sendButton = IconButton(
@@ -140,8 +141,12 @@ class _BottomWidgetState extends State<BottomWidget> {
           ? const BoxConstraints(minWidth: 32, minHeight: 32)
           : null,
       onPressed: () {
+        // 空白だけの本文は送信対象にせず、全プラットフォームで送信契約を揃える。
+        if (normalizedText.isEmpty && widget.selectedSticker == null) {
+          return;
+        }
         widget.onSendIconPressed.call((
-          text: _effectiveController.text,
+          text: normalizedText,
           sticker: widget.selectedSticker,
         ));
         setState(() {

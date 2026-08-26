@@ -830,8 +830,22 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
                 buildOnLongPress: buildOnLongPress,
               ),
             ],
-          // 奇数枚の場合は1枚目を横長で表示し、残りをグリッド表示する。
-          final length when length.isOdd => [
+          final length when length >= 4 => [
+            _ImagesGrid(
+              message: message,
+              imageUrls: imageUrls.take(4).toList(growable: false),
+              startIndex: 0,
+              roundTop: true,
+              totalWidth: totalWidth,
+              tileSize: tileSize,
+              spacing: spacing,
+              overflowCount: imageUrls.length - 4,
+              onTap: handleTap,
+              buildOnLongPress: buildOnLongPress,
+            ),
+          ],
+          // 3枚の先頭横長配置では、先頭を全幅、残りを下段へ表示する。
+          3 => [
             _LeadingWideImageSection(
               message: message,
               width: totalWidth,
@@ -847,6 +861,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
               totalWidth: totalWidth,
               tileSize: tileSize,
               spacing: spacing,
+              overflowCount: 0,
               onTap: handleTap,
               buildOnLongPress: buildOnLongPress,
             ),
@@ -861,6 +876,7 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
               totalWidth: totalWidth,
               tileSize: tileSize,
               spacing: spacing,
+              overflowCount: 0,
               onTap: handleTap,
               buildOnLongPress: buildOnLongPress,
             ),
@@ -911,16 +927,21 @@ class _SingleImageSection extends StatelessWidget {
     final key = GlobalObjectKey('img_${message.id}_$index');
     final longPress = buildOnLongPress(context, key, index);
 
-    final adaptiveHeight = layout.isAdaptive
+    final adaptiveHeight =
+        layout.isAdaptive && message.hasExplicitImageAspectRatios
         ? (size * message.imageAspectRatios.first).clamp(
             layout.minHeight!,
             layout.maxHeight!,
           )
+        : layout.isAdaptive
+        ? null
         : size;
     return _ImageTile(
       key: key,
       width: size,
       height: adaptiveHeight,
+      intrinsicMinHeight: layout.isAdaptive ? layout.minHeight : null,
+      intrinsicMaxHeight: layout.isAdaptive ? layout.maxHeight : null,
       borderRadius: BorderRadius.circular(10),
       imageUrl: message.imageUrls[index],
       onTap: () => onTap(index),
@@ -1056,6 +1077,7 @@ class _ImagesGrid extends StatelessWidget {
     required this.totalWidth,
     required this.tileSize,
     required this.spacing,
+    required this.overflowCount,
     required this.onTap,
     required this.buildOnLongPress,
   });
@@ -1067,6 +1089,7 @@ class _ImagesGrid extends StatelessWidget {
   final double totalWidth;
   final double tileSize;
   final double spacing;
+  final int overflowCount;
   final ValueChanged<int> onTap;
   final PopupMenuLongPressBuilder buildOnLongPress;
 
@@ -1129,6 +1152,7 @@ class _ImagesGrid extends StatelessWidget {
                   imageUrl: imageUrls[rightIndex],
                   onTap: () => onTap(rightIndex),
                   onLongPress: buildOnLongPress(context, rightKey, rightIndex),
+                  overflowCount: rightIndex == 3 ? overflowCount : 0,
                 ),
               ],
             ),
@@ -1149,15 +1173,21 @@ class _ImageTile extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.fit = BoxFit.cover,
+    this.intrinsicMinHeight,
+    this.intrinsicMaxHeight,
+    this.overflowCount = 0,
   });
 
   final double width;
-  final double height;
+  final double? height;
   final BorderRadius borderRadius;
   final String imageUrl;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final BoxFit fit;
+  final double? intrinsicMinHeight;
+  final double? intrinsicMaxHeight;
+  final int overflowCount;
 
   @override
   Widget build(BuildContext context) {
@@ -1166,14 +1196,49 @@ class _ImageTile extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         onLongPress: onLongPress,
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: CommonCachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: fit,
-            retainPreviousImage: true,
-          ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (height == null)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: width,
+                  minHeight: intrinsicMinHeight ?? 0,
+                  maxHeight: intrinsicMaxHeight ?? double.infinity,
+                ),
+                child: CommonCachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  retainPreviousImage: true,
+                ),
+              )
+            else
+              SizedBox(
+                width: width,
+                height: height,
+                child: CommonCachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: fit,
+                  retainPreviousImage: true,
+                ),
+              ),
+            if (overflowCount > 0)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: const Color(0x7A000000),
+                  child: Center(
+                    child: Text(
+                      '+$overflowCount',
+                      style: const TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

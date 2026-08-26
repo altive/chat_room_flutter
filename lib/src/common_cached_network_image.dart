@@ -81,6 +81,38 @@ class CommonCachedNetworkImage extends StatelessWidget {
       return errorWidget;
     }
 
+    final retainedImageProvider = retainPreviousImage
+        ? _retainedRasterImageProvider(uri)
+        : null;
+    if (retainedImageProvider != null) {
+      return Image(
+        image: retainedImageProvider,
+        width: width,
+        height: height,
+        fit: fit,
+        filterQuality: filterQuality,
+        gaplessPlayback: true,
+        errorBuilder: (_, _, _) => errorWidget,
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) {
+            return child;
+          }
+          return SizedBox(
+            width: progressIndicatorWidth,
+            height: progressIndicatorHeight,
+            child: Center(
+              child: CircularProgressIndicator.adaptive(
+                value: progress.expectedTotalBytes == null
+                    ? null
+                    : progress.cumulativeBytesLoaded /
+                          progress.expectedTotalBytes!,
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     // data URI の場合は専用 Widget でメモリ上の画像を描画する。
     if (uri.scheme == 'data') {
       return CachedLocalImage(
@@ -147,6 +179,21 @@ class CommonCachedNetworkImage extends StatelessWidget {
       // エラーで画像が表示できない時、真っ白な表示ではなくエラー用のWidgetを表示させる
       errorWidget: (_, _, _) => errorWidget,
     );
+  }
+
+  /// data URIとネットワークURLを同じ[Image]で扱える画像providerへ変換する。
+  ///
+  /// 同じWidget stateのままproviderを差し替えることで、resource種別をまたぐ場合も
+  /// 新しい画像の準備が終わるまで直前のフレームを維持する。
+  ImageProvider<Object>? _retainedRasterImageProvider(Uri uri) {
+    if (uri.scheme == 'data') {
+      final bytes = uri.data?.contentAsBytes();
+      return bytes == null ? null : MemoryImage(bytes);
+    }
+    if (uri.path.toLowerCase().endsWith('.svg')) {
+      return null;
+    }
+    return CommonCachedNetworkImageProvider(imageUrl);
   }
 }
 

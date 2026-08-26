@@ -16,7 +16,9 @@ public struct AltiveChatRoom: View {
   private let isPreparingCameraImage: Bool
   private let isSending: Bool
   private let imageLoader: ChatImageLoader
+  private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
+  private let latestProximityThreshold: CGFloat
   private let onRequestCamera: (() -> Void)?
   private let resolvePhotoLibraryItem:
     (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)?
@@ -46,7 +48,11 @@ public struct AltiveChatRoom: View {
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
+    imageLoader: ChatImageLoader = .standard,
+    singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
+    latestProximityThreshold: CGFloat = 80,
+    onImageTap: ((String, Int) -> Void)? = nil,
     onRetry: ((String) -> Void)? = nil,
     onSend: @escaping (String) -> Void
   ) {
@@ -62,12 +68,14 @@ public struct AltiveChatRoom: View {
     availableImageInputSources = []
     isPreparingCameraImage = false
     isSending = false
-    imageLoader = .standard
+    self.imageLoader = imageLoader
+    self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
+    self.latestProximityThreshold = max(0, latestProximityThreshold)
     onRequestCamera = nil
     resolvePhotoLibraryItem = nil
     onImagePreparationFailure = nil
-    onImageTap = nil
+    self.onImageTap = onImageTap
     onSubmit = nil
     onTextSend = onSend
     self.onRetry = onRetry
@@ -91,7 +99,9 @@ public struct AltiveChatRoom: View {
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
     imageLoader: ChatImageLoader = .standard,
+    singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
+    latestProximityThreshold: CGFloat = 80,
     onRequestCamera: (() -> Void)? = nil,
     resolvePhotoLibraryItem:
       (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)? = nil,
@@ -113,7 +123,9 @@ public struct AltiveChatRoom: View {
     self.isPreparingCameraImage = isPreparingCameraImage
     self.isSending = isSending
     self.imageLoader = imageLoader
+    self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
+    self.latestProximityThreshold = max(0, latestProximityThreshold)
     self.onRequestCamera = onRequestCamera
     self.resolvePhotoLibraryItem = resolvePhotoLibraryItem
     self.onImagePreparationFailure = onImagePreparationFailure
@@ -136,6 +148,7 @@ public struct AltiveChatRoom: View {
         followLatestTrigger: messages.last?.id,
         followLatestAnimation: hasPresentedMessages ? .easeOut(duration: 0.2) : nil,
         latestFollowingPolicy: .whenNearBottom,
+        latestProximityThreshold: latestProximityThreshold,
         forceFollowLatest: messages.last?.isSent(by: currentUserID) == true,
         latestControl: .button(label: strings.latestMessagesLabel),
         spacing: 12,
@@ -155,6 +168,7 @@ public struct AltiveChatRoom: View {
               strings: strings,
               showsSenderName: showsSenderName,
               imageLoader: imageLoader,
+              singleImageLayout: singleImageLayout,
               multipleImageLayout: multipleImageLayout,
               onImageTap: onImageTap,
               onRetry: onRetry.map { retry in

@@ -13,6 +13,8 @@ Altive Chat は、Altive のアプリ間でチャット UI とその表示契約
 プラットフォーム間で共有する責務と機能差は、
 [`contract/chat-ui-contract.md`](contract/chat-ui-contract.md) と
 [`contract/feature-matrix.md`](contract/feature-matrix.md) を正本とします。
+リンクプレビューの予定APIとUI境界は
+[`contract/link-preview-contract.md`](contract/link-preview-contract.md)に定義しています。
 
 ## Flutter
 

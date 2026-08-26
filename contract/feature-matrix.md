@@ -7,6 +7,7 @@
 | --- | --- | --- | --- |
 | テキストメッセージ | implemented | implemented | implemented |
 | メッセージ内リンク・連絡先 | implemented | implemented | implemented |
+| リンクプレビュー | planned | planned | planned |
 | システムメッセージ | implemented | implemented | implemented |
 | 汎用メッセージカード | implemented | implemented | implemented |
 | 画像メッセージ | implemented | implemented | implemented |

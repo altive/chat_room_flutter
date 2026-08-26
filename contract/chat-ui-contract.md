@@ -12,6 +12,7 @@ SwiftUI、Flutter、Jetpack Composeで揃える。
 - 単純なシステムメッセージ本文の中央寄せ表示
 - 通常本文、画像caption、システムメッセージ本文に含まれるWeb URL、メールアドレス、
   電話番号のリンク表示とOS標準アプリへの遷移
+- 利用アプリが解決した先頭Web URLの入力中・送信後リンクプレビュー表示
 - 電話番号タップ時に、電話またはSMSを選択できるOS標準の操作UI
 - 送信中・送信失敗などの表示状態
 - 失敗時の再送導線と、アプリが実行する再送を受け付ける操作契約
@@ -68,6 +69,7 @@ SwiftUI、Flutter、Jetpack Composeで揃える。
 - 削除済み・非表示などの業務状態からシステムメッセージ表示への変換
 - 永続化されたカード種別・design IDから汎用メッセージカードstyleへの変換
 - カードの見出し、本文、補足表示のローカライズと業務上の意味付け
+- リンクプレビューの外部取得、SSRF対策、cache、Storage、永続化、画像読み込み
 
 ## Swiftのモジュール境界
 
@@ -145,6 +147,18 @@ Store、Repository、Entityへ依存させない。
 - 句読点や閉じ括弧をリンク末尾へ含めず、本文の改行、文字選択、長押し操作を維持する。
 - 対応アプリが存在しない場合や起動に失敗した場合も、チャット表示を継続する。
 - 検出例の正本は[`fixtures/linkified-messages.json`](fixtures/linkified-messages.json)とする。
+
+## リンクプレビュー契約
+
+- テキストメッセージ本文の先頭Web URL 1件だけを対象とする。
+- 入力中は500ミリ秒debounceし、URL変更後に完了した古い結果を表示しない。
+- 取得中・失敗中も送信を妨げず、previewなしの通常リンクへfallbackする。
+- AltiveChatは外部URL、Firebase、Storageへ直接接続せず、利用アプリが返す表示値と
+  画像resourceだけを描画する。
+- 公開model、resolver、表示、後方互換性の正本は
+  [`link-preview-contract.md`](link-preview-contract.md)とする。
+- backend、保存、SSRF、画像変換、Storage方針の正本はAltive Specsの
+  `integrations/chat-link-preview.md`とする。
 
 ## プラットフォーム差
 

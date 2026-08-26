@@ -119,7 +119,7 @@ struct ChatLinkParserTests {
   @Test("リンク表示Viewを通常本文と同じく構築できる")
   @MainActor
   func createsSelectableLinkedText() {
-    let linkedText = ChatLinkedText(text: "example.jp 090-1234-5678", strings: .localized)
+    let linkedText = ChatLinkedText(text: "example.jp 090-1234-5678")
 
     _ = linkedText.body
   }

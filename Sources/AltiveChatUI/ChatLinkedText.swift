@@ -3,14 +3,20 @@ import SwiftUI
 
 /// チャット本文に含まれるリンクを表示し、電話番号の起動方法を選択できるテキスト。
 @MainActor
-struct ChatLinkedText: View {
+public struct ChatLinkedText: View {
   let text: String
   let strings: ChatRoomStrings
 
   @Environment(\.openURL) private var openURL
   @State private var selectedPhoneNumber: String?
 
-  var body: some View {
+  /// リンク化する本文と操作文言を指定して作成する。
+  public init(text: String, strings: ChatRoomStrings = .localized) {
+    self.text = text
+    self.strings = strings
+  }
+
+  public var body: some View {
     Text(ChatLinkParser.attributedString(from: text))
       .textSelection(.enabled)
       .environment(

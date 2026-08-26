@@ -98,6 +98,9 @@ Store、Repository、Entityへ依存させない。
 
 ## メッセージ内リンク契約
 
+- 独自の吹き出しやカードでも共通の検出・操作を再利用できるよう、SwiftUIは
+  `ChatLinkedText`、Jetpack Composeは`ChatLinkifiedText`を公開APIとして提供する。
+
 - `http`、`https`、`www.`、bare domain、メールアドレス、`mailto:`、`tel:`、
   `sms:`、国際番号または9〜15桁の電話番号をリンク候補とする。
 - URL、メール、電話番号が重なる場合は、この順に優先して重複範囲を除外する。

@@ -154,8 +154,9 @@ private fun trimmedLinkRange(text: String, source: IntRange): IntRange {
 private fun rangesOverlap(lhs: IntRange, rhs: IntRange): Boolean =
   lhs.first <= rhs.last && rhs.first <= lhs.last
 
+/** チャット本文のリンクを表示し、対応するOS標準アプリを開くテキスト。 */
 @Composable
-internal fun ChatLinkifiedText(
+fun ChatLinkifiedText(
   text: String,
   strings: ChatRoomStrings,
   modifier: Modifier = Modifier,

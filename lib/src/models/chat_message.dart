@@ -26,6 +26,7 @@ sealed class ChatUserMessage extends ChatMessage {
     required super.id,
     required super.createdAt,
     required this.sender,
+    this.deliveryState = ChatMessageDeliveryState.sent,
     this.isRead = false,
     this.replyTo,
     this.replyImageIndex,
@@ -34,6 +35,9 @@ sealed class ChatUserMessage extends ChatMessage {
 
   /// 送信者。
   final ChatUser sender;
+
+  /// メッセージの送信状態。
+  final ChatMessageDeliveryState deliveryState;
 
   /// 既読状態。
   ///
@@ -61,11 +65,24 @@ sealed class ChatUserMessage extends ChatMessage {
   List<Object?> get props => [
     ...super.props,
     sender,
+    deliveryState,
     isRead,
     replyTo,
     replyImageIndex,
     label,
   ];
+}
+
+/// 送信メッセージの配信状態。
+enum ChatMessageDeliveryState {
+  /// 送信中。
+  sending,
+
+  /// 送信済み。
+  sent,
+
+  /// 送信に失敗し、再送できる状態。
+  failed,
 }
 
 /// {@template altive_chat_room.ChatTextMessage}
@@ -78,6 +95,7 @@ class ChatTextMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.deliveryState,
     required this.text,
     this.highlight = false,
     this.button,
@@ -105,6 +123,7 @@ class ChatTextMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    ChatMessageDeliveryState? deliveryState,
     String? text,
     bool? highlight,
     MessageActionButton? button,
@@ -117,6 +136,7 @@ class ChatTextMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      deliveryState: deliveryState ?? this.deliveryState,
       text: text ?? this.text,
       highlight: highlight ?? this.highlight,
       button: button ?? this.button,
@@ -143,12 +163,7 @@ class ChatTextMessage extends ChatUserMessage {
       ')';
 
   @override
-  List<Object?> get props => [
-    ...super.props,
-    text,
-    highlight,
-    button,
-  ];
+  List<Object?> get props => [...super.props, text, highlight, button];
 }
 
 /// {@template altive_chat_room.MessageActionButton}
@@ -186,18 +201,30 @@ class ChatImagesMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.deliveryState,
     super.isRead,
     required List<String> imageUrls,
+    List<double>? imageAspectRatios,
     this.caption,
     this.selectedImageIndex,
     super.replyTo,
     super.replyImageIndex,
     super.label = 'Images',
   }) : imageUrls = List.unmodifiable(imageUrls),
-       assert(imageUrls.isNotEmpty);
+       imageAspectRatios = List.unmodifiable(
+         imageAspectRatios ?? List.filled(imageUrls.length, 1.0),
+       ),
+       assert(imageUrls.isNotEmpty),
+       assert(
+         imageAspectRatios == null ||
+             imageAspectRatios.length == imageUrls.length,
+       );
 
   /// 画像のURL一覧。
   final List<String> imageUrls;
+
+  /// 各画像の高さを幅で割った縦横比。
+  final List<double> imageAspectRatios;
 
   /// 画像と同じ送信単位で表示する本文。
   final String? caption;
@@ -210,8 +237,10 @@ class ChatImagesMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    ChatMessageDeliveryState? deliveryState,
     bool? isRead,
     List<String>? imageUrls,
+    List<double>? imageAspectRatios,
     String? caption,
     int? selectedImageIndex,
     ChatUserMessage? replyTo,
@@ -222,8 +251,12 @@ class ChatImagesMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      deliveryState: deliveryState ?? this.deliveryState,
       isRead: isRead ?? this.isRead,
       imageUrls: imageUrls ?? this.imageUrls,
+      imageAspectRatios:
+          imageAspectRatios ??
+          (imageUrls == null ? this.imageAspectRatios : null),
       caption: caption ?? this.caption,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,
@@ -250,6 +283,7 @@ class ChatImagesMessage extends ChatUserMessage {
   List<Object?> get props => [
     ...super.props,
     imageUrls,
+    imageAspectRatios,
     caption,
     selectedImageIndex,
   ];
@@ -258,6 +292,10 @@ class ChatImagesMessage extends ChatUserMessage {
 /// 画像メッセージのタップコールバック。
 typedef ImageMessageTapCallback =
     void Function({required List<String> imageUrls, required int index});
+
+/// 画像メッセージのIDと画像位置を通知するタップコールバック。
+typedef ChatImageTapCallback =
+    void Function({required String messageId, required int index});
 
 /// {@template altive_chat_room.ChatStickerMessage}
 /// ステッカーメッセージ。
@@ -269,6 +307,7 @@ class ChatStickerMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.deliveryState,
     super.isRead,
     required this.sticker,
     super.replyTo,
@@ -284,6 +323,7 @@ class ChatStickerMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    ChatMessageDeliveryState? deliveryState,
     bool? isRead,
     Sticker? sticker,
     ChatUserMessage? replyTo,
@@ -294,6 +334,7 @@ class ChatStickerMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      deliveryState: deliveryState ?? this.deliveryState,
       isRead: isRead ?? this.isRead,
       sticker: sticker ?? this.sticker,
       replyTo: replyTo ?? this.replyTo,
@@ -315,10 +356,7 @@ class ChatStickerMessage extends ChatUserMessage {
       ')';
 
   @override
-  List<Object?> get props => [
-    ...super.props,
-    sticker,
-  ];
+  List<Object?> get props => [...super.props, sticker];
 }
 
 /// 音声通話の種類。
@@ -350,6 +388,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     required super.id,
     required super.createdAt,
     required super.sender,
+    super.deliveryState,
     super.isRead,
     required this.voiceCallType,
     this.durationSeconds,
@@ -375,6 +414,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     String? id,
     DateTime? createdAt,
     ChatUser? sender,
+    ChatMessageDeliveryState? deliveryState,
     bool? isRead,
     VoiceCallType? voiceCallType,
     int? durationSeconds,
@@ -386,6 +426,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       sender: sender ?? this.sender,
+      deliveryState: deliveryState ?? this.deliveryState,
       isRead: isRead ?? this.isRead,
       voiceCallType: voiceCallType ?? this.voiceCallType,
       durationSeconds: durationSeconds ?? this.durationSeconds,
@@ -409,11 +450,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
       ')';
 
   @override
-  List<Object?> get props => [
-    ...super.props,
-    voiceCallType,
-    durationSeconds,
-  ];
+  List<Object?> get props => [...super.props, voiceCallType, durationSeconds];
 }
 
 /// {@template altive_chat_room.ChatSystemMessage}

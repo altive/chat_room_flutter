@@ -66,9 +66,7 @@ class AdaptiveCachedNetworkSVGImage extends StatelessWidget {
         return SizedBox(
           width: progressIndicatorWidth,
           height: progressIndicatorHeight,
-          child: const Center(
-            child: CircularProgressIndicator.adaptive(),
-          ),
+          child: const Center(child: CircularProgressIndicator.adaptive()),
         );
       },
     );

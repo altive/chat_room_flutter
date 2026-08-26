@@ -18,10 +18,8 @@ void main() {
             currentUserId: 'current-user',
             messages: const [],
             onSendIconPressed: (_) {},
-            textFieldSuffixBuilder: (_) => const Icon(
-              Icons.emoji_emotions_outlined,
-              key: Key('スタンプ入力切替'),
-            ),
+            textFieldSuffixBuilder: (_) =>
+                const Icon(Icons.emoji_emotions_outlined, key: Key('スタンプ入力切替')),
             stickerPackages: [
               StickerPackage(
                 id: 1,
@@ -67,10 +65,8 @@ void main() {
             currentUserId: 'current-user',
             messages: const [],
             onSendIconPressed: (_) {},
-            textFieldSuffixBuilder: (_) => const Icon(
-              Icons.emoji_emotions_outlined,
-              key: Key('スタンプ入力切替'),
-            ),
+            textFieldSuffixBuilder: (_) =>
+                const Icon(Icons.emoji_emotions_outlined, key: Key('スタンプ入力切替')),
             stickerPackages: [
               StickerPackage(
                 id: 1,
@@ -121,10 +117,7 @@ void main() {
                 id: 1,
                 tabStickerImageUrl: 'https://example.com/tray.png',
                 stickers: [
-                  Sticker(
-                    id: 1,
-                    imageUrl: 'https://example.com/sticker.png',
-                  ),
+                  Sticker(id: 1, imageUrl: 'https://example.com/sticker.png'),
                 ],
                 isLocked: true,
               ),
@@ -170,10 +163,8 @@ void main() {
             currentUserId: 'current-user',
             messages: const [],
             onSendIconPressed: (_) {},
-            textFieldSuffixBuilder: (_) => const Icon(
-              Icons.emoji_emotions_outlined,
-              key: Key('スタンプ入力切替'),
-            ),
+            textFieldSuffixBuilder: (_) =>
+                const Icon(Icons.emoji_emotions_outlined, key: Key('スタンプ入力切替')),
             stickerPackages: [
               StickerPackage(
                 id: 1,

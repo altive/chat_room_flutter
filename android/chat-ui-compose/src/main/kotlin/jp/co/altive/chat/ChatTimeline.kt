@@ -72,6 +72,31 @@ enum class ChatTimelineHistoryControlStyle {
   Bordered,
 }
 
+/** 新着項目を受け取ったときの末尾追従方法。 */
+enum class ChatTimelineFollowLatestMode {
+  /** 閲覧位置にかかわらず追従する従来動作。 */
+  Always,
+
+  /** 末尾付近にいる場合だけ追従する。 */
+  WhenNearLatest,
+
+  /** 末尾付近、または呼び出し側が強制追従を指定した場合に追従する。 */
+  WhenNearLatestOrForced,
+}
+
+/** 新着項目への末尾追従設定。 */
+data class ChatTimelineFollowLatestConfiguration(
+  val mode: ChatTimelineFollowLatestMode = ChatTimelineFollowLatestMode.Always,
+  /** 末尾から何項目以内を「末尾付近」とみなすか。 */
+  val maximumDistanceFromLatestItems: Int = 1,
+) {
+  init {
+    require(maximumDistanceFromLatestItems >= 0) {
+      "maximumDistanceFromLatestItems must not be negative"
+    }
+  }
+}
+
 /** タイムラインの履歴追加設定。 */
 class ChatTimelineHistoryConfiguration<ID> private constructor(
   internal val mode: ChatTimelineHistoryLoadingMode?,
@@ -144,6 +169,15 @@ class ChatTimelineState internal constructor(
     val index = contentPrefixCount + contentIndex
     if (animated) listState.animateScrollToItem(index) else listState.scrollToItem(index)
   }
+
+  /** 現在の表示位置が最新項目付近か返す。 */
+  fun isNearLatest(maximumDistanceFromLatestItems: Int = 1): Boolean {
+    val latestIndex = latestContentIndex ?: return true
+    val lastVisibleIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+      ?: return !listState.canScrollForward
+    val latestFullIndex = contentPrefixCount + latestIndex
+    return latestFullIndex - lastVisibleIndex <= maximumDistanceFromLatestItems
+  }
 }
 
 /** 汎用タイムラインのスクロール状態を保持する。 */
@@ -178,6 +212,9 @@ fun <ID, FollowTrigger> ChatTimeline(
   isReadyForInitialPositioning: Boolean,
   initialPosition: ChatTimelineInitialPosition<ID> = ChatTimelineInitialPosition.Latest,
   followLatestTrigger: FollowTrigger,
+  followLatestConfiguration: ChatTimelineFollowLatestConfiguration =
+    ChatTimelineFollowLatestConfiguration(),
+  forceFollowLatest: Boolean = false,
   modifier: Modifier = Modifier,
   state: ChatTimelineState = rememberChatTimelineState(),
   history: ChatTimelineHistoryConfiguration<ID> = ChatTimelineHistoryConfiguration.disabled(),
@@ -196,8 +233,13 @@ fun <ID, FollowTrigger> ChatTimeline(
   state.contentPrefixCount = historyItemCount
   state.latestContentIndex = latestItemIndex
   var previousFollowTrigger by remember(timelineId) { mutableStateOf(followLatestTrigger) }
+  var previousLatestContentIndex by remember(timelineId) { mutableStateOf(latestItemIndex) }
   var observedPositioningScope by remember(state) { mutableStateOf<Any?>(null) }
   var isHistoryLoadScheduled by remember(timelineId) { mutableStateOf(false) }
+  if (previousFollowTrigger == followLatestTrigger) {
+    // 履歴追加など、新着以外のindex変化は次の追従判定の基準へ反映する。
+    previousLatestContentIndex = latestItemIndex
+  }
 
   suspend fun waitForLayout() {
     withFrameNanos { }
@@ -267,6 +309,7 @@ fun <ID, FollowTrigger> ChatTimeline(
       observedPositioningScope = positioningScope
       state.positionedScope = null
       previousFollowTrigger = followLatestTrigger
+      previousLatestContentIndex = latestItemIndex
     }
     if (!isReadyForInitialPositioning || state.positionedScope == positioningScope) return@LaunchedEffect
     state.positionedScope = positioningScope
@@ -282,6 +325,18 @@ fun <ID, FollowTrigger> ChatTimeline(
     val previous = previousFollowTrigger
     previousFollowTrigger = followLatestTrigger
     if (state.positionedScope != positioningScope || previous == followLatestTrigger) return@LaunchedEffect
+    val latestFullIndex = previousLatestContentIndex?.let { state.contentPrefixCount + it }
+    val lastVisibleIndex = state.listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+    val wasNearLatest = latestFullIndex == null || lastVisibleIndex == null ||
+      latestFullIndex - lastVisibleIndex <=
+      followLatestConfiguration.maximumDistanceFromLatestItems
+    previousLatestContentIndex = latestItemIndex
+    val shouldFollow = when (followLatestConfiguration.mode) {
+      ChatTimelineFollowLatestMode.Always -> true
+      ChatTimelineFollowLatestMode.WhenNearLatest -> wasNearLatest
+      ChatTimelineFollowLatestMode.WhenNearLatestOrForced -> wasNearLatest || forceFollowLatest
+    }
+    if (!shouldFollow) return@LaunchedEffect
     state.scrollToLatest(animated = true)
     waitForLayout()
     if (state.positionedScope == positioningScope) state.scrollToLatest(animated = false)

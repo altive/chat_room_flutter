@@ -50,16 +50,16 @@ void main() {
           .toList();
 
       expect(segments.map((segment) => segment.text).join(), text);
-      expect(
-        links.map((link) => link.destination.toString()),
-        ['https://example.com?q=1&lang=ja', 'mailto:user@example.jp'],
-      );
+      expect(links.map((link) => link.destination.toString()), [
+        'https://example.com?q=1&lang=ja',
+        'mailto:user@example.jp',
+      ]);
     });
 
     test('未対応schemeに続くドメインを部分的にリンク化しない', () {
-      final links = parseMessageLinks('javascript:example.com')
-          .map((segment) => segment.link)
-          .whereType<MessageLink>();
+      final links = parseMessageLinks(
+        'javascript:example.com',
+      ).map((segment) => segment.link).whereType<MessageLink>();
 
       expect(links, isEmpty);
     });

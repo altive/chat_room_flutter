@@ -64,4 +64,37 @@ struct ChatTimelineTests {
 
     #expect(latest != specified)
   }
+
+  @Test("末尾付近だけ追従する方針では過去閲覧中の受信へ追従しない")
+  func keepsPositionForIncomingMessageWhileBrowsingHistory() {
+    let state = ChatTimelinePositioningState<String>()
+
+    #expect(
+      !state.shouldFollowLatest(
+        isNearBottom: false,
+        policy: .whenNearBottom,
+        isForced: false
+      )
+    )
+    #expect(
+      state.shouldFollowLatest(
+        isNearBottom: true,
+        policy: .whenNearBottom,
+        isForced: false
+      )
+    )
+  }
+
+  @Test("自分の送信は過去閲覧中でも末尾へ追従する")
+  func followsOwnMessageWhileBrowsingHistory() {
+    let state = ChatTimelinePositioningState<String>()
+
+    #expect(
+      state.shouldFollowLatest(
+        isNearBottom: false,
+        policy: .whenNearBottom,
+        isForced: true
+      )
+    )
+  }
 }

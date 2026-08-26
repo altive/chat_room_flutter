@@ -46,6 +46,34 @@ class AltiveChatRoomTest {
     }
   }
 
+  @Test fun `送信失敗アイコンから同じメッセージIDで再送する`() {
+    var retriedMessageId: String? = null
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = listOf(
+            ChatMessage(
+              id = "failed-message",
+              createdAtEpochMillis = 1L,
+              sender = ChatUser("me", "Me"),
+              content = ChatMessageContent.Text("再送する本文"),
+              deliveryState = ChatMessageDeliveryState.Failed,
+            ),
+          ),
+          currentUserId = "me",
+          draft = "",
+          onDraftChange = {},
+          onRetry = { retriedMessageId = it },
+          onSend = {},
+        )
+      }
+    }
+
+    compose.onNodeWithContentDescription("Failed to send. Retry").performClick()
+
+    compose.runOnIdle { assertEquals("failed-message", retriedMessageId) }
+  }
+
   @Test fun sendsTextAndImagesAsOneSubmissionAndClearsBothDrafts() {
     var submission: ChatComposerSubmission? = null
     var draft by mutableStateOf("")

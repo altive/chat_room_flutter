@@ -38,6 +38,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 画像の読み込み失敗を示す文言。
   public var imageLoadingFailedLabel: String
 
+  /// 最新メッセージへ移動するボタンの文言。
+  public var latestMessagesLabel: String
+
   /// 電話番号をタップした際の選択肢タイトル。
   public var phoneActionTitle: String
 
@@ -64,6 +67,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
     imageLoadingFailedLabel: String = "Failed to load image",
+    latestMessagesLabel: String = "Latest messages",
     phoneActionTitle: String = "Choose an action",
     callActionLabel: String = "Call",
     messageActionLabel: String = "Send message",
@@ -81,6 +85,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
     self.imageLoadingFailedLabel = imageLoadingFailedLabel
+    self.latestMessagesLabel = latestMessagesLabel
     self.phoneActionTitle = phoneActionTitle
     self.callActionLabel = callActionLabel
     self.messageActionLabel = messageActionLabel
@@ -105,6 +110,7 @@ public struct ChatRoomStrings: Equatable, Sendable {
       removeImageButtonLabel: String(localized: "chat.composer.removeImage", bundle: .module),
       imageLabel: String(localized: "chat.image.label", bundle: .module),
       imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module),
+      latestMessagesLabel: String(localized: "chat.timeline.latest", bundle: .module),
       phoneActionTitle: String(localized: "chat.link.phone.title", bundle: .module),
       callActionLabel: String(localized: "chat.link.phone.call", bundle: .module),
       messageActionLabel: String(localized: "chat.link.phone.message", bundle: .module),

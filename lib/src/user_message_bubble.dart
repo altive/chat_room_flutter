@@ -25,6 +25,7 @@ class UserMessageBubble extends StatelessWidget {
     required this.selectableTextMessageId,
     required this.contextMenuBuilder,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.popupMenuLayoutForText,
@@ -32,6 +33,7 @@ class UserMessageBubble extends StatelessWidget {
     required this.popupMenuLayoutForSticker,
     required this.popupMenuLayoutForVoiceCall,
     required this.popupMenuAccessoryBuilder,
+    required this.imageLayoutConfiguration,
     this.popupMenuEnabled = true,
   });
 
@@ -49,6 +51,9 @@ class UserMessageBubble extends StatelessWidget {
 
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
+
+  /// 画像タップ時にメッセージIDと位置を通知するコールバック。
+  final ChatImageTapCallback? onImageTap;
 
   /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
@@ -71,6 +76,9 @@ class UserMessageBubble extends StatelessWidget {
   /// ポップアップメニュー付属領域の構築処理。
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
 
+  /// 画像メッセージのレイアウト設定。
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
+
   /// ポップアップメニューを有効化するかどうか。
   final bool popupMenuEnabled;
 
@@ -79,9 +87,7 @@ class UserMessageBubble extends StatelessWidget {
     final message = this.message;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.widthOf(context) * .75,
-      ),
+      constraints: BoxConstraints(maxWidth: MediaQuery.widthOf(context) * .75),
       child: switch (message) {
         ChatTextMessage() => _TextMessageBubble(
           currentUserId: currentUserId,
@@ -97,9 +103,11 @@ class UserMessageBubble extends StatelessWidget {
           currentUserId: currentUserId,
           message: message,
           onImageMessageTap: onImageMessageTap,
+          onImageTap: onImageTap,
           popupMenuLayout: popupMenuLayoutForImage,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           popupMenuEnabled: popupMenuEnabled,
+          imageLayoutConfiguration: imageLayoutConfiguration,
         ),
         ChatStickerMessage() => StickerMessageBubble(
           currentUserId: currentUserId,
@@ -667,17 +675,21 @@ class _ImagesMessageBubble extends StatelessWidget {
     required this.currentUserId,
     required this.message,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
     required this.popupMenuEnabled,
+    required this.imageLayoutConfiguration,
   });
 
   final String currentUserId;
   final ChatImagesMessage message;
   final ImageMessageTapCallback? onImageMessageTap;
+  final ChatImageTapCallback? onImageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
   final bool popupMenuEnabled;
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
 
   @override
   Widget build(BuildContext context) {
@@ -694,9 +706,7 @@ class _ImagesMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isOutgoing: isOutgoing,
-            isReplyOutgoing: replyTo.isOutgoing(
-              currentUserId: currentUserId,
-            ),
+            isReplyOutgoing: replyTo.isOutgoing(currentUserId: currentUserId),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -704,9 +714,11 @@ class _ImagesMessageBubble extends StatelessWidget {
         _ImagesMessageBubbleContents(
           message: message,
           onImageMessageTap: onImageMessageTap,
+          onImageTap: onImageTap,
           popupMenuLayout: popupMenuLayout,
           popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
           popupMenuEnabled: popupMenuEnabled,
+          imageLayoutConfiguration: imageLayoutConfiguration,
         ),
         if (message.caption case final caption?) ...[
           const SizedBox(height: 6),
@@ -734,9 +746,11 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
   const _ImagesMessageBubbleContents({
     required this.message,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.popupMenuLayout,
     required this.popupMenuAccessoryBuilder,
     required this.popupMenuEnabled,
+    required this.imageLayoutConfiguration,
   });
 
   /// 画像同士の間隔。
@@ -744,16 +758,22 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
 
   final ChatImagesMessage message;
   final ImageMessageTapCallback? onImageMessageTap;
+  final ChatImageTapCallback? onImageTap;
   final PopupMenuLayout? popupMenuLayout;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
   final bool popupMenuEnabled;
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
 
   @override
   Widget build(BuildContext context) {
     final imageUrls = message.imageUrls;
 
     void handleTap(int index) {
-      onImageMessageTap?.call(imageUrls: message.imageUrls, index: index);
+      if (onImageTap != null) {
+        onImageTap!(messageId: message.id, index: index);
+      } else {
+        onImageMessageTap?.call(imageUrls: message.imageUrls, index: index);
+      }
     }
 
     return LayoutBuilder(
@@ -795,8 +815,21 @@ class _ImagesMessageBubbleContents extends StatelessWidget {
               size: totalWidth,
               onTap: handleTap,
               buildOnLongPress: buildOnLongPress,
+              layout: imageLayoutConfiguration.singleImageLayout,
             ),
           ],
+          3
+              when imageLayoutConfiguration.multipleImageLayout ==
+                  ChatMultipleImageLayout.mosaic =>
+            [
+              _MosaicImageSection(
+                message: message,
+                width: totalWidth,
+                spacing: spacing,
+                onTap: handleTap,
+                buildOnLongPress: buildOnLongPress,
+              ),
+            ],
           // 奇数枚の場合は1枚目を横長で表示し、残りをグリッド表示する。
           final length when length.isOdd => [
             _LeadingWideImageSection(
@@ -863,12 +896,14 @@ class _SingleImageSection extends StatelessWidget {
     required this.size,
     required this.onTap,
     required this.buildOnLongPress,
+    required this.layout,
   });
 
   final ChatImagesMessage message;
   final double size;
   final ValueChanged<int> onTap;
   final PopupMenuLongPressBuilder buildOnLongPress;
+  final ChatSingleImageLayout layout;
 
   @override
   Widget build(BuildContext context) {
@@ -876,14 +911,95 @@ class _SingleImageSection extends StatelessWidget {
     final key = GlobalObjectKey('img_${message.id}_$index');
     final longPress = buildOnLongPress(context, key, index);
 
+    final adaptiveHeight = layout.isAdaptive
+        ? (size * message.imageAspectRatios.first).clamp(
+            layout.minHeight!,
+            layout.maxHeight!,
+          )
+        : size;
     return _ImageTile(
       key: key,
       width: size,
-      height: size,
+      height: adaptiveHeight,
       borderRadius: BorderRadius.circular(10),
       imageUrl: message.imageUrls[index],
       onTap: () => onTap(index),
       onLongPress: longPress,
+      fit: layout.fit,
+    );
+  }
+}
+
+/// 先頭画像を左へ大きく配置する3枚用レイアウト。
+class _MosaicImageSection extends StatelessWidget {
+  const _MosaicImageSection({
+    required this.message,
+    required this.width,
+    required this.spacing,
+    required this.onTap,
+    required this.buildOnLongPress,
+  });
+
+  final ChatImagesMessage message;
+  final double width;
+  final double spacing;
+  final ValueChanged<int> onTap;
+  final PopupMenuLongPressBuilder buildOnLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final largeWidth = (width - spacing) * 2 / 3;
+    final smallWidth = width - spacing - largeWidth;
+    final key0 = GlobalObjectKey('img_${message.id}_0');
+    final key1 = GlobalObjectKey('img_${message.id}_1');
+    final key2 = GlobalObjectKey('img_${message.id}_2');
+    return SizedBox(
+      height: largeWidth,
+      child: Row(
+        children: [
+          _ImageTile(
+            key: key0,
+            width: largeWidth,
+            height: largeWidth,
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(10),
+            ),
+            imageUrl: message.imageUrls[0],
+            onTap: () => onTap(0),
+            onLongPress: buildOnLongPress(context, key0, 0),
+          ),
+          SizedBox(width: spacing),
+          Expanded(
+            child: Column(
+              children: [
+                _ImageTile(
+                  key: key1,
+                  width: smallWidth,
+                  height: (largeWidth - spacing) / 2,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(10),
+                  ),
+                  imageUrl: message.imageUrls[1],
+                  onTap: () => onTap(1),
+                  onLongPress: buildOnLongPress(context, key1, 1),
+                ),
+                SizedBox(height: spacing),
+                _ImageTile(
+                  key: key2,
+                  width: smallWidth,
+                  height: (largeWidth - spacing) / 2,
+                  borderRadius: const BorderRadius.only(
+                    bottomRight: Radius.circular(10),
+                  ),
+                  imageUrl: message.imageUrls[2],
+                  onTap: () => onTap(2),
+                  onLongPress: buildOnLongPress(context, key2, 2),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1032,6 +1148,7 @@ class _ImageTile extends StatelessWidget {
     required this.imageUrl,
     required this.onTap,
     this.onLongPress,
+    this.fit = BoxFit.cover,
   });
 
   final double width;
@@ -1040,6 +1157,7 @@ class _ImageTile extends StatelessWidget {
   final String imageUrl;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final BoxFit fit;
 
   @override
   Widget build(BuildContext context) {
@@ -1051,7 +1169,11 @@ class _ImageTile extends StatelessWidget {
         child: SizedBox(
           width: width,
           height: height,
-          child: CommonCachedNetworkImage(imageUrl: imageUrl),
+          child: CommonCachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: fit,
+            retainPreviousImage: true,
+          ),
         ),
       ),
     );
@@ -1122,9 +1244,7 @@ class StickerMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isOutgoing: isOutgoing,
-            isReplyOutgoing: replyTo.isOutgoing(
-              currentUserId: currentUserId,
-            ),
+            isReplyOutgoing: replyTo.isOutgoing(currentUserId: currentUserId),
             replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
@@ -1307,9 +1427,7 @@ class _VoiceCallMessageBubbleContents extends StatelessWidget {
           Column(
             children: [
               Text(
-                message.voiceCallType.text(
-                  isOutgoing: isOutgoing,
-                ),
+                message.voiceCallType.text(isOutgoing: isOutgoing),
                 style: textStyle,
               ),
               if (durationSeconds != null)
@@ -1478,9 +1596,7 @@ class _ReplyToMessageContents extends StatelessWidget {
                   ChatStickerMessage(:final label) => label,
                   ChatVoiceCallMessage(:final voiceCallType) =>
                     // 返信先のメッセージがログインユーザーのものかどうかで表示するテキストを変更する。
-                    voiceCallType.text(
-                      isOutgoing: isReplyOutgoing,
-                    ),
+                    voiceCallType.text(isOutgoing: isReplyOutgoing),
                 },
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

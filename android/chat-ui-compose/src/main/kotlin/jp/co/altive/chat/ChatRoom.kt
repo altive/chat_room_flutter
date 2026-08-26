@@ -53,6 +53,7 @@ data class ChatRoomStrings(
   val callButtonLabel: String = "Call",
   val smsButtonLabel: String = "SMS",
   val cancelButtonLabel: String = "Cancel",
+  val latestButtonLabel: String = "Latest messages",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -73,6 +74,7 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_call),
         stringResource(R.string.altive_chat_sms),
         stringResource(R.string.altive_chat_cancel),
+        stringResource(R.string.altive_chat_latest),
       )
     }
   }
@@ -89,34 +91,59 @@ fun AltiveChatRoom(
   strings: ChatRoomStrings = ChatRoomStrings.localized(),
   showsSenderName: Boolean = false,
   draftPolicy: ChatDraftPolicy = ChatDraftPolicy.Unrestricted,
+  multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
+  followLatestConfiguration: ChatTimelineFollowLatestConfiguration =
+    ChatTimelineFollowLatestConfiguration(),
+  showsScrollToLatestButton: Boolean = false,
   onRetry: ((String) -> Unit)? = null,
   onSend: (String) -> Unit,
 ) {
+  val timelineState = rememberChatTimelineState()
+  val coroutineScope = rememberCoroutineScope()
+  val shouldShowLatestButton by remember(showsScrollToLatestButton) {
+    derivedStateOf {
+      showsScrollToLatestButton && timelineState.hasPositioned &&
+        timelineState.listState.canScrollForward
+    }
+  }
   Column(modifier.background(theme.background).imePadding()) {
-    ChatTimeline(
-      timelineId = Unit,
-      itemIds = messages.map(ChatMessage::id),
-      itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
-      latestItemIndex = messages.lastIndex.coerceAtLeast(0),
-      isReadyForInitialPositioning = true,
-      followLatestTrigger = messages.lastOrNull()?.id,
-      modifier = Modifier.weight(1f).fillMaxWidth(),
-      contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-      if (messages.isEmpty()) {
-        item { Text(strings.emptyMessage, Modifier.fillMaxWidth().padding(vertical = 48.dp), textAlign = TextAlign.Center) }
-      } else {
-        items(messages, key = { it.id }) { message ->
-          ChatMessageRow(
-            message = message,
-            currentUserId = currentUserId,
-            theme = theme,
-            strings = strings,
-            showsSenderName = showsSenderName,
-            onRetry = onRetry?.let { { it(message.id) } },
-          )
+    Box(Modifier.weight(1f).fillMaxWidth()) {
+      ChatTimeline(
+        timelineId = Unit,
+        itemIds = messages.map(ChatMessage::id),
+        itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
+        latestItemIndex = messages.lastIndex.coerceAtLeast(0),
+        isReadyForInitialPositioning = true,
+        followLatestTrigger = messages.lastOrNull()?.id,
+        followLatestConfiguration = followLatestConfiguration,
+        forceFollowLatest = messages.lastOrNull()?.isSentBy(currentUserId) == true,
+        state = timelineState,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+      ) {
+        if (messages.isEmpty()) {
+          item { Text(strings.emptyMessage, Modifier.fillMaxWidth().padding(vertical = 48.dp), textAlign = TextAlign.Center) }
+        } else {
+          items(messages, key = { it.id }) { message ->
+            ChatMessageRow(
+              message = message,
+              currentUserId = currentUserId,
+              theme = theme,
+              strings = strings,
+              showsSenderName = showsSenderName,
+              multipleImageLayout = multipleImageLayout,
+              onRetry = onRetry?.let { { it(message.id) } },
+            )
+          }
         }
+      }
+      if (shouldShowLatestButton) {
+        SmallFloatingActionButton(
+          onClick = { coroutineScope.launch { timelineState.scrollToLatest() } },
+          modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+            .testTag("AltiveChatUI.ScrollToLatestButton")
+            .semantics { contentDescription = strings.latestButtonLabel },
+        ) { Text("↓") }
       }
     }
     ChatComposer(
@@ -155,6 +182,10 @@ fun AltiveChatRoom(
   onRequestCamera: (() -> Unit)? = null,
   onImagePreparationFailure: ((Throwable) -> Unit)? = null,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
+  multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
+  followLatestConfiguration: ChatTimelineFollowLatestConfiguration =
+    ChatTimelineFollowLatestConfiguration(),
+  showsScrollToLatestButton: Boolean = false,
   onRetry: ((String) -> Unit)? = null,
   focusRequester: FocusRequester = remember { FocusRequester() },
   imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
@@ -162,6 +193,7 @@ fun AltiveChatRoom(
       Text(strings.imageLabel)
     }
   },
+  transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
@@ -169,6 +201,13 @@ fun AltiveChatRoom(
   var photoUris by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
   var photoDraftIdValues by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
   var resolvingUris by remember { mutableStateOf(emptySet<String>()) }
+  val timelineState = rememberChatTimelineState()
+  val shouldShowLatestButton by remember(showsScrollToLatestButton) {
+    derivedStateOf {
+      showsScrollToLatestButton && timelineState.hasPositioned &&
+        timelineState.listState.canScrollForward
+    }
+  }
 
   val latestImageDrafts by rememberUpdatedState(imageDrafts)
   val latestOnImageDraftsChange by rememberUpdatedState(onImageDraftsChange)
@@ -263,38 +302,52 @@ fun AltiveChatRoom(
 
   Box(modifier) {
     Column(Modifier.background(theme.background).imePadding()) {
-      ChatTimeline(
-        timelineId = Unit,
-        itemIds = messages.map(ChatMessage::id),
-        itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
-        latestItemIndex = messages.lastIndex.coerceAtLeast(0),
-        isReadyForInitialPositioning = true,
-        followLatestTrigger = messages.lastOrNull()?.id,
-        modifier = Modifier.weight(1f).fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-      ) {
-        if (messages.isEmpty()) {
-          item {
-            Text(
-              strings.emptyMessage,
-              Modifier.fillMaxWidth().padding(vertical = 48.dp),
-              textAlign = TextAlign.Center,
-            )
+      Box(Modifier.weight(1f).fillMaxWidth()) {
+        ChatTimeline(
+          timelineId = Unit,
+          itemIds = messages.map(ChatMessage::id),
+          itemIndex = { id -> messages.indexOfFirst { it.id == id }.takeIf { it >= 0 } },
+          latestItemIndex = messages.lastIndex.coerceAtLeast(0),
+          isReadyForInitialPositioning = true,
+          followLatestTrigger = messages.lastOrNull()?.id,
+          followLatestConfiguration = followLatestConfiguration,
+          forceFollowLatest = messages.lastOrNull()?.isSentBy(currentUserId) == true,
+          state = timelineState,
+          contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+          verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+          if (messages.isEmpty()) {
+            item {
+              Text(
+                strings.emptyMessage,
+                Modifier.fillMaxWidth().padding(vertical = 48.dp),
+                textAlign = TextAlign.Center,
+              )
+            }
+          } else {
+            items(messages, key = { it.id }) { message ->
+              ChatMessageRow(
+                message = message,
+                currentUserId = currentUserId,
+                theme = theme,
+                strings = strings,
+                showsSenderName = showsSenderName,
+                multipleImageLayout = multipleImageLayout,
+                onRetry = onRetry?.let { { it(message.id) } },
+                onImageTap = onImageTap,
+                imageContent = imageContent,
+                transitioningImageContent = transitioningImageContent,
+              )
+            }
           }
-        } else {
-          items(messages, key = { it.id }) { message ->
-            ChatMessageRow(
-              message = message,
-              currentUserId = currentUserId,
-              theme = theme,
-              strings = strings,
-              showsSenderName = showsSenderName,
-              onRetry = onRetry?.let { { it(message.id) } },
-              onImageTap = onImageTap,
-              imageContent = imageContent,
-            )
-          }
+        }
+        if (shouldShowLatestButton) {
+          SmallFloatingActionButton(
+            onClick = { coroutineScope.launch { timelineState.scrollToLatest() } },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+              .testTag("AltiveChatUI.ScrollToLatestButton")
+              .semantics { contentDescription = strings.latestButtonLabel },
+          ) { Text("↓") }
         }
       }
 
@@ -348,6 +401,7 @@ fun ChatMessageRow(
   theme: ChatRoomTheme = ChatRoomTheme.fanely(),
   strings: ChatRoomStrings = ChatRoomStrings.localized(),
   showsSenderName: Boolean = false,
+  multipleImageLayout: ChatMultipleImageLayout = ChatMultipleImageLayout.Mosaic,
   onRetry: (() -> Unit)? = null,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit = {
@@ -355,6 +409,7 @@ fun ChatMessageRow(
       Text(strings.imageLabel)
     }
   },
+  transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
 ) {
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
@@ -404,7 +459,9 @@ fun ChatMessageRow(
         showsSenderName = showsSenderName,
         onRetry = onRetry,
         onImageTap = onImageTap,
+        multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
+        transitioningImageContent = transitioningImageContent,
       )
     }
     is ChatMessageContent.ImagesWithCaption -> {
@@ -418,7 +475,9 @@ fun ChatMessageRow(
         showsSenderName = showsSenderName,
         onRetry = onRetry,
         onImageTap = onImageTap,
+        multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
+        transitioningImageContent = transitioningImageContent,
       )
     }
   }
@@ -435,7 +494,9 @@ private fun ChatImageMessageRow(
   showsSenderName: Boolean,
   onRetry: (() -> Unit)?,
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)?,
+  multipleImageLayout: ChatMultipleImageLayout,
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
+  transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)?,
 ) {
   val own = message.isSentBy(currentUserId)
   Row(
@@ -453,8 +514,10 @@ private fun ChatImageMessageRow(
         messageId = message.id,
         images = images,
         imageLabel = strings.imageLabel,
+        multipleImageLayout = multipleImageLayout,
         onImageTap = onImageTap,
         imageContent = imageContent,
+        transitioningImageContent = transitioningImageContent,
       )
       if (caption != null) {
         Spacer(Modifier.height(4.dp))

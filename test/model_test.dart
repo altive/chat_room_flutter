@@ -43,6 +43,24 @@ void main() {
       expect(updated.replyTo, base.replyTo);
       expect(updated.replyImageIndex, base.replyImageIndex);
       expect(updated.label, base.label);
+      expect(updated.deliveryState, ChatMessageDeliveryState.sent);
+    });
+
+    test('copyWith は送信状態を更新できる', () {
+      final message = ChatTextMessage(
+        id: 'm1',
+        createdAt: DateTime(2026, 2, 9),
+        sender: _user(id: 'u1'),
+        text: 'hello',
+      );
+
+      final failed = message.copyWith(
+        deliveryState: ChatMessageDeliveryState.failed,
+      );
+
+      expect(failed.id, message.id);
+      expect(failed.deliveryState, ChatMessageDeliveryState.failed);
+      expect(failed, isNot(message));
     });
   });
 
@@ -69,6 +87,28 @@ void main() {
       expect(updated.sender, base.sender);
       expect(updated.label, base.label);
     });
+
+    test('画像縦横比はURLと同じ件数で保持する', () {
+      final message = ChatImagesMessage(
+        id: 'm3',
+        createdAt: DateTime(2026, 2, 9),
+        sender: _user(id: 'u1'),
+        imageUrls: const ['a.jpg', 'b.jpg'],
+        imageAspectRatios: const [0.75, 1.5],
+      );
+
+      expect(message.imageAspectRatios, const [0.75, 1.5]);
+      expect(
+        () => ChatImagesMessage(
+          id: 'invalid',
+          createdAt: DateTime(2026, 2, 9),
+          sender: _user(id: 'u1'),
+          imageUrls: const ['a.jpg'],
+          imageAspectRatios: const [1, 2],
+        ),
+        throwsAssertionError,
+      );
+    });
   });
 
   group('ChatStickerMessage', () {
@@ -93,22 +133,10 @@ void main() {
 
   group('VoiceCallType', () {
     test('text は通話種別と送信者種別に応じた文言を返す', () {
-      expect(
-        VoiceCallType.connected.text(isOutgoing: true),
-        'Voice call',
-      );
-      expect(
-        VoiceCallType.connected.text(isOutgoing: false),
-        'Voice call',
-      );
-      expect(
-        VoiceCallType.unanswered.text(isOutgoing: true),
-        'No answer',
-      );
-      expect(
-        VoiceCallType.unanswered.text(isOutgoing: false),
-        'Missed call',
-      );
+      expect(VoiceCallType.connected.text(isOutgoing: true), 'Voice call');
+      expect(VoiceCallType.connected.text(isOutgoing: false), 'Voice call');
+      expect(VoiceCallType.unanswered.text(isOutgoing: true), 'No answer');
+      expect(VoiceCallType.unanswered.text(isOutgoing: false), 'Missed call');
     });
   });
 
@@ -182,15 +210,12 @@ void main() {
       expect(updated.avatarImageUrl, 'https://example.com/b.png');
     });
 
-    test(
-      'アバター指定がない場合は assertion になる',
-      () {
-        expect(
-          () => ChatUser(id: 'u1', name: 'name'),
-          throwsA(isA<AssertionError>()),
-        );
-      },
-    );
+    test('アバター指定がない場合は assertion になる', () {
+      expect(
+        () => ChatUser(id: 'u1', name: 'name'),
+        throwsA(isA<AssertionError>()),
+      );
+    });
   });
 
   group('PopupMenuLayout', () {
@@ -240,10 +265,10 @@ void main() {
 
   group('MessageInputType', () {
     test('期待する enum 値を持つ', () {
-      expect(
-        MessageInputType.values,
-        const [MessageInputType.text, MessageInputType.sticker],
-      );
+      expect(MessageInputType.values, const [
+        MessageInputType.text,
+        MessageInputType.sticker,
+      ]);
     });
   });
 

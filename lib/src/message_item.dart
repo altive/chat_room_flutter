@@ -25,6 +25,7 @@ class MessageItem extends StatelessWidget {
     required this.popupMenuAccessoryBuilder,
     required this.onAvatarTap,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.incomingAvatarSizeDimension,
@@ -39,6 +40,9 @@ class MessageItem extends StatelessWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.onRetryMessage,
+    required this.failedIndicator,
+    required this.imageLayoutConfiguration,
     required this.showOutgoingMessageAppearAnimation,
     required this.outgoingMessageAnimationDuration,
     required this.outgoingMessageAnimationCurve,
@@ -71,6 +75,9 @@ class MessageItem extends StatelessWidget {
 
   /// 画像メッセージタップ時のコールバック。
   final ImageMessageTapCallback? onImageMessageTap;
+
+  /// 画像タップ時にメッセージIDと位置を通知するコールバック。
+  final ChatImageTapCallback? onImageTap;
 
   /// ステッカーメッセージタップ時のコールバック。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
@@ -114,6 +121,15 @@ class MessageItem extends StatelessWidget {
   /// 送信待ち状態のメッセージ ID 一覧。
   final List<String> pendingMessageIds;
 
+  /// 送信失敗メッセージの再送コールバック。
+  final ValueChanged<String>? onRetryMessage;
+
+  /// 送信失敗時に表示するWidget。
+  final Widget? failedIndicator;
+
+  /// 画像メッセージのレイアウト設定。
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
+
   /// 送信メッセージの出現アニメーションを有効にするかどうか。
   final bool showOutgoingMessageAppearAnimation;
 
@@ -140,6 +156,7 @@ class MessageItem extends StatelessWidget {
         popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
         onAvatarTap: onAvatarTap,
         onImageMessageTap: onImageMessageTap,
+        onImageTap: onImageTap,
         onStickerMessageTap: onStickerMessageTap,
         onActionButtonTap: onActionButtonTap,
         incomingAvatarSizeDimension: incomingAvatarSizeDimension,
@@ -160,6 +177,9 @@ class MessageItem extends StatelessWidget {
         readStatusWidget: readStatusWidget,
         pendingIndicator: pendingIndicator,
         pendingMessageIds: pendingMessageIds,
+        onRetryMessage: onRetryMessage,
+        failedIndicator: failedIndicator,
+        imageLayoutConfiguration: imageLayoutConfiguration,
         showOutgoingMessageAppearAnimation: showOutgoingMessageAppearAnimation,
         outgoingMessageAnimationDuration: outgoingMessageAnimationDuration,
         outgoingMessageAnimationCurve: outgoingMessageAnimationCurve,
@@ -182,6 +202,7 @@ class _UserMessageItem extends StatelessWidget {
     required this.popupMenuAccessoryBuilder,
     required this.onAvatarTap,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.incomingAvatarSizeDimension,
@@ -196,6 +217,9 @@ class _UserMessageItem extends StatelessWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.onRetryMessage,
+    required this.failedIndicator,
+    required this.imageLayoutConfiguration,
     required this.showOutgoingMessageAppearAnimation,
     required this.outgoingMessageAnimationDuration,
     required this.outgoingMessageAnimationCurve,
@@ -211,6 +235,7 @@ class _UserMessageItem extends StatelessWidget {
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
+  final ChatImageTapCallback? onImageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
   final double incomingAvatarSizeDimension;
@@ -225,6 +250,9 @@ class _UserMessageItem extends StatelessWidget {
   final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final ValueChanged<String>? onRetryMessage;
+  final Widget? failedIndicator;
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
   final bool showOutgoingMessageAppearAnimation;
   final Duration outgoingMessageAnimationDuration;
   final Curve outgoingMessageAnimationCurve;
@@ -236,7 +264,13 @@ class _UserMessageItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
-    final isPending = isOutgoing && pendingMessageIds.contains(message.id);
+    final deliveryState = pendingMessageIds.contains(message.id)
+        ? ChatMessageDeliveryState.sending
+        : message.deliveryState;
+    final isPending =
+        isOutgoing && deliveryState == ChatMessageDeliveryState.sending;
+    final isFailed =
+        isOutgoing && deliveryState == ChatMessageDeliveryState.failed;
     final bottomWidget = messageBottomWidgetBuilder?.call(
       message,
       isOutgoing: isOutgoing,
@@ -255,6 +289,20 @@ class _UserMessageItem extends StatelessWidget {
                       colorScheme.onSurfaceVariant,
                 )
           : null,
+      failedIndicator: isFailed
+          ? IconButton(
+              tooltip: 'Retry',
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              onPressed: onRetryMessage == null
+                  ? null
+                  : () => onRetryMessage!(message.id),
+              icon:
+                  failedIndicator ??
+                  Icon(Icons.error_outline, size: 16, color: colorScheme.error),
+            )
+          : null,
     );
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
@@ -272,6 +320,7 @@ class _UserMessageItem extends StatelessWidget {
             selectableTextMessageId: selectableTextMessageId,
             contextMenuBuilder: contextMenuBuilder,
             onImageMessageTap: onImageMessageTap,
+            onImageTap: onImageTap,
             onStickerMessageTap: onStickerMessageTap,
             onActionButtonTap: onActionButtonTap,
             popupMenuLayoutForText: outgoingTextMessagePopupMenuLayout,
@@ -281,6 +330,7 @@ class _UserMessageItem extends StatelessWidget {
                 outgoingVoiceCallMessagePopupMenuLayout,
             popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
             popupMenuEnabled: popupMenuEnabled,
+            imageLayoutConfiguration: imageLayoutConfiguration,
           ),
         ),
       ],
@@ -342,6 +392,7 @@ class _UserMessageItem extends StatelessWidget {
                               selectableTextMessageId: selectableTextMessageId,
                               contextMenuBuilder: contextMenuBuilder,
                               onImageMessageTap: onImageMessageTap,
+                              onImageTap: onImageTap,
                               onStickerMessageTap: onStickerMessageTap,
                               onActionButtonTap: onActionButtonTap,
                               popupMenuLayoutForText:
@@ -355,6 +406,8 @@ class _UserMessageItem extends StatelessWidget {
                               popupMenuAccessoryBuilder:
                                   popupMenuAccessoryBuilder,
                               popupMenuEnabled: popupMenuEnabled,
+                              imageLayoutConfiguration:
+                                  imageLayoutConfiguration,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -490,12 +543,14 @@ class _BubbleSideStatus extends StatelessWidget {
     required this.isRead,
     this.readStatusWidget,
     this.pendingIndicator,
+    this.failedIndicator,
   });
 
   final DateTime dateTime;
   final bool isRead;
   final Widget? readStatusWidget;
   final Widget? pendingIndicator;
+  final Widget? failedIndicator;
 
   @override
   Widget build(BuildContext context) {
@@ -521,6 +576,7 @@ class _BubbleSideStatus extends StatelessWidget {
       children: [
         ?readStatus,
         ?pendingIndicator,
+        ?failedIndicator,
         Text(dateTime.timeText, style: timeTextStyle),
       ],
     );

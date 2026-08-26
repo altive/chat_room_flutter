@@ -130,16 +130,14 @@ class _BottomWidgetState extends State<BottomWidget> {
     final sendButtonWidget = widget.sendButtonWidget;
     final shouldShowSendButton =
         _effectiveController.text.isNotEmpty || widget.selectedSticker != null;
+    final stickerInputEnabled = widget.stickerPackages.isNotEmpty;
 
     final sendButton = IconButton(
       icon: sendButtonWidget ?? const Icon(Icons.send),
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.zero,
       constraints: sendButtonWidget == null
-          ? const BoxConstraints(
-              minWidth: 32,
-              minHeight: 32,
-            )
+          ? const BoxConstraints(minWidth: 32, minHeight: 32)
           : null,
       onPressed: () {
         widget.onSendIconPressed.call((
@@ -158,18 +156,21 @@ class _BottomWidgetState extends State<BottomWidget> {
         final suffixWidgets = [
           if (textFieldSuffixBuilder != null)
             GestureDetector(
-              onTap: () {
-                setState(() {
-                  switch (messageType) {
-                    case MessageInputType.text:
-                      messageTypeNotifier.value = MessageInputType.sticker;
-                      FocusScope.of(context).unfocus();
-                    case MessageInputType.sticker:
-                      messageTypeNotifier.value = MessageInputType.text;
-                      FocusScope.of(context).requestFocus(focusNode);
-                  }
-                });
-              },
+              onTap: stickerInputEnabled
+                  ? () {
+                      setState(() {
+                        switch (messageType) {
+                          case MessageInputType.text:
+                            messageTypeNotifier.value =
+                                MessageInputType.sticker;
+                            FocusScope.of(context).unfocus();
+                          case MessageInputType.sticker:
+                            messageTypeNotifier.value = MessageInputType.text;
+                            FocusScope.of(context).requestFocus(focusNode);
+                        }
+                      });
+                    }
+                  : null,
               child: textFieldSuffixBuilder(messageType),
             ),
           if (widget.showSendButtonInTextField && shouldShowSendButton)
@@ -237,7 +238,7 @@ class _BottomWidgetState extends State<BottomWidget> {
                 ],
               ),
             ),
-            if (messageType == MessageInputType.sticker)
+            if (stickerInputEnabled && messageType == MessageInputType.sticker)
               // ステッカー選択View。
               _StickerSelectionView(
                 stickerPackages: widget.stickerPackages,

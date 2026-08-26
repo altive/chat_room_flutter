@@ -35,11 +35,7 @@ class CachedOgpData {
 /// {@endtemplate}
 class OgpData {
   /// {@macro altive_chat_room.OgpData}
-  OgpData({
-    this.title,
-    this.description,
-    this.imageUrl,
-  });
+  OgpData({this.title, this.description, this.imageUrl});
 
   /// OGP タイトル。
   final String? title;

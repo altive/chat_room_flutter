@@ -19,12 +19,22 @@ public enum ChatImageGridMetrics {
   }
 }
 
+/// 複数画像をメッセージ内へ配置する方法。
+public enum ChatMultipleImageLayout: Hashable, Sendable {
+  /// 3枚では先頭を大きく配置し、右側へ残り2枚を並べる。
+  case mosaic
+
+  /// 奇数枚では先頭を横長にし、残りを2列へ配置する。
+  case leadingWideGrid
+}
+
 /// 画像メッセージを1〜4区画へ配置するグリッド。
 @MainActor
 public struct ChatImageGrid: View {
   private let messageID: String
   private let images: [ChatImage]
   private let imageLoader: ChatImageLoader
+  private let multipleImageLayout: ChatMultipleImageLayout
   private let imageLabel: String
   private let loadingFailureLabel: String
   private let onImageTap: ((String, Int) -> Void)?
@@ -34,6 +44,7 @@ public struct ChatImageGrid: View {
     messageID: String,
     images: [ChatImage],
     imageLoader: ChatImageLoader = .standard,
+    multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     imageLabel: String = "Image",
     loadingFailureLabel: String = "Failed to load image",
     onImageTap: ((String, Int) -> Void)? = nil
@@ -41,6 +52,7 @@ public struct ChatImageGrid: View {
     self.messageID = messageID
     self.images = images
     self.imageLoader = imageLoader
+    self.multipleImageLayout = multipleImageLayout
     self.imageLabel = imageLabel
     self.loadingFailureLabel = loadingFailureLabel
     self.onImageTap = onImageTap
@@ -55,21 +67,9 @@ public struct ChatImageGrid: View {
         tile(at: 0)
           .frame(width: 240, height: singleImageHeight)
       case 2:
-        HStack(spacing: 3) {
-          tile(at: 0)
-          tile(at: 1)
-        }
-        .frame(width: 267, height: 176)
+        twoImageGrid
       case 3:
-        HStack(spacing: 3) {
-          tile(at: 0)
-            .frame(width: 176)
-          VStack(spacing: 3) {
-            tile(at: 1)
-            tile(at: 2)
-          }
-        }
-        .frame(width: 267, height: 221)
+        threeImageGrid
       default:
         VStack(spacing: 3) {
           HStack(spacing: 3) {
@@ -85,6 +85,39 @@ public struct ChatImageGrid: View {
       }
     }
     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+  }
+
+  private var twoImageGrid: some View {
+    HStack(spacing: 3) {
+      tile(at: 0)
+      tile(at: 1)
+    }
+    .frame(width: 267, height: 176)
+  }
+
+  @ViewBuilder
+  private var threeImageGrid: some View {
+    switch multipleImageLayout {
+    case .mosaic:
+      HStack(spacing: 3) {
+        tile(at: 0)
+          .frame(width: 176)
+        VStack(spacing: 3) {
+          tile(at: 1)
+          tile(at: 2)
+        }
+      }
+      .frame(width: 267, height: 221)
+    case .leadingWideGrid:
+      VStack(spacing: 3) {
+        tile(at: 0)
+        HStack(spacing: 3) {
+          tile(at: 1)
+          tile(at: 2)
+        }
+      }
+      .frame(width: 267, height: 267)
+    }
   }
 
   private var visibleImages: ArraySlice<ChatImage> {
@@ -118,10 +151,22 @@ public struct ChatImageGrid: View {
 
 @MainActor
 struct ChatImageTile: View {
-  private enum Phase {
+  enum Phase: Equatable {
     case loading
     case success(Data)
     case failure
+
+    /// 別resourceの読み込み開始時に表示する状態を返す。
+    var startingReplacement: Self {
+      if case .success = self { return self }
+      return .loading
+    }
+
+    /// 別resourceの読み込み失敗時に表示する状態を返す。
+    var failingReplacement: Self {
+      if case .success = self { return self }
+      return .failure
+    }
   }
 
   let image: ChatImage
@@ -159,7 +204,10 @@ struct ChatImageTile: View {
     .buttonStyle(.plain)
     .accessibilityLabel(image.accessibilityLabel ?? fallbackLabel)
     .task(id: LoadTaskID(resource: image.resource, retryID: retryID)) {
-      phase = .loading
+      // 同一画像がローカルからリモートへ切り替わる間も、ちらつきを避けるため
+      // 読み込み済みの旧画像を残す。
+      let previousPhase = phase
+      phase = previousPhase.startingReplacement
       do {
         let data = try await imageLoader.data(for: image.resource)
         try Task.checkCancellation()
@@ -167,7 +215,8 @@ struct ChatImageTile: View {
       } catch is CancellationError {
         return
       } catch {
-        phase = .failure
+        // 既に表示できる画像がある場合、次の再描画まで利用可能な表示を維持する。
+        phase = previousPhase.failingReplacement
       }
     }
   }

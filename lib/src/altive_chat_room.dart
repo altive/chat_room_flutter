@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,18 @@ import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
 import 'message_item.dart';
 import 'models.dart';
+
+/// 新着メッセージ受信時のスクロール方針。
+enum NewMessageScrollPolicy {
+  /// 常に最新へ移動する。
+  always,
+
+  /// 最新付近にいる場合、または自分の送信時に最新へ移動する。
+  whenNearLatest,
+
+  /// 自動では移動しない。
+  never,
+}
 
 /// {@template altive_chat_room.AltiveChatRoom}
 /// チャットルームを表示するWidget。
@@ -37,6 +51,7 @@ class AltiveChatRoom extends StatefulWidget {
     this.dateTextBuilder,
     this.onAvatarTap,
     this.onImageMessageTap,
+    this.onImageTap,
     this.onStickerMessageTap,
     this.onActionButtonTap,
     this.incomingAvatarSizeDimension = 30,
@@ -62,6 +77,13 @@ class AltiveChatRoom extends StatefulWidget {
     this.readStatusWidget,
     this.pendingIndicator,
     this.pendingMessageIds = const <String>[],
+    this.onRetryMessage,
+    this.failedIndicator,
+    this.imageLayoutConfiguration = const ChatImageLayoutConfiguration(),
+    this.newMessageScrollPolicy = NewMessageScrollPolicy.whenNearLatest,
+    this.latestThreshold = 80,
+    this.showScrollToLatestButton = true,
+    this.scrollToLatestButtonBuilder,
     this.showOutgoingMessageAppearAnimation = false,
     this.outgoingMessageAnimationDuration = const Duration(milliseconds: 300),
     this.outgoingMessageAnimationCurve = Curves.easeOutCubic,
@@ -141,6 +163,11 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// 画像メッセージをタップした時の処理。
   final ImageMessageTapCallback? onImageMessageTap;
+
+  /// 画像タップ時にメッセージIDと画像位置を通知する処理。
+  ///
+  /// 指定時は[onImageMessageTap]より優先される。
+  final ChatImageTapCallback? onImageTap;
 
   /// ステッカーメッセージをタップした時の処理。
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
@@ -226,6 +253,27 @@ class AltiveChatRoom extends StatefulWidget {
   /// 未同期メッセージのID一覧。
   final List<String> pendingMessageIds;
 
+  /// 送信失敗メッセージを同じIDで再送する処理。
+  final ValueChanged<String>? onRetryMessage;
+
+  /// 送信失敗時に表示するWidget。
+  final Widget? failedIndicator;
+
+  /// 画像メッセージのレイアウト設定。
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
+
+  /// 新着メッセージ受信時のスクロール方針。
+  final NewMessageScrollPolicy newMessageScrollPolicy;
+
+  /// 最新付近とみなすスクロール距離。
+  final double latestThreshold;
+
+  /// 最新へ移動する標準ボタンを表示するかどうか。
+  final bool showScrollToLatestButton;
+
+  /// 最新へ移動するボタンを構築する処理。
+  final Widget Function(VoidCallback onPressed)? scrollToLatestButtonBuilder;
+
   /// 送信メッセージの出現アニメーションを有効にするかどうか。
   ///
   /// [ChatUserMessage] でログインユーザーが送信したメッセージにのみ適用される。
@@ -253,11 +301,66 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
 
   /// 選択中のステッカー。
   Sticker? _selectedSticker;
+  ScrollController? _scrollController;
+  var _isNearLatest = true;
+
+  ScrollController get _effectiveScrollController =>
+      widget.scrollController ?? _scrollController!;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.scrollController == null) {
+      _scrollController = ScrollController();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AltiveChatRoom oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController != widget.scrollController) {
+      _scrollController?.dispose();
+      _scrollController = widget.scrollController == null
+          ? ScrollController()
+          : null;
+    }
+    if (widget.messages.isEmpty ||
+        oldWidget.messages.isEmpty ||
+        widget.messages.first.id == oldWidget.messages.first.id) {
+      return;
+    }
+    final latest = widget.messages.first;
+    final shouldFollow = switch (widget.newMessageScrollPolicy) {
+      NewMessageScrollPolicy.always => true,
+      NewMessageScrollPolicy.never => false,
+      NewMessageScrollPolicy.whenNearLatest =>
+        _isNearLatest ||
+            latest is ChatUserMessage &&
+                latest.isOutgoing(currentUserId: widget.currentUserId),
+    };
+    if (shouldFollow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToLatest());
+    }
+  }
 
   @override
   void dispose() {
     messageTypeNotifier.dispose();
+    _scrollController?.dispose();
     super.dispose();
+  }
+
+  void _scrollToLatest() {
+    if (!_effectiveScrollController.hasClients) {
+      return;
+    }
+    unawaited(
+      _effectiveScrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   @override
@@ -279,7 +382,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         currentUserId: widget.currentUserId,
         messages: widget.messages,
         isGroupChat: widget.isGroupChat,
-        scrollController: widget.scrollController,
+        scrollController: _effectiveScrollController,
         selectableTextMessageId: widget.selectableTextMessageId,
         contextMenuBuilder: widget.contextMenuBuilder,
         messageBubbleBuilder: widget.messageBubbleBuilder,
@@ -289,6 +392,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         messageTypeNotifier: messageTypeNotifier,
         onAvatarTap: widget.onAvatarTap,
         onImageMessageTap: widget.onImageMessageTap,
+        onImageTap: widget.onImageTap,
         onStickerMessageTap: widget.onStickerMessageTap,
         onActionButtonTap: widget.onActionButtonTap,
         incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
@@ -311,6 +415,15 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         readStatusWidget: widget.readStatusWidget,
         pendingIndicator: widget.pendingIndicator,
         pendingMessageIds: widget.pendingMessageIds,
+        onRetryMessage: widget.onRetryMessage,
+        failedIndicator: widget.failedIndicator,
+        imageLayoutConfiguration: widget.imageLayoutConfiguration,
+        latestThreshold: widget.latestThreshold,
+        onLatestProximityChanged: (isNearLatest) {
+          if (_isNearLatest != isNearLatest) {
+            setState(() => _isNearLatest = isNearLatest);
+          }
+        },
         showOutgoingMessageAppearAnimation:
             widget.showOutgoingMessageAppearAnimation,
         outgoingMessageAnimationDuration:
@@ -385,6 +498,19 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                               _selectedSticker = null;
                             });
                           },
+                        ),
+                      if (widget.showScrollToLatestButton && !_isNearLatest)
+                        Positioned(
+                          right: 16,
+                          bottom: 8,
+                          child:
+                              widget.scrollToLatestButtonBuilder?.call(
+                                _scrollToLatest,
+                              ) ??
+                              FloatingActionButton.small(
+                                onPressed: _scrollToLatest,
+                                child: const Icon(Icons.arrow_downward),
+                              ),
                         ),
                     ],
                   ),
@@ -497,6 +623,7 @@ class _MessageListView extends StatefulWidget {
     required this.messageTypeNotifier,
     required this.onAvatarTap,
     required this.onImageMessageTap,
+    required this.onImageTap,
     required this.onStickerMessageTap,
     required this.onActionButtonTap,
     required this.incomingAvatarSizeDimension,
@@ -511,6 +638,11 @@ class _MessageListView extends StatefulWidget {
     required this.readStatusWidget,
     required this.pendingIndicator,
     required this.pendingMessageIds,
+    required this.onRetryMessage,
+    required this.failedIndicator,
+    required this.imageLayoutConfiguration,
+    required this.latestThreshold,
+    required this.onLatestProximityChanged,
     required this.showOutgoingMessageAppearAnimation,
     required this.outgoingMessageAnimationDuration,
     required this.outgoingMessageAnimationCurve,
@@ -531,6 +663,7 @@ class _MessageListView extends StatefulWidget {
   final ValueNotifier<MessageInputType> messageTypeNotifier;
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
+  final ChatImageTapCallback? onImageTap;
   final ValueChanged<ChatStickerMessage>? onStickerMessageTap;
   final ValueChanged<Object?>? onActionButtonTap;
   final double incomingAvatarSizeDimension;
@@ -545,6 +678,11 @@ class _MessageListView extends StatefulWidget {
   final Widget? readStatusWidget;
   final Widget? pendingIndicator;
   final List<String> pendingMessageIds;
+  final ValueChanged<String>? onRetryMessage;
+  final Widget? failedIndicator;
+  final ChatImageLayoutConfiguration imageLayoutConfiguration;
+  final double latestThreshold;
+  final ValueChanged<bool> onLatestProximityChanged;
   final bool showOutgoingMessageAppearAnimation;
   final Duration outgoingMessageAnimationDuration;
   final Curve outgoingMessageAnimationCurve;
@@ -615,91 +753,107 @@ class _MessageListViewState extends State<_MessageListView> {
   Widget build(BuildContext context) {
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
 
-    return GestureDetector(
-      // Padding等でも反応させるために追加する。
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        // キーボードを閉じるために追加する。
-        FocusScope.of(context).unfocus();
-        // テキストメッセージに切り替える。
-        widget.messageTypeNotifier.value = MessageInputType.text;
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification ||
+            notification is ScrollEndNotification) {
+          widget.onLatestProximityChanged(
+            notification.metrics.pixels <= widget.latestThreshold,
+          );
+        }
+        return false;
       },
-      child: ListView.builder(
-        reverse: true,
-        controller: widget.scrollController,
-        itemCount: widget.messages.length,
-        itemBuilder: (context, index) {
-          final message = widget.messages[index];
-
-          // reverse: true のため、1つ古いメッセージ（index + 1）と比較して
-          // 日付の切り替わり位置でヘッダーを表示する。
-          final isFirstInGroup =
-              index == widget.messages.length - 1 ||
-              widget.messages[index + 1].createdAt.dateText !=
-                  message.createdAt.dateText;
-
-          final messageItem = MessageItem(
-            key: ValueKey(message.id),
-            currentUserId: widget.currentUserId,
-            message: message,
-            isGroupChat: widget.isGroupChat,
-            selectableTextMessageId: widget.selectableTextMessageId,
-            contextMenuBuilder: widget.contextMenuBuilder,
-            messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
-            popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
-            onAvatarTap: widget.onAvatarTap,
-            onImageMessageTap: widget.onImageMessageTap,
-            onStickerMessageTap: widget.onStickerMessageTap,
-            onActionButtonTap: widget.onActionButtonTap,
-            incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
-            outgoingTextMessagePopupMenuLayout:
-                widget.outgoingTextMessagePopupMenuLayout,
-            outgoingImageMessagePopupMenuLayout:
-                widget.outgoingImageMessagePopupMenuLayout,
-            outgoingStickerMessagePopupMenuLayout:
-                widget.outgoingStickerMessagePopupMenuLayout,
-            outgoingVoiceCallMessagePopupMenuLayout:
-                widget.outgoingVoiceCallMessagePopupMenuLayout,
-            incomingTextMessagePopupMenuLayout:
-                widget.incomingTextMessagePopupMenuLayout,
-            incomingImageMessagePopupMenuLayout:
-                widget.incomingImageMessagePopupMenuLayout,
-            incomingStickerMessagePopupMenuLayout:
-                widget.incomingStickerMessagePopupMenuLayout,
-            incomingVoiceCallMessagePopupMenuLayout:
-                widget.incomingVoiceCallMessagePopupMenuLayout,
-            readStatusWidget: widget.readStatusWidget,
-            pendingIndicator: widget.pendingIndicator,
-            pendingMessageIds: widget.pendingMessageIds,
-            showOutgoingMessageAppearAnimation:
-                _showAnimationMessageId == message.id,
-            outgoingMessageAnimationDuration:
-                widget.outgoingMessageAnimationDuration,
-            outgoingMessageAnimationCurve: widget.outgoingMessageAnimationCurve,
-            outgoingMessageAnimationOffset:
-                widget.outgoingMessageAnimationOffset,
-          );
-
-          final messageBubbleBuilder = widget.messageBubbleBuilder;
-          final dateTextBuilder = widget.dateTextBuilder;
-          return Column(
-            children: [
-              // 同じ日付の中で先頭の場合のみヘッダーを表示する
-              if (isFirstInGroup) ...[
-                if (dateTextBuilder == null)
-                  _DateText(dateTime: message.createdAt)
-                else
-                  dateTextBuilder(dateText: message.createdAt.dateText),
-                SizedBox(height: altiveChatRoomTheme.messageInsetsVertical),
-              ],
-
-              if (messageBubbleBuilder == null)
-                messageItem
-              else
-                messageBubbleBuilder(messageItem, message: message),
-            ],
-          );
+      child: GestureDetector(
+        // Padding等でも反応させるために追加する。
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          // キーボードを閉じるために追加する。
+          FocusScope.of(context).unfocus();
+          // テキストメッセージに切り替える。
+          widget.messageTypeNotifier.value = MessageInputType.text;
         },
+        child: ListView.builder(
+          reverse: true,
+          controller: widget.scrollController,
+          itemCount: widget.messages.length,
+          itemBuilder: (context, index) {
+            final message = widget.messages[index];
+
+            // reverse: true のため、1つ古いメッセージ（index + 1）と比較して
+            // 日付の切り替わり位置でヘッダーを表示する。
+            final isFirstInGroup =
+                index == widget.messages.length - 1 ||
+                widget.messages[index + 1].createdAt.dateText !=
+                    message.createdAt.dateText;
+
+            final messageItem = MessageItem(
+              key: ValueKey(message.id),
+              currentUserId: widget.currentUserId,
+              message: message,
+              isGroupChat: widget.isGroupChat,
+              selectableTextMessageId: widget.selectableTextMessageId,
+              contextMenuBuilder: widget.contextMenuBuilder,
+              messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
+              popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
+              onAvatarTap: widget.onAvatarTap,
+              onImageMessageTap: widget.onImageMessageTap,
+              onImageTap: widget.onImageTap,
+              onStickerMessageTap: widget.onStickerMessageTap,
+              onActionButtonTap: widget.onActionButtonTap,
+              incomingAvatarSizeDimension: widget.incomingAvatarSizeDimension,
+              outgoingTextMessagePopupMenuLayout:
+                  widget.outgoingTextMessagePopupMenuLayout,
+              outgoingImageMessagePopupMenuLayout:
+                  widget.outgoingImageMessagePopupMenuLayout,
+              outgoingStickerMessagePopupMenuLayout:
+                  widget.outgoingStickerMessagePopupMenuLayout,
+              outgoingVoiceCallMessagePopupMenuLayout:
+                  widget.outgoingVoiceCallMessagePopupMenuLayout,
+              incomingTextMessagePopupMenuLayout:
+                  widget.incomingTextMessagePopupMenuLayout,
+              incomingImageMessagePopupMenuLayout:
+                  widget.incomingImageMessagePopupMenuLayout,
+              incomingStickerMessagePopupMenuLayout:
+                  widget.incomingStickerMessagePopupMenuLayout,
+              incomingVoiceCallMessagePopupMenuLayout:
+                  widget.incomingVoiceCallMessagePopupMenuLayout,
+              readStatusWidget: widget.readStatusWidget,
+              pendingIndicator: widget.pendingIndicator,
+              pendingMessageIds: widget.pendingMessageIds,
+              onRetryMessage: widget.onRetryMessage,
+              failedIndicator: widget.failedIndicator,
+              imageLayoutConfiguration: widget.imageLayoutConfiguration,
+              showOutgoingMessageAppearAnimation:
+                  _showAnimationMessageId == message.id,
+              outgoingMessageAnimationDuration:
+                  widget.outgoingMessageAnimationDuration,
+              outgoingMessageAnimationCurve:
+                  widget.outgoingMessageAnimationCurve,
+              outgoingMessageAnimationOffset:
+                  widget.outgoingMessageAnimationOffset,
+            );
+
+            final messageBubbleBuilder = widget.messageBubbleBuilder;
+            final dateTextBuilder = widget.dateTextBuilder;
+            return Column(
+              children: [
+                // 同じ日付の中で先頭の場合のみヘッダーを表示する
+                if (isFirstInGroup) ...[
+                  if (dateTextBuilder == null)
+                    _DateText(dateTime: message.createdAt)
+                  else
+                    dateTextBuilder(dateText: message.createdAt.dateText),
+                  SizedBox(height: altiveChatRoomTheme.messageInsetsVertical),
+                ],
+
+                if (messageBubbleBuilder == null)
+                  messageItem
+                else
+                  messageBubbleBuilder(messageItem, message: message),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

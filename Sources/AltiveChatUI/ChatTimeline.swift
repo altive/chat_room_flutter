@@ -88,6 +88,33 @@ public enum ChatTimelineHistoryControlStyle: Hashable, Sendable {
   case bordered(systemImage: String)
 }
 
+/// 新しい項目が追加された際の末尾追従方法。
+public enum ChatTimelineLatestFollowingPolicy: Hashable, Sendable {
+  /// 閲覧位置に関係なく末尾へ移動する従来動作。
+  case always
+
+  /// 末尾付近を閲覧している場合だけ末尾へ移動する。
+  case whenNearBottom
+}
+
+/// 過去の項目を閲覧中に最新位置へ戻る操作の設定。
+public struct ChatTimelineLatestControlConfiguration: Hashable, Sendable {
+  fileprivate let isEnabled: Bool
+  fileprivate let label: String
+  fileprivate let systemImage: String
+
+  /// 最新位置へ戻る操作を表示しない設定。
+  public static let disabled = Self(isEnabled: false, label: "", systemImage: "")
+
+  /// 最新位置へ戻る標準ボタンを表示する設定を作成する。
+  public static func button(
+    label: String,
+    systemImage: String = "arrow.down"
+  ) -> Self {
+    .init(isEnabled: true, label: label, systemImage: systemImage)
+  }
+}
+
 /// タイムラインの履歴追加設定。
 @MainActor
 public struct ChatTimelineHistoryConfiguration<ID: Hashable> {
@@ -164,6 +191,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private let initialPosition: ChatTimelineInitialPosition<ID>
   private let followLatestTrigger: FollowTrigger
   private let followLatestAnimation: Animation?
+  private let latestFollowingPolicy: ChatTimelineLatestFollowingPolicy
+  private let forceFollowLatest: Bool
+  private let latestControl: ChatTimelineLatestControlConfiguration
   private let history: ChatTimelineHistoryConfiguration<ID>
   private let spacing: CGFloat
   private let contentInsets: EdgeInsets
@@ -176,6 +206,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   @State private var historyCoordinateSpaceID = UUID()
   @State private var historyTopOffset: CGFloat?
   @State private var isHistoryLoadScheduled = false
+  @State private var visiblePosition: AnyHashable?
+  @State private var isNearBottom = true
+  @State private var showsLatestControl = false
 
   /// 汎用タイムラインを作成する。
   ///
@@ -187,6 +220,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     initialPosition: ChatTimelineInitialPosition<ID> = .latest,
     followLatestTrigger: FollowTrigger,
     followLatestAnimation: Animation? = .easeOut(duration: 0.2),
+    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .always,
+    forceFollowLatest: Bool = false,
+    latestControl: ChatTimelineLatestControlConfiguration = .disabled,
     history: ChatTimelineHistoryConfiguration<ID> = .disabled,
     spacing: CGFloat = 12,
     contentInsets: EdgeInsets = EdgeInsets(),
@@ -199,6 +235,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     self.initialPosition = initialPosition
     self.followLatestTrigger = followLatestTrigger
     self.followLatestAnimation = followLatestAnimation
+    self.latestFollowingPolicy = latestFollowingPolicy
+    self.forceFollowLatest = forceFollowLatest
+    self.latestControl = latestControl
     self.history = history
     self.spacing = spacing
     self.contentInsets = contentInsets
@@ -220,6 +259,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     initialTargetAnchor: UnitPoint = .center,
     followLatestTrigger: FollowTrigger,
     followLatestAnimation: Animation? = .easeOut(duration: 0.2),
+    latestFollowingPolicy: ChatTimelineLatestFollowingPolicy = .always,
+    forceFollowLatest: Bool = false,
+    latestControl: ChatTimelineLatestControlConfiguration = .disabled,
     history: ChatTimelineHistoryConfiguration<ID> = .disabled,
     spacing: CGFloat = 12,
     contentInsets: EdgeInsets = EdgeInsets(),
@@ -235,6 +277,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       } ?? .latest,
       followLatestTrigger: followLatestTrigger,
       followLatestAnimation: followLatestAnimation,
+      latestFollowingPolicy: latestFollowingPolicy,
+      forceFollowLatest: forceFollowLatest,
+      latestControl: latestControl,
       history: history,
       spacing: spacing,
       contentInsets: contentInsets,
@@ -256,7 +301,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           content(timelineProxy)
           Color.clear
             .frame(height: 1)
-            .id(bottomAnchorID)
+            .id(AnyHashable(bottomAnchorID))
         }
         .scrollTargetLayout()
         .frame(maxWidth: maximumContentWidth ?? .infinity)
@@ -265,9 +310,33 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       }
       .coordinateSpace(name: historyCoordinateSpaceID)
       .defaultScrollAnchor(.bottom)
+      .scrollPosition(id: $visiblePosition, anchor: .bottom)
+      .overlay(alignment: .bottomTrailing) {
+        if latestControl.isEnabled, showsLatestControl {
+          Button {
+            showsLatestControl = false
+            timelineProxy.scrollToBottom(animation: followLatestAnimation)
+          } label: {
+            Label(latestControl.label, systemImage: latestControl.systemImage)
+              .labelStyle(.iconOnly)
+              .frame(width: 44, height: 44)
+          }
+          .buttonStyle(.borderedProminent)
+          .buttonBorderShape(.circle)
+          .accessibilityLabel(latestControl.label)
+          .padding(12)
+        }
+      }
       .onPreferenceChange(ChatTimelineHistoryTopOffsetKey.self) { offset in
         historyTopOffset = offset
         requestAutomaticHistoryIfNeeded(using: timelineProxy)
+      }
+      .onChange(of: visiblePosition) { _, position in
+        let isNear = position == AnyHashable(bottomAnchorID)
+        isNearBottom = isNear
+        if isNear {
+          showsLatestControl = false
+        }
       }
       .onAppear {
         positionInitiallyIfNeeded(using: timelineProxy)
@@ -287,6 +356,16 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
             trigger: trigger
           )
         else { return }
+        let shouldFollow = positioningState.shouldFollowLatest(
+          isNearBottom: isNearBottom,
+          policy: latestFollowingPolicy,
+          isForced: forceFollowLatest
+        )
+        guard shouldFollow else {
+          showsLatestControl = true
+          return
+        }
+        showsLatestControl = false
         timelineProxy.scrollToBottom(animation: followLatestAnimation)
         Task { @MainActor in
           await Task.yield()
@@ -457,5 +536,14 @@ struct ChatTimelinePositioningState<Scope: Hashable> {
     trigger: Trigger
   ) -> Bool {
     positionedScope == scope && previousTrigger != trigger
+  }
+
+  /// 現在の閲覧位置と方針から、追加された項目へ追従するかを返す。
+  func shouldFollowLatest(
+    isNearBottom: Bool,
+    policy: ChatTimelineLatestFollowingPolicy,
+    isForced: Bool
+  ) -> Bool {
+    isForced || policy == .always || isNearBottom
   }
 }

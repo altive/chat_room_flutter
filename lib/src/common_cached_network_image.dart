@@ -31,6 +31,7 @@ class CommonCachedNetworkImage extends StatelessWidget {
     this.timeoutDuration = const Duration(seconds: 10),
     // NOTE: レンダリングで出力される画像の品質。
     this.filterQuality = FilterQuality.medium,
+    this.retainPreviousImage = false,
   });
 
   /// 表示対象の画像URL。
@@ -65,6 +66,9 @@ class CommonCachedNetworkImage extends StatelessWidget {
 
   /// 描画時のフィルター品質。
   final FilterQuality filterQuality;
+
+  /// URL変更後の画像が読み込まれるまで変更前の画像を維持するかどうか。
+  final bool retainPreviousImage;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +122,7 @@ class CommonCachedNetworkImage extends StatelessWidget {
       maxWidthDiskCache: maxWidthDiskCache,
       filterQuality: filterQuality,
       cacheManager: CommonCachedNetworkImageProvider.commonCacheManager,
+      useOldImageOnUrlChange: retainPreviousImage,
       // 画像ダウンロードに時間がかかる場合に進捗を表示する
       progressIndicatorBuilder: (_, _, progress) {
         return FutureBuilder(

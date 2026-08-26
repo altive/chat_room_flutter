@@ -79,9 +79,7 @@ final _phonePattern = RegExp(
   r'(?<![\w])(?:(?:tel|sms):)?\+?\d[\d ().-]{6,}\d',
   caseSensitive: false,
 );
-final _trailingPunctuation = RegExp(
-  r'[。、，．,.!?！？:：;；）)］\]｝}〉》」』】]+$',
-);
+final _trailingPunctuation = RegExp(r'[。、，．,.!?！？:：;；）)］\]｝}〉》」』】]+$');
 
 class _Candidate {
   const _Candidate(this.start, this.end, this.priority, this.link);

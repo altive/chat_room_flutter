@@ -124,6 +124,87 @@ class ChatTimelineTest {
     }
   }
 
+  @Test
+  fun `過去を閲覧中の新着では末尾へ移動しない`() {
+    lateinit var timelineState: ChatTimelineState
+    var items by mutableStateOf((0 until 20).toList())
+    compose.setContent {
+      timelineState = rememberChatTimelineState()
+      MaterialTheme {
+        Box(Modifier.height(200.dp)) {
+          ChatTimeline(
+            timelineId = "follow-near-latest",
+            itemIds = items,
+            itemIndex = items::indexOf,
+            latestItemIndex = items.lastIndex,
+            isReadyForInitialPositioning = true,
+            followLatestTrigger = items.last(),
+            followLatestConfiguration = ChatTimelineFollowLatestConfiguration(
+              mode = ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
+            ),
+            state = timelineState,
+          ) {
+            items(items, key = { it }) { id -> TimelineTestItem(id) }
+          }
+        }
+      }
+    }
+
+    compose.waitForIdle()
+    compose.runOnIdle { runBlocking { timelineState.listState.scrollToItem(0) } }
+    compose.waitForIdle()
+    compose.runOnIdle { items = items + 20 }
+    compose.waitForIdle()
+
+    compose.runOnIdle {
+      assertTrue(timelineState.listState.canScrollForward)
+      assertFalse(timelineState.listState.layoutInfo.visibleItemsInfo.any { it.key == 20 })
+    }
+  }
+
+  @Test
+  fun `過去を閲覧中でも強制指定した新着は末尾へ移動する`() {
+    lateinit var timelineState: ChatTimelineState
+    var items by mutableStateOf((0 until 20).toList())
+    var forceFollow by mutableStateOf(false)
+    compose.setContent {
+      timelineState = rememberChatTimelineState()
+      MaterialTheme {
+        Box(Modifier.height(200.dp)) {
+          ChatTimeline(
+            timelineId = "follow-forced",
+            itemIds = items,
+            itemIndex = items::indexOf,
+            latestItemIndex = items.lastIndex,
+            isReadyForInitialPositioning = true,
+            followLatestTrigger = items.last(),
+            followLatestConfiguration = ChatTimelineFollowLatestConfiguration(
+              mode = ChatTimelineFollowLatestMode.WhenNearLatestOrForced,
+            ),
+            forceFollowLatest = forceFollow,
+            state = timelineState,
+          ) {
+            items(items, key = { it }) { id -> TimelineTestItem(id) }
+          }
+        }
+      }
+    }
+
+    compose.waitForIdle()
+    compose.runOnIdle { runBlocking { timelineState.listState.scrollToItem(0) } }
+    compose.waitForIdle()
+    compose.runOnIdle {
+      forceFollow = true
+      items = items + 20
+    }
+    compose.waitForIdle()
+
+    compose.runOnIdle {
+      assertFalse(timelineState.listState.canScrollForward)
+      assertTrue(timelineState.listState.layoutInfo.visibleItemsInfo.any { it.key == 20 })
+    }
+  }
+
   @Composable
   private fun TestTimeline(
     state: ChatTimelineState,

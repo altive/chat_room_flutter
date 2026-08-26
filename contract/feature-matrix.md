@@ -16,8 +16,8 @@
 | 自分・相手の左右配置 | implemented | implemented | implemented |
 | グループでの送信者名 | implemented | implemented | implemented |
 | 送信中表示 | implemented | implemented | implemented |
-| 送信失敗表示 | app | implemented | implemented |
-| 失敗時の再送UI | app | implemented | implemented |
+| 送信失敗表示 | implemented | implemented | implemented |
+| 失敗時の再送UI | implemented | implemented | implemented |
 | テーマ | implemented | implemented | implemented |
 | 空状態 | implemented | implemented | implemented |
 | リプライ | implemented | planned | planned |
@@ -30,8 +30,15 @@
 | 汎用タイムライン境界 | app | implemented | implemented |
 | Roomシェル・入力面配置 | app | implemented | implemented |
 | 初期位置・末尾追従 | implemented | implemented | implemented |
+| 最新付近のみ受信追従・自分送信は常に追従 | implemented | implemented | implemented |
+| 最新へ移動ボタン | implemented | implemented | implemented |
 | 手動・自動の履歴追加UI | implemented | implemented | implemented |
 | 履歴追加時の位置保持 | implemented | implemented | implemented |
+| 単一画像の高さ制限付き可変比率 | implemented | implemented | implemented |
+| 複数画像レイアウト選択 | implemented | implemented | implemented |
+| メッセージID＋画像位置のタップ通知 | implemented | implemented | implemented |
+| ローカル画像からリモート画像への表示維持 | implemented | implemented | implemented |
+| ステッカー入力のopt-in表示 | implemented | implemented | implemented |
 | 日付・未読区切り | app | implemented | implemented |
 | 削除確認UI | app | implemented | implemented |
 | 過去メッセージ取得処理 | implemented | app | app |

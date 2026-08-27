@@ -1,50 +1,63 @@
-# Feature matrix
+# プラットフォーム機能・動作対応表
 
-`implemented`はライブラリ単体で利用可能、`planned`は共通化対象だが未実装、
-`app`はアプリ側の責務を表す。
+この表はリポジトリの最新実装状態を示す。特定のリリース時点へ固定せず、実装や契約を
+変更したときに同じ変更で更新する。
 
-| 機能 | Flutter | SwiftUI | Compose |
-| --- | --- | --- | --- |
-| テキストメッセージ | implemented | implemented | implemented |
-| メッセージ内リンク・連絡先 | implemented | implemented | implemented |
-| リンクプレビュー | planned | planned | planned |
-| システムメッセージ | implemented | implemented | implemented |
-| 汎用メッセージカード | implemented | implemented | implemented |
-| 画像メッセージ | implemented | implemented | implemented |
-| 画像＋本文の複合メッセージ | implemented | implemented | implemented |
-| スタンプメッセージ | implemented | planned | planned |
-| 音声通話メッセージ | implemented | planned | planned |
-| 自分・相手の左右配置 | implemented | implemented | implemented |
-| グループでの送信者名 | implemented | implemented | implemented |
-| 送信中表示 | implemented | implemented | implemented |
-| 送信失敗表示 | implemented | implemented | implemented |
-| 失敗時の再送UI | implemented | implemented | implemented |
-| テーマ | implemented | implemented | implemented |
-| 空状態 | implemented | implemented | implemented |
-| リプライ | implemented | planned | planned |
-| リアクション候補・件数 | implemented | implemented | implemented |
-| 長押しメニュー | implemented | implemented | implemented |
-| UTF-16入力長方針 | app | implemented | implemented |
-| スタンプpicker | implemented | implemented | implemented |
-| アバター表示 | implemented | implemented | implemented |
-| システムイベント展開 | app | implemented | implemented |
-| 汎用タイムライン境界 | app | implemented | implemented |
-| Roomシェル・入力面配置 | app | implemented | implemented |
-| 初期位置・末尾追従 | implemented | implemented | implemented |
-| 最新付近のみ受信追従・自分送信は常に追従 | implemented | implemented | implemented |
-| 最新へ移動ボタン | implemented | implemented | implemented |
-| 手動・自動の履歴追加UI | implemented | implemented | implemented |
-| 履歴追加時の位置保持 | implemented | implemented | implemented |
-| 単一画像の高さ制限付き可変比率 | implemented | implemented | implemented |
-| 複数画像レイアウト選択 | implemented | implemented | implemented |
-| メッセージID＋画像位置のタップ通知 | implemented | implemented | implemented |
-| ローカル画像からリモート画像への表示維持 | implemented | implemented | implemented |
-| ステッカー入力のopt-in表示 | implemented | implemented | implemented |
-| 日付・未読区切り | app | implemented | implemented |
-| 削除確認UI | app | implemented | implemented |
-| 過去メッセージ取得処理 | implemented | app | app |
-| 既読管理 | app | app | app |
-| 永続化・実際の再送 | app | app | app |
+- `✅ implemented`: ライブラリ単体で利用可能
+- `📝 planned`: 共通化対象だが未実装
+- `📱 app`: アプリ側の責務
 
-Flutterの既存機能は維持する。SwiftUIまたはComposeへ未移植であることを理由に、
+各プラットフォームのセルは現在の実装状態を示し、補足は既定値や移行互換上の差を表す。
+「共通仕様・選択基準」では、UIの表示・操作と、データ取得・業務判断の責務を分けて示す。
+新規利用ではこの責務分担を優先する。
+
+| 項目 | Flutter | Jetpack Compose | SwiftUI | 共通仕様・選択基準 |
+| --- | --- | --- | --- | --- |
+| テキストメッセージ | ✅ | ✅ | ✅ | 共通の表示・操作契約 |
+| メッセージ内リンク・連絡先 | ✅ | ✅ | ✅ | 共通の検出・操作契約 |
+| Webリンクプレビュー（OGP等） | 📝 共通化（✅ 旧OGP表示） | 📝 | 📝 | 表示モデル・カードUIはpackage、OGP等のmetadata取得はapp。Flutterの端末直接取得は移行対象 |
+| システムメッセージ | ✅ | ✅ | ✅ | 単純な本文を中央寄せで表示 |
+| 汎用メッセージカード | ✅ | ✅ | ✅ | 用途と永続化payloadはアプリが所有 |
+| 画像メッセージ | ✅ | ✅ | ✅ | 単一・複数画像の共通表示契約 |
+| 画像＋本文の複合メッセージ | ✅ | ✅ | ✅ | 同じメッセージID、送信状態、再送単位で扱う |
+| ステッカーメッセージ表示 | ✅ | 📝 | 📝 | メッセージ型とタイムライン描画をpackageで共通化予定 |
+| 音声通話メッセージ | ✅ | 📝 | 📝 | Flutterの既存機能を維持し、他実装へ共通化予定 |
+| 自分・相手の左右配置 | ✅ | ✅ | ✅ | 共通の送信者判定に基づいて配置 |
+| グループでの送信者名 | ✅ | ✅ | ✅ | 共通の表示契約 |
+| 送信中表示 | ✅ | ✅ | ✅ | 明示的なdelivery stateで管理 |
+| 送信後の入力欄 | ✅ 即時クリア | ✅ 即時クリア | ✅ 即時クリア | ネットワーク完了を待たず、コールバック直後にクリア |
+| 空白のみの送信 | ✅ trim後に抑止 | ✅ trim後に抑止 | ✅ trim後に抑止 | 正規化後の空文字を送信しない |
+| 送信失敗・再送 | ✅ `failed`を優先 | ✅ delivery state | ✅ delivery state | 同じメッセージID・operation IDで再送 |
+| メッセージ順 | ✅ 昇順・降順を正規化 | ✅ 昇順 | ✅ 昇順 | 新規利用は作成日時の昇順。Flutterのみ移行互換あり |
+| テーマ | ✅ | ✅ | ✅ | 状態と意味を揃え、外観は各プラットフォームへ適合 |
+| 空状態 | ✅ | ✅ | ✅ | 共通の表示契約 |
+| リプライ | ✅ | 📝 | 📝 | Flutterの既存機能を維持し、他実装へ共通化予定 |
+| リアクション候補・件数 | ✅ | ✅ | ✅ | 共通の楽観的更新契約 |
+| 長押しメニュー | ✅ | ✅ | ✅ | OS標準の操作体験を優先 |
+| UTF-16入力長方針 | 📱 | ✅ | ✅ | Character・UTF-16から選択可能。Flutterはアプリ側で制御 |
+| ステッカーpicker・選択 | ✅ | ✅ | ✅ | catalog取得と画像解決はapp、pickerの表示・操作はpackage |
+| ステッカー入力切替 | ✅ 明示的opt-in | ✅ 明示的opt-in | ✅ 明示的opt-in | 有効化した場合だけ切替操作を表示 |
+| アバター表示 | ✅ | ✅ | ✅ | 表示値とタップ通知を共通化 |
+| システムイベント展開 | 📱 | ✅ | ✅ | 業務上の意味とアクションはアプリが所有 |
+| 汎用タイムライン境界 | 📱 | ✅ | ✅ | アプリ固有行と課金境界を受け入れる |
+| Roomシェル・入力面配置 | 📱 | ✅ | ✅ | Store、navigation、外部I/Oはアプリが所有 |
+| 初期位置 | ✅ | ✅ | ✅ | 末尾または指定項目とanchorを型付き方針で指定 |
+| 最新メッセージ追従 | ✅ 最新付近または自分の送信時 | ✅ 最新付近または自分の送信時 | ✅ point単位で最新付近を判定 | 過去閲覧中は位置を維持し、自分の送信時は常に追従 |
+| 最新へ戻るボタン | ✅ 既定で表示 | ✅ 既定で表示 | ✅ 既定で表示 | 全実装で提供し、外観を差し替え可能にする |
+| 履歴追加UI・上端検知 | ✅ | ✅ | ✅ | packageが設定に応じて取得を要求し、appが取得可否とloading状態を渡す |
+| 履歴追加時の位置保持 | ✅ | ✅ | ✅ | レイアウト反映後にアニメーションなしで復元 |
+| 単一画像 | ✅ `adaptiveBounded`既定 | ✅ `AdaptiveBounded`既定 | ✅ `adaptiveBounded`既定 | 高さ制限付き可変比率を推奨。正方形も選択可能 |
+| 3枚の画像 | ✅ `leadingWideGrid`既定 | ✅ `mosaic`既定 | ✅ `mosaic`既定 | 先頭横長とモザイクからアプリが選択 |
+| 4枚以上の画像 | ✅ 2×2＋超過件数 | ✅ 2×2＋超過件数 | ✅ 2×2＋超過件数 | レイアウト指定にかかわらず共通 |
+| ローカル→リモート画像 | ✅ 表示を維持 | ✅ 表示を維持。Coil標準描画あり | ✅ 表示を維持 | 同じ画像IDなら新resourceの準備完了まで直前の画像を維持 |
+| 画像タップ | ✅ メッセージID＋index | ✅ メッセージID＋index | ✅ メッセージID＋index | navigationは行わず、共通コールバックで通知 |
+| テキスト専用Roomの画像拡張 | ✅ renderer・layout・tap | ✅ renderer・layout・tap | ✅ loader・layout・tap | 既存APIを維持し、画像機能をopt-inで追加 |
+| 日付区切り表示 | ✅ | ✅ | ✅ | 挿入判定と表示はpackage、表示値のローカライズはappから注入可能 |
+| 未読区切り表示 | 📝 package化 | ✅ | ✅ | 挿入判定と表示はpackage、未読状態の算出はapp |
+| 削除確認UI | 📝 package化 | ✅ | ✅ | 確認表示はpackage、権限判定と実際の削除はapp |
+| ページング判断・過去メッセージ取得 | 📱 | 📱 | 📱 | Repository・外部I/O・retry・課金判断を含むapp責務 |
+| 既読状態の判定・更新 | 📱 | 📱 | 📱 | 永続化と既読更新はapp責務。packageには表示に必要な状態だけを渡す |
+| 永続化・実際の再送 | 📱 | 📱 | 📱 | アプリ側の責務 |
+
+Flutterの既存機能は維持する。SwiftUIまたはJetpack Composeへ未移植であることを理由に、
 Flutterの公開APIを削除しない。

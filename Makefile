@@ -28,7 +28,7 @@ swift_format_lint:
 	xcrun swift-format lint --recursive --strict Package.swift Sources Tests
 
 swift_test:
-	swift test
+	swift test --no-parallel
 
 swift_ios_build:
 	xcodebuild -scheme AltiveChat-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/altive-chat-derived CODE_SIGNING_ALLOWED=NO build

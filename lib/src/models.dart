@@ -1,4 +1,5 @@
 export 'models/altive_chat_room_theme.dart';
+export 'models/chat_draft_policy.dart';
 export 'models/chat_image_layout.dart';
 export 'models/chat_message.dart';
 export 'models/chat_user.dart';

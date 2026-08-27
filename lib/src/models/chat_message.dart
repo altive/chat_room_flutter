@@ -265,11 +265,9 @@ class ChatImagesMessage extends ChatUserMessage {
       imageAspectRatios:
           imageAspectRatios ??
           (imageUrls == null ? this.imageAspectRatios : null),
-      hasExplicitImageAspectRatios: imageAspectRatios != null
-          ? true
-          : imageUrls == null
-          ? this.hasExplicitImageAspectRatios
-          : false,
+      hasExplicitImageAspectRatios:
+          imageAspectRatios != null ||
+          (imageUrls == null && hasExplicitImageAspectRatios),
       caption: caption ?? this.caption,
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,

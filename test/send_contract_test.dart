@@ -46,4 +46,35 @@ void main() {
     expect(find.byIcon(Icons.send), findsNothing);
     expect(sendCount, 0);
   });
+
+  testWidgets('UTF-16上限で結合文字を分割せず入力を丸める', (tester) async {
+    String? sentText;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AltiveChatRoom(
+          theme: const AltiveChatRoomTheme(),
+          currentUserId: 'me',
+          messages: const [],
+          showSendButtonInTextField: true,
+          draftPolicy: const ChatDraftPolicy(
+            maximumLength: 3,
+            warningThreshold: 2,
+            lengthUnit: ChatDraftLengthUnit.utf16,
+          ),
+          onSendIconPressed: (value) => sentText = value.text,
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), 'A😀B');
+    await tester.pump();
+
+    expect(find.text('A😀'), findsOneWidget);
+    expect(find.text('3/3'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
+
+    expect(sentText, 'A😀');
+  });
 }

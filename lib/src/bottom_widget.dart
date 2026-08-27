@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'common_cached_network_image.dart';
 import 'inherited_altive_chat_room_theme.dart';
@@ -15,6 +16,7 @@ class BottomWidget extends StatefulWidget {
   const BottomWidget({
     super.key,
     this.textEditingController,
+    required this.draftPolicy,
     required this.onSendIconPressed,
     required this.hintText,
     required this.showSendButtonInTextField,
@@ -34,6 +36,9 @@ class BottomWidget extends StatefulWidget {
 
   /// 外部から渡す入力欄のコントローラー。
   final TextEditingController? textEditingController;
+
+  /// 入力値の長さ、上限、送信時の正規化を制御する方針。
+  final ChatDraftPolicy draftPolicy;
 
   /// 送信ボタン押下時のコールバック。
   final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
@@ -128,10 +133,15 @@ class _BottomWidgetState extends State<BottomWidget> {
     final textFieldSuffixBuilder = widget.textFieldSuffixBuilder;
     final messageTypeNotifier = widget.messageTypeNotifier;
     final sendButtonWidget = widget.sendButtonWidget;
-    final normalizedText = _effectiveController.text.trim();
+    final draft = _effectiveController.text;
+    final normalizedText = widget.draftPolicy.normalizedText(draft);
     final shouldShowSendButton =
-        normalizedText.isNotEmpty || widget.selectedSticker != null;
+        normalizedText != null || widget.selectedSticker != null;
     final stickerInputEnabled = widget.stickerPackages.isNotEmpty;
+    final maximumLength = widget.draftPolicy.maximumLength;
+    final draftLength = widget.draftPolicy.length(draft);
+    final shouldShowLength =
+        maximumLength != null && widget.draftPolicy.shouldShowLength(draft);
 
     final sendButton = IconButton(
       icon: sendButtonWidget ?? const Icon(Icons.send),
@@ -142,11 +152,11 @@ class _BottomWidgetState extends State<BottomWidget> {
           : null,
       onPressed: () {
         // 空白だけの本文は送信対象にせず、全プラットフォームで送信契約を揃える。
-        if (normalizedText.isEmpty && widget.selectedSticker == null) {
+        if (normalizedText == null && widget.selectedSticker == null) {
           return;
         }
         widget.onSendIconPressed.call((
-          text: normalizedText,
+          text: normalizedText ?? '',
           sticker: widget.selectedSticker,
         ));
         setState(() {
@@ -218,8 +228,21 @@ class _BottomWidgetState extends State<BottomWidget> {
                       focusNode: focusNode,
                       minLines: 1,
                       maxLines: 10,
+                      inputFormatters: [
+                        _ChatDraftInputFormatter(widget.draftPolicy),
+                      ],
                       decoration: InputDecoration(
                         hintText: widget.hintText,
+                        counter: shouldShowLength
+                            ? Text(
+                                '$draftLength/$maximumLength',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: draftLength > maximumLength
+                                      ? theme.colorScheme.error
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
+                              )
+                            : null,
                         suffixIcon: suffixWidgets.isEmpty
                             ? null
                             : Row(
@@ -255,6 +278,31 @@ class _BottomWidgetState extends State<BottomWidget> {
           ],
         );
       },
+    );
+  }
+}
+
+class _ChatDraftInputFormatter extends TextInputFormatter {
+  _ChatDraftInputFormatter(this.policy);
+
+  final ChatDraftPolicy policy;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // 日本語入力などの変換中は確定を待ち、IMEのcomposing rangeを壊さない。
+    if (!newValue.composing.isCollapsed) {
+      return newValue;
+    }
+    final limitedText = policy.limited(newValue.text);
+    if (limitedText == newValue.text) {
+      return newValue;
+    }
+    return TextEditingValue(
+      text: limitedText,
+      selection: TextSelection.collapsed(offset: limitedText.length),
     );
   }
 }

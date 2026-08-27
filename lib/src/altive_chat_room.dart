@@ -53,6 +53,7 @@ class AltiveChatRoom extends StatefulWidget {
     required this.messages,
     required this.onSendIconPressed,
     this.textEditingController,
+    this.draftPolicy = const ChatDraftPolicy.unrestricted(),
     this.isGroupChat = false,
     this.scrollController,
     this.selectableTextMessageId,
@@ -128,6 +129,9 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// テキストフィールドのコントローラー。
   final TextEditingController? textEditingController;
+
+  /// 入力値の長さ、上限、送信時の正規化を制御する方針。
+  final ChatDraftPolicy draftPolicy;
 
   /// スクロールコントローラー。
   final ScrollController? scrollController;
@@ -535,6 +539,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
                 if (!widget.hideBottomWidget) ...[
                   BottomWidget(
                     textEditingController: widget.textEditingController,
+                    draftPolicy: widget.draftPolicy,
                     onSendIconPressed: (value) {
                       widget.onSendIconPressed(value);
                       setState(() {

@@ -1,5 +1,8 @@
 ## Unreleased
 
+- FlutterへCharacter・UTF-16を選択できる入力長方針、上限制御、文字数表示を追加した。
+- Flutterへ、権限判定と実際の削除をアプリ側に保ったまま利用できる共通削除確認UIを追加した。
+
 ## 1.5.1 - 2026-08-27
 
 - Flutter、SwiftUI、Jetpack Composeで、単一画像の高さ制限付き可変比率を既定にし、

@@ -73,11 +73,33 @@ class ChatPage extends StatelessWidget {
       theme: const AltiveChatRoomTheme(),
       currentUserId: me.id,
       messages: messages,
+      draftPolicy: ChatDraftPolicy(
+        maximumLength: 1_000,
+        warningThreshold: 900,
+        lengthUnit: ChatDraftLengthUnit.utf16,
+      ),
       onSendIconPressed: (value) {
         // 送信処理
       },
     );
   }
+}
+```
+
+削除確認はpackageの共通UIを表示し、削除が選ばれた場合だけアプリ側の処理を実行します。
+
+```dart
+final shouldDelete = await showChatDeletionConfirmation(
+  context: context,
+  strings: const ChatDeletionConfirmationStrings(
+    title: 'メッセージを削除しますか？',
+    message: 'この操作は取り消せません。',
+    deleteButton: '削除',
+    cancelButton: 'キャンセル',
+  ),
+);
+if (shouldDelete) {
+  await repository.deleteMessage(messageId);
 }
 ```
 

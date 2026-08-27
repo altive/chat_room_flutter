@@ -7,8 +7,9 @@ import Testing
 struct ChatTimelineSectioningTests {
   @Test("先頭と日付変更時だけ日付区切りを開始する")
   func startsNewDay() {
-    let calendar = Calendar(identifier: .gregorian)
-    let current = Date(timeIntervalSince1970: 86_400)
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+    let current = Date(timeIntervalSince1970: 86_400 + 43_200)
 
     #expect(
       ChatTimelineSectioning.startsNewDay(

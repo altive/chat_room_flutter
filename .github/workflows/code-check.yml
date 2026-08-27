@@ -29,6 +29,9 @@ jobs:
           java-version: 17
           cache: gradle
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Set up Android SDK 37
         run: sdkmanager "platforms;android-37"
 
@@ -55,6 +58,24 @@ jobs:
 
       - name: Verify main push guard
         run: make push_main_test
+
+  flutter-golden:
+    name: Flutter golden
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Verify Flutter golden
+        run: make flutter_golden_test
 
   swift:
     name: SwiftUI

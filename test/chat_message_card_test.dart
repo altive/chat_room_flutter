@@ -53,57 +53,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('celebrationカードのlight外観を固定する', (tester) async {
-    tester.view
-      ..physicalSize = const Size(390, 360)
-      ..devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'celebrationカードのlight外観を固定する',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(390, 360)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(colorSchemeSeed: Colors.orange),
-        home: const Scaffold(
-          body: RepaintBoundary(
-            key: Key('message-card-golden'),
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ChatMessageCard(
-                    style: ChatMessageCardStyle.celebration,
-                    isOwnMessage: false,
-                    accessibilityLabel: 'Celebration card',
-                    header: Text(
-                      'Happy birthday, Alex!',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(colorSchemeSeed: Colors.orange),
+          home: const Scaffold(
+            body: RepaintBoundary(
+              key: Key('message-card-golden'),
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ChatMessageCard(
+                      style: ChatMessageCardStyle.celebration,
+                      isOwnMessage: false,
+                      accessibilityLabel: 'Celebration card',
+                      header: Text(
+                        'Happy birthday, Alex!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      content: Text('Wishing you a wonderful year ahead.'),
                     ),
-                    content: Text('Wishing you a wonderful year ahead.'),
-                  ),
-                  SizedBox(height: 20),
-                  ChatMessageCard(
-                    style: ChatMessageCardStyle.celebration,
-                    isOwnMessage: true,
-                    accessibilityLabel: 'Celebration card',
-                    header: Text(
-                      'Congratulations!',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    SizedBox(height: 20),
+                    ChatMessageCard(
+                      style: ChatMessageCardStyle.celebration,
+                      isOwnMessage: true,
+                      accessibilityLabel: 'Celebration card',
+                      header: Text(
+                        'Congratulations!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      content: Text('This card includes a footer.'),
+                      footer: Text('From your family'),
                     ),
-                    content: Text('This card includes a footer.'),
-                    footer: Text('From your family'),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await expectLater(
-      find.byKey(const Key('message-card-golden')),
-      matchesGoldenFile('goldens/chat_message_card.png'),
-    );
-  });
+      await expectLater(
+        find.byKey(const Key('message-card-golden')),
+        matchesGoldenFile('goldens/chat_message_card.png'),
+      );
+    },
+    tags: 'golden',
+  );
 }

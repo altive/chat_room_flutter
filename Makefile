@@ -1,4 +1,4 @@
-.PHONY: android_publish_local android_verify flutter_verify push_main push_main_test swift_format_lint swift_ios_build swift_test swift_verify verify
+.PHONY: android_publish_local android_verify flutter_golden_test flutter_verify push_main push_main_test swift_format_lint swift_ios_build swift_test swift_verify verify
 
 verify: flutter_verify swift_verify android_verify
 
@@ -17,7 +17,10 @@ android_publish_local:
 flutter_verify:
 	flutter pub get
 	flutter analyze
-	flutter test
+	flutter test --exclude-tags=golden
+
+flutter_golden_test:
+	flutter test --tags=golden
 
 swift_verify: swift_format_lint swift_test swift_ios_build
 

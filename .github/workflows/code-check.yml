@@ -33,7 +33,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Set up Android SDK 37
-        run: sdkmanager "platforms;android-37"
+        run: sdkmanager --channel=3 "platforms;android-37"
 
       - name: Verify Android packages
         run: make android_verify
@@ -81,6 +81,8 @@ jobs:
     name: SwiftUI
     runs-on: macos-latest
     timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

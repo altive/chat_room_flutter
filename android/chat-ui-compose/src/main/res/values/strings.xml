@@ -10,6 +10,8 @@
   <string name="altive_chat_expand_source_buttons">Show attachment buttons</string>
   <string name="altive_chat_remove_image">Remove selected image</string>
   <string name="altive_chat_image">Image</string>
+  <string name="altive_chat_sticker">Sticker</string>
+  <string name="altive_chat_sticker_loading_failed">Failed to load sticker</string>
   <string name="altive_chat_phone_action_title">Contact phone number</string>
   <string name="altive_chat_phone_action_message">Choose an action</string>
   <string name="altive_chat_call">Call</string>

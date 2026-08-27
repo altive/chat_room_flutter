@@ -11,6 +11,9 @@ public enum ChatMessageContent: Hashable, Sendable {
   /// ユーザーが1回の操作で送信した1枚以上の画像と本文。
   case imagesWithCaption(images: [ChatImage], caption: String)
 
+  /// ユーザーが送信したステッカー。
+  case sticker(ChatStickerReference)
+
   /// 会話内へ表示するシステム文言。
   case system(String)
 }

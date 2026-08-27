@@ -1,5 +1,7 @@
 ## Unreleased
 
+- SwiftUIとJetpack Composeへ構造化ステッカーメッセージと、読み込み・失敗・再試行を
+  含む共通表示を追加した。
 - FlutterへCharacter・UTF-16を選択できる入力長方針、上限制御、文字数表示を追加した。
 - Flutterへ、権限判定と実際の削除をアプリ側に保ったまま利用できる共通削除確認UIを追加した。
 

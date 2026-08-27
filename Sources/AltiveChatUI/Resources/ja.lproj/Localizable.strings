@@ -9,6 +9,8 @@
 "chat.delivery.failed" = "送信できませんでした";
 "chat.image.label" = "画像";
 "chat.image.loadingFailed" = "画像を読み込めませんでした";
+"chat.sticker.label" = "ステッカー";
+"chat.sticker.loadingFailed" = "ステッカーを読み込めませんでした";
 "chat.timeline.latest" = "最新メッセージへ移動";
 "chat.link.phone.title" = "操作を選択";
 "chat.link.phone.call" = "電話";

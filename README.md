@@ -86,6 +86,20 @@ class ChatPage extends StatelessWidget {
 }
 ```
 
+ステッカーは`ChatMessageContent.sticker`として渡します。catalog取得、固定revisionの
+asset検証と画像dataの解決はアプリ側で行い、表示寸法、読み込み・失敗・再試行、
+送信状態はパッケージが揃えます。
+
+```swift
+let stickerLoader = ChatStickerImageLoader { reference in
+  let asset = try await stickerRepository.asset(for: reference)
+  return ChatResolvedSticker(
+    imageData: try await stickerRepository.imageData(for: asset),
+    accessibilityLabel: asset.accessibilityLabel
+  )
+}
+```
+
 削除確認はpackageの共通UIを表示し、削除が選ばれた場合だけアプリ側の処理を実行します。
 
 ```dart
@@ -277,6 +291,19 @@ ChatTimeline(
   ),
 ) {
   items(items, key = Item::id) { item -> AppSpecificChatRow(item) }
+}
+```
+
+Composeでも`ChatMessageContent.Sticker`と`ChatStickerImageLoader`を使用します。
+loaderは検証済み画像dataだけを返し、RepositoryやFirebaseをpackageへ渡しません。
+
+```kotlin
+val stickerLoader = ChatStickerImageLoader { reference ->
+  val asset = stickerRepository.asset(reference)
+  ChatResolvedSticker(
+    imageData = stickerRepository.imageData(asset),
+    accessibilityLabel = asset.accessibilityLabel,
+  )
 }
 ```
 

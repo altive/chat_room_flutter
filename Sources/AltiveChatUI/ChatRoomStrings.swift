@@ -38,6 +38,12 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 画像の読み込み失敗を示す文言。
   public var imageLoadingFailedLabel: String
 
+  /// ステッカーの代替ラベル。
+  public var stickerLabel: String
+
+  /// ステッカーの読み込み失敗を示す文言。
+  public var stickerLoadingFailedLabel: String
+
   /// 最新メッセージへ移動するボタンの文言。
   public var latestMessagesLabel: String
 
@@ -67,6 +73,8 @@ public struct ChatRoomStrings: Equatable, Sendable {
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
     imageLoadingFailedLabel: String = "Failed to load image",
+    stickerLabel: String = "Sticker",
+    stickerLoadingFailedLabel: String = "Failed to load sticker",
     latestMessagesLabel: String = "Latest messages",
     phoneActionTitle: String = "Choose an action",
     callActionLabel: String = "Call",
@@ -85,6 +93,8 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
     self.imageLoadingFailedLabel = imageLoadingFailedLabel
+    self.stickerLabel = stickerLabel
+    self.stickerLoadingFailedLabel = stickerLoadingFailedLabel
     self.latestMessagesLabel = latestMessagesLabel
     self.phoneActionTitle = phoneActionTitle
     self.callActionLabel = callActionLabel
@@ -110,6 +120,11 @@ public struct ChatRoomStrings: Equatable, Sendable {
       removeImageButtonLabel: String(localized: "chat.composer.removeImage", bundle: .module),
       imageLabel: String(localized: "chat.image.label", bundle: .module),
       imageLoadingFailedLabel: String(localized: "chat.image.loadingFailed", bundle: .module),
+      stickerLabel: String(localized: "chat.sticker.label", bundle: .module),
+      stickerLoadingFailedLabel: String(
+        localized: "chat.sticker.loadingFailed",
+        bundle: .module
+      ),
       latestMessagesLabel: String(localized: "chat.timeline.latest", bundle: .module),
       phoneActionTitle: String(localized: "chat.link.phone.title", bundle: .module),
       callActionLabel: String(localized: "chat.link.phone.call", bundle: .module),

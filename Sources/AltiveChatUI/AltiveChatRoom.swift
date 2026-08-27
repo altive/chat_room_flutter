@@ -16,6 +16,7 @@ public struct AltiveChatRoom: View {
   private let isPreparingCameraImage: Bool
   private let isSending: Bool
   private let imageLoader: ChatImageLoader
+  private let stickerImageLoader: ChatStickerImageLoader?
   private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
   private let latestProximityThreshold: CGFloat
@@ -49,6 +50,7 @@ public struct AltiveChatRoom: View {
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
     imageLoader: ChatImageLoader = .standard,
+    stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     latestProximityThreshold: CGFloat = 80,
@@ -69,6 +71,7 @@ public struct AltiveChatRoom: View {
     isPreparingCameraImage = false
     isSending = false
     self.imageLoader = imageLoader
+    self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.latestProximityThreshold = max(0, latestProximityThreshold)
@@ -99,6 +102,7 @@ public struct AltiveChatRoom: View {
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
     imageLoader: ChatImageLoader = .standard,
+    stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     latestProximityThreshold: CGFloat = 80,
@@ -123,6 +127,7 @@ public struct AltiveChatRoom: View {
     self.isPreparingCameraImage = isPreparingCameraImage
     self.isSending = isSending
     self.imageLoader = imageLoader
+    self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.latestProximityThreshold = max(0, latestProximityThreshold)
@@ -168,6 +173,7 @@ public struct AltiveChatRoom: View {
               strings: strings,
               showsSenderName: showsSenderName,
               imageLoader: imageLoader,
+              stickerImageLoader: stickerImageLoader,
               singleImageLayout: singleImageLayout,
               multipleImageLayout: multipleImageLayout,
               onImageTap: onImageTap,

@@ -9,6 +9,8 @@
 "chat.delivery.failed" = "Failed to send";
 "chat.image.label" = "Image";
 "chat.image.loadingFailed" = "Failed to load image";
+"chat.sticker.label" = "Sticker";
+"chat.sticker.loadingFailed" = "Failed to load sticker";
 "chat.timeline.latest" = "Latest messages";
 "chat.link.phone.title" = "Choose an action";
 "chat.link.phone.call" = "Call";

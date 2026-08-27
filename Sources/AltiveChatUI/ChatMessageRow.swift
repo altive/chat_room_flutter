@@ -9,6 +9,7 @@ public struct ChatMessageRow: View {
   private let strings: ChatRoomStrings
   private let showsSenderName: Bool
   private let imageLoader: ChatImageLoader
+  private let stickerImageLoader: ChatStickerImageLoader?
   private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
   private let onImageTap: ((String, Int) -> Void)?
@@ -22,6 +23,7 @@ public struct ChatMessageRow: View {
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
     imageLoader: ChatImageLoader = .standard,
+    stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     onImageTap: ((String, Int) -> Void)? = nil,
@@ -33,6 +35,7 @@ public struct ChatMessageRow: View {
     self.strings = strings
     self.showsSenderName = showsSenderName
     self.imageLoader = imageLoader
+    self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.onImageTap = onImageTap
@@ -47,9 +50,40 @@ public struct ChatMessageRow: View {
       imageMessage(images, caption: nil)
     case .imagesWithCaption(let images, let caption):
       imageMessage(images, caption: caption)
+    case .sticker(let reference):
+      stickerMessage(reference)
     case .system(let text):
       systemMessage(text)
     }
+  }
+
+  private func stickerMessage(_ reference: ChatStickerReference) -> some View {
+    let isOwnMessage = message.isSent(by: currentUserID)
+
+    return HStack(alignment: .bottom, spacing: 8) {
+      if isOwnMessage { Spacer(minLength: 8) }
+
+      VStack(alignment: isOwnMessage ? .trailing : .leading, spacing: 4) {
+        if showsSenderName, !isOwnMessage {
+          Text(message.sender?.displayName ?? strings.unknownSender)
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+
+        ChatStickerMessageContent(
+          reference: reference,
+          imageLoader: stickerImageLoader,
+          stickerLabel: strings.stickerLabel,
+          loadingFailureLabel: strings.stickerLoadingFailedLabel
+        )
+
+        deliveryMetadata
+      }
+      .accessibilityElement(children: .combine)
+
+      if !isOwnMessage { Spacer(minLength: 8) }
+    }
+    .frame(maxWidth: .infinity)
   }
 
   private func imageMessage(_ images: [ChatImage], caption: String?) -> some View {

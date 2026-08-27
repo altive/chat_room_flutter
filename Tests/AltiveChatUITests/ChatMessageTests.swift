@@ -31,4 +31,22 @@ struct ChatMessageTests {
     #expect(message.sender == nil)
     #expect(message.content == .system("Joined"))
   }
+
+  @Test("構造化ステッカー参照をメッセージ内容として保持する")
+  func keepsStickerReference() {
+    let reference = ChatStickerReference(
+      packID: "standard",
+      stickerID: "thanks",
+      locale: "ja",
+      assetRevision: 3
+    )
+    let message = ChatMessage(
+      id: "sticker",
+      createdAt: .init(timeIntervalSince1970: 1_700_000_000),
+      sender: ChatUser(id: "me", displayName: "Me"),
+      content: .sticker(reference)
+    )
+
+    #expect(message.content == .sticker(reference))
+  }
 }

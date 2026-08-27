@@ -54,6 +54,8 @@ data class ChatRoomStrings(
   val smsButtonLabel: String = "SMS",
   val cancelButtonLabel: String = "Cancel",
   val latestButtonLabel: String = "Latest messages",
+  val stickerLabel: String = "Sticker",
+  val stickerLoadingFailedLabel: String = "Failed to load sticker",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -75,6 +77,8 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_sms),
         stringResource(R.string.altive_chat_cancel),
         stringResource(R.string.altive_chat_latest),
+        stringResource(R.string.altive_chat_sticker),
+        stringResource(R.string.altive_chat_sticker_loading_failed),
       )
     }
   }
@@ -102,6 +106,7 @@ fun AltiveChatRoom(
   onRetry: ((String) -> Unit)? = null,
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
+  stickerImageLoader: ChatStickerImageLoader? = null,
   onSend: (String) -> Unit,
 ) {
   val timelineState = rememberChatTimelineState()
@@ -143,6 +148,7 @@ fun AltiveChatRoom(
               onImageTap = onImageTap,
               imageContent = imageContent,
               transitioningImageContent = transitioningImageContent,
+              stickerImageLoader = stickerImageLoader,
             )
           }
         }
@@ -203,6 +209,7 @@ fun AltiveChatRoom(
   focusRequester: FocusRequester = remember { FocusRequester() },
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
+  stickerImageLoader: ChatStickerImageLoader? = null,
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
@@ -347,6 +354,7 @@ fun AltiveChatRoom(
                 onImageTap = onImageTap,
                 imageContent = imageContent,
                 transitioningImageContent = transitioningImageContent,
+                stickerImageLoader = stickerImageLoader,
               )
             }
           }
@@ -421,6 +429,7 @@ fun ChatMessageRow(
   onImageTap: ((messageId: String, imageIndex: Int) -> Unit)? = null,
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
+  stickerImageLoader: ChatStickerImageLoader? = null,
 ) {
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
@@ -492,6 +501,61 @@ fun ChatMessageRow(
         imageContent = imageContent,
         transitioningImageContent = transitioningImageContent,
       )
+    }
+    is ChatMessageContent.Sticker -> {
+      ChatStickerMessageRow(
+        message = message,
+        reference = content.reference,
+        currentUserId = currentUserId,
+        theme = theme,
+        strings = strings,
+        showsSenderName = showsSenderName,
+        imageLoader = stickerImageLoader,
+        onRetry = onRetry,
+      )
+    }
+  }
+}
+
+@Composable
+private fun ChatStickerMessageRow(
+  message: ChatMessage,
+  reference: ChatStickerReference,
+  currentUserId: String,
+  theme: ChatRoomTheme,
+  strings: ChatRoomStrings,
+  showsSenderName: Boolean,
+  imageLoader: ChatStickerImageLoader?,
+  onRetry: (() -> Unit)?,
+) {
+  val own = message.isSentBy(currentUserId)
+  Row(
+    Modifier.fillMaxWidth(),
+    horizontalArrangement = if (own) Arrangement.End else Arrangement.Start,
+  ) {
+    Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
+      if (showsSenderName && !own) {
+        Text(
+          message.sender?.displayName ?: strings.unknownSender,
+          style = MaterialTheme.typography.labelSmall,
+        )
+      }
+      ChatStickerMessageContent(
+        reference = reference,
+        imageLoader = imageLoader,
+        stickerLabel = strings.stickerLabel,
+        loadingFailureLabel = strings.stickerLoadingFailedLabel,
+      )
+      Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(formatTime(message.createdAtEpochMillis), style = MaterialTheme.typography.labelSmall)
+        ChatDeliveryIndicator(
+          message.deliveryState,
+          strings.sendingLabel,
+          strings.failedLabel,
+          theme,
+          onRetry,
+        )
+      }
     }
   }
 }

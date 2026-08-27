@@ -10,11 +10,13 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import java.util.concurrent.atomic.AtomicInteger
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -63,6 +65,7 @@ class AltiveChatRoomTest {
           currentUserId = "me",
           draft = "",
           onDraftChange = {},
+          strings = ChatRoomStrings("", "", "", "", "Failed to send. Retry", ""),
           onRetry = { retriedMessageId = it },
           onSend = {},
         )
@@ -166,12 +169,57 @@ class AltiveChatRoomTest {
           currentUserId = "me",
           draft = "",
           onDraftChange = {},
+          imageContent = { Text("Image") },
           onSend = {},
         )
       }
     }
 
     compose.onNodeWithText("故障した画面です").assertIsDisplayed()
+  }
+
+  @Test fun `ステッカーassetを解決できない場合は共通の再試行表示を出す`() {
+    val attempts = AtomicInteger()
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = listOf(
+            ChatMessage(
+              id = "sticker",
+              createdAtEpochMillis = 1L,
+              sender = ChatUser("me", "Me"),
+              content = ChatMessageContent.Sticker(
+                ChatStickerReference("standard", "thanks", "ja", 3),
+              ),
+            ),
+          ),
+          currentUserId = "me",
+          draft = "",
+          onDraftChange = {},
+          strings = ChatRoomStrings(
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            stickerLoadingFailedLabel = "Failed to load sticker",
+          ),
+          stickerImageLoader = ChatStickerImageLoader {
+            attempts.incrementAndGet()
+            error("assetを解決できません")
+          },
+          onSend = {},
+        )
+      }
+    }
+
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose.onAllNodesWithText("Failed to load sticker").fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNodeWithText("Failed to load sticker").assertIsDisplayed()
+      .performClick()
+    compose.waitUntil(timeoutMillis = 5_000) { attempts.get() == 2 }
   }
 
   @Test fun `通常本文と画像captionとシステム本文にリンクを表示する`() {
@@ -202,6 +250,7 @@ class AltiveChatRoomTest {
           currentUserId = "me",
           draft = "",
           onDraftChange = {},
+          imageContent = { Text("Image") },
           onSend = {},
         )
       }

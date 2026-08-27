@@ -10,6 +10,8 @@
   <string name="altive_chat_expand_source_buttons">添付ボタンを表示</string>
   <string name="altive_chat_remove_image">選択画像を削除</string>
   <string name="altive_chat_image">画像</string>
+  <string name="altive_chat_sticker">ステッカー</string>
+  <string name="altive_chat_sticker_loading_failed">ステッカーを読み込めませんでした</string>
   <string name="altive_chat_phone_action_title">電話番号への連絡</string>
   <string name="altive_chat_phone_action_message">操作を選択してください</string>
   <string name="altive_chat_call">電話</string>

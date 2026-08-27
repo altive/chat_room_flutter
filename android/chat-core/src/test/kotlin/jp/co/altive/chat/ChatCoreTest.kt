@@ -112,6 +112,13 @@ class ChatCoreTest {
     assertEquals("故障した画面です", content.caption)
   }
 
+  @Test fun `構造化ステッカー参照をメッセージへ保持する`() {
+    val reference = ChatStickerReference("standard", "thanks", "ja", 3)
+    val content = ChatMessageContent.Sticker(reference)
+
+    assertEquals(reference, content.reference)
+  }
+
   @Test fun clampsInputSurfaceGeometry() {
     assertEquals(310f, ChatInputSurfaceGeometry.keyboardContentHeight(344f, 34f))
     assertEquals(261f, ChatInputSurfaceGeometry.inputSurfaceHeight(310f, 49f))

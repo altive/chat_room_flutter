@@ -37,6 +37,7 @@ class ChatImageGridTest {
           images = testImages(),
           imageLabel = "画像",
           multipleImageLayout = ChatMultipleImageLayout.LeadingWideGrid,
+          imageContent = { Text("画像") },
         )
       }
     }
@@ -58,6 +59,7 @@ class ChatImageGridTest {
           images = testImages(),
           imageLabel = "画像",
           multipleImageLayout = ChatMultipleImageLayout.Mosaic,
+          imageContent = { Text("画像") },
         )
       }
     }
@@ -78,6 +80,7 @@ class ChatImageGridTest {
           messageId = "message",
           images = testImages(5),
           imageLabel = "画像",
+          imageContent = { Text("画像") },
         )
       }
     }

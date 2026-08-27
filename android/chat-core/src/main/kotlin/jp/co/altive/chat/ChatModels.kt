@@ -11,6 +11,7 @@ sealed interface ChatMessageContent {
   data class Text(val value: String) : ChatMessageContent
   data class Images(val values: List<ChatImage>) : ChatMessageContent
   data class ImagesWithCaption(val values: List<ChatImage>, val caption: String) : ChatMessageContent
+  data class Sticker(val reference: ChatStickerReference) : ChatMessageContent
   data class System(val value: String) : ChatMessageContent
 }
 

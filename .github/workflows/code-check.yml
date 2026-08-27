@@ -53,6 +53,9 @@ jobs:
       - name: Verify Flutter package
         run: make flutter_verify
 
+      - name: Verify main push guard
+        run: make push_main_test
+
   swift:
     name: SwiftUI
     runs-on: macos-latest

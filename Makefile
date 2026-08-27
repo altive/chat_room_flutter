@@ -1,6 +1,12 @@
-.PHONY: android_publish_local android_verify flutter_verify swift_format_lint swift_ios_build swift_test swift_verify verify
+.PHONY: android_publish_local android_verify flutter_verify push_main push_main_test swift_format_lint swift_ios_build swift_test swift_verify verify
 
 verify: flutter_verify swift_verify android_verify
+
+push_main:
+	bash scripts/push_main.sh
+
+push_main_test:
+	bash scripts/push_main_test.sh
 
 android_verify:
 	cd android && ./gradlew :chat-core:test :chat-ui-compose:lintDebug :chat-ui-compose:testDebugUnitTest :chat-ui-compose:compileDebugAndroidTestKotlin :chat-core:generatePomFileForMavenPublication :chat-ui-compose:generatePomFileForReleasePublication

@@ -7,6 +7,8 @@
 - `contract/chat-ui-contract.md`を、ライブラリと利用アプリの責務分担の正本とする。
 - タスク完了前に差分をセルフレビューし、関連するformat、lint、build、testを行う。
 - タスク完了後は、依頼単位の適切な粒度とConventional Commitsでコミットする。
+- `main`をpushするときは、直接`git push`せず`make push_main`を使う。このコマンドが
+  未コミット差分、branch、remoteとの差分を検査し、安全にpushできない状態を拒否する。
 
 ## Fanely・Nokorisへの横断反映
 

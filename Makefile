@@ -28,7 +28,11 @@ swift_format_lint:
 	xcrun swift-format lint --recursive --strict Package.swift Sources Tests
 
 swift_test:
-	swift test --no-parallel
+	swift test --no-parallel --skip ChatTimelineScrollViewTests
+	# AppKitのホスティング状態をテスト間で共有するとrunner上でクラッシュするため、各テストを別プロセスで実行する。
+	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsLatestAtBottom
+	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsSpecifiedItemAtCenter
+	swift test --skip-build --filter ChatTimelineScrollViewTests.preservesPositionWhenHistoryIsPrepended
 
 swift_ios_build:
 	xcodebuild -scheme AltiveChat-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/altive-chat-derived CODE_SIGNING_ALLOWED=NO build

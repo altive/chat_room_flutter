@@ -18,6 +18,7 @@ enum ChatTimelineProximity {
 public struct ChatTimelineProxy {
   fileprivate let scrollProxy: ScrollViewProxy
   fileprivate let bottomAnchorID: ChatTimelineBottomAnchorID
+  fileprivate let prepareForProxyPositioning: @MainActor () -> Void
 
   /// 指定した表示要素へ移動する。
   public func scrollTo<ID: Hashable>(
@@ -25,6 +26,7 @@ public struct ChatTimelineProxy {
     anchor: UnitPoint? = nil,
     animation: Animation? = nil
   ) {
+    prepareForProxyPositioning()
     perform(animation: animation) {
       scrollProxy.scrollTo(id, anchor: anchor)
     }
@@ -32,6 +34,14 @@ public struct ChatTimelineProxy {
 
   /// タイムラインの末尾へ移動する。
   public func scrollToBottom(animation: Animation? = nil) {
+    prepareForProxyPositioning()
+    perform(animation: animation) {
+      scrollProxy.scrollTo(bottomAnchorID, anchor: .bottom)
+    }
+  }
+
+  /// Bindingの末尾目標を維持したまま実ScrollViewへ末尾位置を再適用する。
+  fileprivate func enforceBottomPosition(animation: Animation? = nil) {
     perform(animation: animation) {
       scrollProxy.scrollTo(bottomAnchorID, anchor: .bottom)
     }
@@ -43,6 +53,7 @@ public struct ChatTimelineProxy {
     anchor: UnitPoint = .top,
     while operation: @MainActor () async -> Void
   ) async {
+    prepareForProxyPositioning()
     await operation()
     await waitForTimelineLayout()
     var transaction = Transaction()
@@ -312,7 +323,8 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     ScrollViewReader { scrollProxy in
       let timelineProxy = ChatTimelineProxy(
         scrollProxy: scrollProxy,
-        bottomAnchorID: bottomAnchorID
+        bottomAnchorID: bottomAnchorID,
+        prepareForProxyPositioning: { visiblePosition = nil }
       )
       ScrollView {
         LazyVStack(spacing: spacing) {
@@ -350,7 +362,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         if latestControl.isEnabled, showsLatestControl {
           Button {
             showsLatestControl = false
-            timelineProxy.scrollToBottom(animation: followLatestAnimation)
+            positionLatest(using: timelineProxy, animation: followLatestAnimation)
           } label: {
             Label(latestControl.label, systemImage: latestControl.systemImage)
               .labelStyle(.iconOnly)
@@ -369,6 +381,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       .onPreferenceChange(ChatTimelineViewportHeightKey.self) { height in
         viewportHeight = height
         updateLatestProximity()
+        completeInitialLatestPositionIfNeeded(using: timelineProxy)
       }
       .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { offset in
         bottomOffset = offset
@@ -378,11 +391,15 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           return
         }
         updateLatestProximity()
+        completeInitialLatestPositionIfNeeded(using: timelineProxy)
       }
       .onChange(of: visiblePosition) { _, position in
         if position == AnyHashable(bottomAnchorID) {
           isNearBottom = true
           showsLatestControl = false
+          if case .latest = initialPosition {
+            completeInitialPositioning(scope: positioningScope, using: timelineProxy)
+          }
         } else {
           updateLatestProximity()
         }
@@ -394,7 +411,11 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         positioningState.reset()
         positionInitiallyIfNeeded(using: timelineProxy)
       }
-      .onChange(of: isReadyForInitialPositioning) { _, _ in
+      .onChange(of: isReadyForInitialPositioning) { _, isReady in
+        guard isReady else {
+          positioningState.cancelInitialPositioning(scope: positioningScope)
+          return
+        }
         positionInitiallyIfNeeded(using: timelineProxy)
       }
       .onChange(of: followLatestTrigger) { previousTrigger, trigger in
@@ -415,11 +436,11 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           return
         }
         showsLatestControl = false
-        timelineProxy.scrollToBottom(animation: followLatestAnimation)
+        positionLatest(using: timelineProxy, animation: followLatestAnimation)
         Task { @MainActor in
           await Task.yield()
           guard positioningState.positionedScope == positioningScope else { return }
-          timelineProxy.scrollToBottom()
+          positionLatest(using: timelineProxy)
         }
       }
     }
@@ -519,13 +540,18 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       )
     else { return }
 
+    let scope = positioningScope
     applyInitialPosition(using: proxy)
     Task { @MainActor in
       await waitForInitialLayout()
-      guard positioningState.positionedScope == positioningScope else { return }
+      guard positioningState.pendingScope == scope, positioningScope == scope else { return }
       applyInitialPosition(using: proxy)
-      onInitialPositioning(proxy)
-      requestAutomaticHistoryIfNeeded(using: proxy)
+      switch initialPosition {
+      case .latest:
+        completeInitialLatestPositionIfNeeded(using: proxy)
+      case .item:
+        completeInitialPositioning(scope: scope, using: proxy)
+      }
     }
   }
 
@@ -541,10 +567,55 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private func applyInitialPosition(using proxy: ChatTimelineProxy) {
     switch initialPosition {
     case .latest:
-      proxy.scrollToBottom()
+      positionLatest(using: proxy)
     case .item(let id, let anchor):
+      visiblePosition = nil
       proxy.scrollTo(id, anchor: anchor)
     }
+  }
+
+  /// SwiftUIが末尾anchorを配置できるまで最新位置をscroll targetとして保持する。
+  private func positionLatest(
+    using proxy: ChatTimelineProxy,
+    animation: Animation? = nil
+  ) {
+    let target = AnyHashable(bottomAnchorID)
+    if let animation {
+      withAnimation(animation) {
+        visiblePosition = target
+      }
+    } else {
+      visiblePosition = target
+    }
+    proxy.enforceBottomPosition(animation: animation)
+  }
+
+  /// 末尾anchorがviewport内へ到達した時点で初期配置を完了する。
+  private func completeInitialLatestPositionIfNeeded(using proxy: ChatTimelineProxy) {
+    let scope = positioningScope
+    guard
+      positioningState.pendingScope == scope,
+      case .latest = initialPosition,
+      let bottomOffset,
+      viewportHeight > 0
+    else { return }
+
+    guard bottomOffset <= viewportHeight + 2 else {
+      positionLatest(using: proxy)
+      return
+    }
+    completeInitialPositioning(scope: scope, using: proxy)
+  }
+
+  /// 初期配置の完了通知と自動履歴読み込みをスコープごとに一度だけ実行する。
+  private func completeInitialPositioning(
+    scope: AnyHashable,
+    using proxy: ChatTimelineProxy
+  ) {
+    guard positioningState.completeInitialPositioning(scope: scope) else { return }
+    onInitialPositioning(proxy)
+    guard positioningState.positionedScope == positioningScope else { return }
+    requestAutomaticHistoryIfNeeded(using: proxy)
   }
 
   private func waitForInitialLayout() async {
@@ -597,15 +668,29 @@ private struct ChatTimelineBottomOffsetKey: PreferenceKey {
 }
 
 struct ChatTimelinePositioningState<Scope: Hashable> {
+  private(set) var pendingScope: Scope?
   private(set) var positionedScope: Scope?
 
   mutating func beginInitialPositioning(scope: Scope, isReady: Bool) -> Bool {
-    guard isReady, positionedScope != scope else { return false }
+    guard isReady, positionedScope != scope, pendingScope != scope else { return false }
+    pendingScope = scope
+    return true
+  }
+
+  mutating func completeInitialPositioning(scope: Scope) -> Bool {
+    guard pendingScope == scope else { return false }
+    pendingScope = nil
     positionedScope = scope
     return true
   }
 
+  mutating func cancelInitialPositioning(scope: Scope) {
+    guard pendingScope == scope else { return }
+    pendingScope = nil
+  }
+
   mutating func reset() {
+    pendingScope = nil
     positionedScope = nil
   }
 

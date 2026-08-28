@@ -34,6 +34,29 @@
       #expect(abs(scrollView.documentVisibleRect.midY - expectedItemCenter) < 24)
     }
 
+    @Test("非表示中に項目が届いたタイムラインを表示時に末尾へ配置する")
+    @MainActor
+    func keepsValidPositionWhenHiddenTimelineBecomesReady() async throws {
+      let model = ChatTimelineDelayedVisibilityTestModel()
+      let content = ChatTimelineDelayedVisibilityTestView(model: model)
+        .frame(width: 320, height: 320)
+      let hostedView = NSHostingView(rootView: content)
+      let hosted = host(view: hostedView)
+      defer { hosted.window.close() }
+
+      await settleLayout(of: hosted.view)
+      #expect(model.initialPositioningCount == 0)
+
+      model.items = Array(0..<40)
+      model.composerHeight = 64
+      model.isVisible = true
+      await settleLayout(of: hosted.view, iterations: 12)
+
+      let scrollView = try #require(findScrollView(in: hosted.view))
+      expectValidPosition(in: scrollView)
+      #expect(model.initialPositioningCount == 1)
+    }
+
     @Test("履歴追加後も実ScrollViewで先頭項目の位置を維持する")
     @MainActor
     func preservesPositionWhenHistoryIsPrepended() async throws {
@@ -103,8 +126,8 @@
     }
 
     @MainActor
-    private func settleLayout(of view: NSView) async {
-      for _ in 0..<6 {
+    private func settleLayout(of view: NSView, iterations: Int = 6) async {
+      for _ in 0..<iterations {
         view.layoutSubtreeIfNeeded()
         await withCheckedContinuation { continuation in
           DispatchQueue.main.async {
@@ -112,6 +135,34 @@
           }
         }
       }
+    }
+
+    @MainActor
+    private func expectLatestPosition(in scrollView: NSScrollView) {
+      guard let documentView = scrollView.documentView else {
+        Issue.record("ScrollViewのdocumentViewを取得できませんでした。")
+        return
+      }
+      let visibleRect = scrollView.documentVisibleRect
+      let maximumOffset = max(0, documentView.bounds.height - visibleRect.height)
+
+      #expect(visibleRect.minY >= -2)
+      #expect(visibleRect.minY <= maximumOffset + 2)
+      #expect(abs(visibleRect.minY - maximumOffset) < 2)
+    }
+
+    @MainActor
+    private func expectValidPosition(in scrollView: NSScrollView) {
+      guard let documentView = scrollView.documentView else {
+        Issue.record("ScrollViewのdocumentViewを取得できませんでした。")
+        return
+      }
+      let visibleRect = scrollView.documentVisibleRect
+      let maximumOffset = max(0, documentView.bounds.height - visibleRect.height)
+
+      #expect(visibleRect.minY >= -2)
+      #expect(visibleRect.minY <= maximumOffset + 2)
+      #expect(visibleRect.intersects(documentView.bounds))
     }
 
     @MainActor
@@ -143,6 +194,40 @@
   @MainActor
   private final class ChatTimelineProxyBox {
     var proxy: ChatTimelineProxy?
+  }
+
+  @MainActor
+  private final class ChatTimelineDelayedVisibilityTestModel: ObservableObject {
+    @Published var items: [Int] = []
+    @Published var isVisible = false
+    @Published var composerHeight: CGFloat = 0
+    var initialPositioningCount = 0
+  }
+
+  private struct ChatTimelineDelayedVisibilityTestView: View {
+    @ObservedObject var model: ChatTimelineDelayedVisibilityTestModel
+
+    var body: some View {
+      VStack(spacing: 0) {
+        ChatTimeline(
+          timelineID: "delayed-visibility-test",
+          isReadyForInitialPositioning: model.isVisible && !model.items.isEmpty,
+          initialPosition: ChatTimelineInitialPosition<Int>.latest,
+          followLatestTrigger: 0,
+          followLatestAnimation: nil,
+          spacing: 0,
+          onInitialPositioning: { _ in model.initialPositioningCount += 1 }
+        ) { _ in
+          ForEach(model.items, id: \.self) { id in
+            Text(verbatim: "項目\(id)")
+              .frame(maxWidth: .infinity)
+              .frame(height: 40)
+              .id(id)
+          }
+        }
+        Color.clear.frame(height: model.composerHeight)
+      }
+    }
   }
 
   private struct ChatTimelineHistoryTestView: View {

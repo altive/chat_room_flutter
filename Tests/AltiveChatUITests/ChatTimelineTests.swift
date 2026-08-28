@@ -22,8 +22,8 @@ struct ChatTimelineTests {
     )
   }
 
-  @Test("準備完了後にスコープごとに1回だけ初期位置を決定する")
-  func positionsOncePerScope() {
+  @Test("準備完了後も到達確認までは初期位置を要求中として扱う")
+  func keepsInitialPositionPendingUntilCompletion() {
     var state = ChatTimelinePositioningState<String>()
 
     let positionsBeforeReady = state.beginInitialPositioning(scope: "family-a", isReady: false)
@@ -33,11 +33,52 @@ struct ChatTimelineTests {
     #expect(!positionsBeforeReady)
     #expect(positionsWhenReady)
     #expect(!positionsAgain)
+    #expect(state.pendingScope == "family-a")
+    #expect(state.positionedScope == nil)
+    let completesOtherScope = state.completeInitialPositioning(scope: "family-b")
+    let completesPendingScope = state.completeInitialPositioning(scope: "family-a")
+    #expect(!completesOtherScope)
+    #expect(completesPendingScope)
+    #expect(state.pendingScope == nil)
+    #expect(state.positionedScope == "family-a")
 
     state.reset()
 
     let positionsNewScope = state.beginInitialPositioning(scope: "family-b", isReady: true)
     #expect(positionsNewScope)
+    #expect(state.pendingScope == "family-b")
+  }
+
+  @Test("リセット前の初期位置完了を新しいスコープへ反映しない")
+  func ignoresCompletionFromResetScope() {
+    var state = ChatTimelinePositioningState<String>()
+
+    let beginsFirstScope = state.beginInitialPositioning(scope: "family-a", isReady: true)
+    #expect(beginsFirstScope)
+    state.reset()
+    let beginsSecondScope = state.beginInitialPositioning(scope: "family-b", isReady: true)
+    #expect(beginsSecondScope)
+
+    let completesResetScope = state.completeInitialPositioning(scope: "family-a")
+    #expect(!completesResetScope)
+    #expect(state.pendingScope == "family-b")
+    let completesCurrentScope = state.completeInitialPositioning(scope: "family-b")
+    #expect(completesCurrentScope)
+    #expect(state.positionedScope == "family-b")
+  }
+
+  @Test("準備解除後は同じスコープの初期位置を再要求できる")
+  func retriesInitialPositionAfterReadinessReturns() {
+    var state = ChatTimelinePositioningState<String>()
+
+    let beginsPositioning = state.beginInitialPositioning(scope: "family-a", isReady: true)
+    #expect(beginsPositioning)
+    state.cancelInitialPositioning(scope: "family-a")
+    let retriesPositioning = state.beginInitialPositioning(scope: "family-a", isReady: true)
+
+    #expect(retriesPositioning)
+    #expect(state.pendingScope == "family-a")
+    #expect(state.positionedScope == nil)
   }
 
   @Test("初期位置決定後のトリガー変更だけ末尾追従する")
@@ -53,6 +94,15 @@ struct ChatTimelineTests {
     )
     let positionsInitially = state.beginInitialPositioning(scope: "family-a", isReady: true)
     #expect(positionsInitially)
+    #expect(
+      !state.shouldFollowLatest(
+        scope: "family-a",
+        previousTrigger: [String](),
+        trigger: ["message-a"]
+      )
+    )
+    let completesInitialPositioning = state.completeInitialPositioning(scope: "family-a")
+    #expect(completesInitialPositioning)
     #expect(
       state.shouldFollowLatest(
         scope: "family-a",

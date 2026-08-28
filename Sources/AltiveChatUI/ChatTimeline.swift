@@ -238,7 +238,6 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private let content: (ChatTimelineProxy) -> Content
 
   @State private var positioningState = ChatTimelinePositioningState<AnyHashable>()
-  @State private var scrollViewIdentity = UUID()
   @State private var bottomAnchorID = ChatTimelineBottomAnchorID()
   @State private var historyCoordinateSpaceID = UUID()
   @State private var historyTopOffset: CGFloat?
@@ -381,7 +380,6 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       }
       .defaultScrollAnchor(.bottom)
       .scrollPosition(id: $visiblePosition, anchor: visiblePositionAnchor)
-      .id(scrollViewIdentity)
       .overlay(alignment: .bottomTrailing) {
         if latestControl.isEnabled, showsLatestControl {
           Button {
@@ -693,7 +691,6 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
 
   private func startPositioningAttempt() {
     positioningAttempt &+= 1
-    scrollViewIdentity = UUID()
     viewportMeasurement = nil
     bottomMeasurement = nil
   }

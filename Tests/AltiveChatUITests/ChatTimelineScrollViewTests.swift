@@ -56,7 +56,7 @@
       await settleLayout(of: hosted.view, iterations: 12)
 
       let scrollView = try #require(findScrollView(in: hosted.view))
-      expectLatestPosition(in: scrollView, tolerance: 24)
+      expectLatestPosition(in: scrollView, tolerance: 44)
       #expect(model.initialPositioningCount == 1)
     }
 

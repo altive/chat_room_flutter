@@ -36,10 +36,13 @@
 
     @Test("非表示中に項目が届いたタイムラインを表示時に末尾へ配置する")
     @MainActor
-    func keepsValidPositionWhenHiddenTimelineBecomesReady() async throws {
+    func positionsLatestWhenHiddenTimelineBecomesReady() async throws {
       let model = ChatTimelineDelayedVisibilityTestModel()
-      let content = ChatTimelineDelayedVisibilityTestView(model: model)
-        .frame(width: 320, height: 320)
+      let content = ChatTimelineDelayedVisibilityTestView(
+        model: model,
+        initialPosition: .latest
+      )
+      .frame(width: 320, height: 320)
       let hostedView = NSHostingView(rootView: content)
       let hosted = host(view: hostedView)
       defer { hosted.window.close() }
@@ -53,7 +56,32 @@
       await settleLayout(of: hosted.view, iterations: 12)
 
       let scrollView = try #require(findScrollView(in: hosted.view))
-      expectValidPosition(in: scrollView)
+      expectLatestPosition(in: scrollView, tolerance: 24)
+      #expect(model.initialPositioningCount == 1)
+    }
+
+    @Test("非表示中に項目が届いたタイムラインで指定項目を中央へ配置する")
+    @MainActor
+    func positionsSpecifiedItemWhenHiddenTimelineBecomesReady() async throws {
+      let model = ChatTimelineDelayedVisibilityTestModel()
+      let content = ChatTimelineDelayedVisibilityTestView(
+        model: model,
+        initialPosition: .item(10)
+      )
+      .frame(width: 320, height: 320)
+      let hostedView = NSHostingView(rootView: content)
+      let hosted = host(view: hostedView)
+      defer { hosted.window.close() }
+
+      await settleLayout(of: hosted.view)
+      model.items = Array(0..<40)
+      model.composerHeight = 64
+      model.isVisible = true
+      await settleLayout(of: hosted.view, iterations: 12)
+
+      let scrollView = try #require(findScrollView(in: hosted.view))
+      let expectedItemCenter = CGFloat(10 * 40 + 20)
+      #expect(abs(scrollView.documentVisibleRect.midY - expectedItemCenter) < 64)
       #expect(model.initialPositioningCount == 1)
     }
 
@@ -68,7 +96,7 @@
       let hosted = host(view: hostedView)
       defer { hosted.window.close() }
 
-      await settleLayout(of: hosted.view)
+      await settleLayout(of: hosted.view, iterations: 12)
       let scrollView = try #require(findScrollView(in: hosted.view))
       scrollView.contentView.scroll(to: .zero)
       scrollView.reflectScrolledClipView(scrollView.contentView)
@@ -138,7 +166,10 @@
     }
 
     @MainActor
-    private func expectLatestPosition(in scrollView: NSScrollView) {
+    private func expectLatestPosition(
+      in scrollView: NSScrollView,
+      tolerance: CGFloat = 2
+    ) {
       guard let documentView = scrollView.documentView else {
         Issue.record("ScrollViewのdocumentViewを取得できませんでした。")
         return
@@ -148,21 +179,7 @@
 
       #expect(visibleRect.minY >= -2)
       #expect(visibleRect.minY <= maximumOffset + 2)
-      #expect(abs(visibleRect.minY - maximumOffset) < 2)
-    }
-
-    @MainActor
-    private func expectValidPosition(in scrollView: NSScrollView) {
-      guard let documentView = scrollView.documentView else {
-        Issue.record("ScrollViewのdocumentViewを取得できませんでした。")
-        return
-      }
-      let visibleRect = scrollView.documentVisibleRect
-      let maximumOffset = max(0, documentView.bounds.height - visibleRect.height)
-
-      #expect(visibleRect.minY >= -2)
-      #expect(visibleRect.minY <= maximumOffset + 2)
-      #expect(visibleRect.intersects(documentView.bounds))
+      #expect(abs(visibleRect.minY - maximumOffset) < tolerance)
     }
 
     @MainActor
@@ -206,13 +223,14 @@
 
   private struct ChatTimelineDelayedVisibilityTestView: View {
     @ObservedObject var model: ChatTimelineDelayedVisibilityTestModel
+    let initialPosition: ChatTimelineInitialPosition<Int>
 
     var body: some View {
       VStack(spacing: 0) {
         ChatTimeline(
           timelineID: "delayed-visibility-test",
           isReadyForInitialPositioning: model.isVisible && !model.items.isEmpty,
-          initialPosition: ChatTimelineInitialPosition<Int>.latest,
+          initialPosition: initialPosition,
           followLatestTrigger: 0,
           followLatestAnimation: nil,
           spacing: 0,

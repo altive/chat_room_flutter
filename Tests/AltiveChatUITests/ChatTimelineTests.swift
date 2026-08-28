@@ -22,6 +22,38 @@ struct ChatTimelineTests {
     )
   }
 
+  @Test("末尾anchorとviewport末端が一致した場合だけ配置完了と判定する")
+  func detectsCompletedBottomPosition() {
+    #expect(
+      ChatTimelineProximity.isAtBottom(
+        bottomOffset: 600,
+        viewportHeight: 600,
+        contentBottomInset: 0
+      )
+    )
+    #expect(
+      ChatTimelineProximity.isAtBottom(
+        bottomOffset: 520,
+        viewportHeight: 600,
+        contentBottomInset: 80
+      )
+    )
+    #expect(
+      !ChatTimelineProximity.isAtBottom(
+        bottomOffset: 0,
+        viewportHeight: 600,
+        contentBottomInset: 0
+      )
+    )
+    #expect(
+      !ChatTimelineProximity.isAtBottom(
+        bottomOffset: 0,
+        viewportHeight: 0,
+        contentBottomInset: 0
+      )
+    )
+  }
+
   @Test("準備完了後も到達確認までは初期位置を要求中として扱う")
   func keepsInitialPositionPendingUntilCompletion() {
     var state = ChatTimelinePositioningState<String>()

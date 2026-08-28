@@ -11,6 +11,18 @@ enum ChatTimelineProximity {
   ) -> Bool {
     bottomOffset <= viewportHeight + max(0, threshold)
   }
+
+  /// 末尾anchorがviewport末端へ配置済みかを返す。
+  static func isAtBottom(
+    bottomOffset: CGFloat,
+    viewportHeight: CGFloat,
+    contentBottomInset: CGFloat,
+    tolerance: CGFloat = 44
+  ) -> Bool {
+    let expectedBottomOffset = viewportHeight - contentBottomInset
+    return viewportHeight > 0
+      && abs(bottomOffset - expectedBottomOffset) <= max(0, tolerance)
+  }
 }
 
 /// チャットタイムラインのスクロール操作を提供する。
@@ -226,15 +238,20 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private let content: (ChatTimelineProxy) -> Content
 
   @State private var positioningState = ChatTimelinePositioningState<AnyHashable>()
+  @State private var scrollViewIdentity = UUID()
   @State private var bottomAnchorID = ChatTimelineBottomAnchorID()
   @State private var historyCoordinateSpaceID = UUID()
   @State private var historyTopOffset: CGFloat?
   @State private var isHistoryLoadScheduled = false
   @State private var visiblePosition: AnyHashable?
+  @State private var visiblePositionAnchor: UnitPoint = .bottom
   @State private var isNearBottom = true
   @State private var showsLatestControl = false
   @State private var viewportHeight: CGFloat = 0
   @State private var bottomOffset: CGFloat?
+  @State private var positioningAttempt = 0
+  @State private var viewportMeasurement: ChatTimelinePositionMeasurement?
+  @State private var bottomMeasurement: ChatTimelinePositionMeasurement?
 
   /// 汎用タイムラインを作成する。
   ///
@@ -337,7 +354,10 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
               GeometryReader { geometry in
                 Color.clear.preference(
                   key: ChatTimelineBottomOffsetKey.self,
-                  value: geometry.frame(in: .named(historyCoordinateSpaceID)).maxY
+                  value: ChatTimelinePositionMeasurement(
+                    attempt: positioningAttempt,
+                    value: geometry.frame(in: .named(historyCoordinateSpaceID)).maxY
+                  )
                 )
               }
             }
@@ -352,12 +372,16 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         GeometryReader { geometry in
           Color.clear.preference(
             key: ChatTimelineViewportHeightKey.self,
-            value: geometry.size.height
+            value: ChatTimelinePositionMeasurement(
+              attempt: positioningAttempt,
+              value: geometry.size.height
+            )
           )
         }
       }
       .defaultScrollAnchor(.bottom)
-      .scrollPosition(id: $visiblePosition, anchor: .bottom)
+      .scrollPosition(id: $visiblePosition, anchor: visiblePositionAnchor)
+      .id(scrollViewIdentity)
       .overlay(alignment: .bottomTrailing) {
         if latestControl.isEnabled, showsLatestControl {
           Button {
@@ -378,14 +402,21 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         historyTopOffset = offset
         requestAutomaticHistoryIfNeeded(using: timelineProxy)
       }
-      .onPreferenceChange(ChatTimelineViewportHeightKey.self) { height in
-        viewportHeight = height
+      .onPreferenceChange(ChatTimelineViewportHeightKey.self) { measurement in
+        guard let measurement else { return }
+        viewportHeight = measurement.value
+        if measurement.attempt == positioningAttempt {
+          viewportMeasurement = measurement
+        }
         updateLatestProximity()
         completeInitialLatestPositionIfNeeded(using: timelineProxy)
       }
-      .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { offset in
-        bottomOffset = offset
-        guard offset != nil else {
+      .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { measurement in
+        bottomOffset = measurement?.value
+        if measurement?.attempt == positioningAttempt {
+          bottomMeasurement = measurement
+        }
+        guard measurement != nil else {
           // LazyVStackが末尾anchorを画面外で破棄した場合は、過去閲覧中として扱う。
           isNearBottom = false
           return
@@ -397,9 +428,6 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         if position == AnyHashable(bottomAnchorID) {
           isNearBottom = true
           showsLatestControl = false
-          if case .latest = initialPosition {
-            completeInitialPositioning(scope: positioningScope, using: timelineProxy)
-          }
         } else {
           updateLatestProximity()
         }
@@ -409,11 +437,13 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       }
       .onChange(of: positioningScope) { _, _ in
         positioningState.reset()
+        invalidatePositionMeasurements()
         positionInitiallyIfNeeded(using: timelineProxy)
       }
       .onChange(of: isReadyForInitialPositioning) { _, isReady in
         guard isReady else {
           positioningState.cancelInitialPositioning(scope: positioningScope)
+          invalidatePositionMeasurements()
           return
         }
         positionInitiallyIfNeeded(using: timelineProxy)
@@ -541,15 +571,23 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     else { return }
 
     let scope = positioningScope
+    if case .latest = initialPosition {
+      startPositioningAttempt()
+    }
     applyInitialPosition(using: proxy)
     Task { @MainActor in
       await waitForInitialLayout()
-      guard positioningState.pendingScope == scope, positioningScope == scope else { return }
+      guard
+        isReadyForInitialPositioning,
+        positioningState.pendingScope == scope,
+        positioningScope == scope
+      else { return }
       applyInitialPosition(using: proxy)
       switch initialPosition {
       case .latest:
         completeInitialLatestPositionIfNeeded(using: proxy)
       case .item:
+        // 指定項目は従来どおりProxyで再適用した後に完了する。今回の永続targetはlatestだけに限定する。
         completeInitialPositioning(scope: scope, using: proxy)
       }
     }
@@ -569,9 +607,19 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     case .latest:
       positionLatest(using: proxy)
     case .item(let id, let anchor):
-      visiblePosition = nil
-      proxy.scrollTo(id, anchor: anchor)
+      position(id, anchor: anchor, using: proxy)
     }
+  }
+
+  /// 指定項目へ移動し、次の位置監視に使うanchorを更新する。
+  private func position(
+    _ id: ID,
+    anchor: UnitPoint,
+    using proxy: ChatTimelineProxy
+  ) {
+    visiblePositionAnchor = anchor
+    visiblePosition = nil
+    proxy.scrollTo(id, anchor: anchor)
   }
 
   /// SwiftUIが末尾anchorを配置できるまで最新位置をscroll targetとして保持する。
@@ -580,6 +628,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     animation: Animation? = nil
   ) {
     let target = AnyHashable(bottomAnchorID)
+    visiblePositionAnchor = .bottom
     if let animation {
       withAnimation(animation) {
         visiblePosition = target
@@ -594,13 +643,23 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private func completeInitialLatestPositionIfNeeded(using proxy: ChatTimelineProxy) {
     let scope = positioningScope
     guard
+      isReadyForInitialPositioning,
       positioningState.pendingScope == scope,
       case .latest = initialPosition,
-      let bottomOffset,
-      viewportHeight > 0
+      let viewportMeasurement,
+      let bottomMeasurement,
+      viewportMeasurement.attempt == positioningAttempt,
+      bottomMeasurement.attempt == positioningAttempt,
+      viewportMeasurement.value > 0
     else { return }
 
-    guard bottomOffset <= viewportHeight + 2 else {
+    guard
+      ChatTimelineProximity.isAtBottom(
+        bottomOffset: bottomMeasurement.value,
+        viewportHeight: viewportMeasurement.value,
+        contentBottomInset: contentInsets.bottom
+      )
+    else {
       positionLatest(using: proxy)
       return
     }
@@ -612,7 +671,11 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     scope: AnyHashable,
     using proxy: ChatTimelineProxy
   ) {
-    guard positioningState.completeInitialPositioning(scope: scope) else { return }
+    guard
+      isReadyForInitialPositioning,
+      positioningScope == scope,
+      positioningState.completeInitialPositioning(scope: scope)
+    else { return }
     onInitialPositioning(proxy)
     guard positioningState.positionedScope == positioningScope else { return }
     requestAutomaticHistoryIfNeeded(using: proxy)
@@ -621,9 +684,24 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   private func waitForInitialLayout() async {
     await withCheckedContinuation { continuation in
       DispatchQueue.main.async {
-        continuation.resume()
+        DispatchQueue.main.async {
+          continuation.resume()
+        }
       }
     }
+  }
+
+  private func startPositioningAttempt() {
+    positioningAttempt &+= 1
+    scrollViewIdentity = UUID()
+    viewportMeasurement = nil
+    bottomMeasurement = nil
+  }
+
+  private func invalidatePositionMeasurements() {
+    positioningAttempt &+= 1
+    viewportMeasurement = nil
+    bottomMeasurement = nil
   }
 }
 
@@ -651,18 +729,29 @@ private struct ChatTimelineHistoryTopOffsetKey: PreferenceKey {
   }
 }
 
-private struct ChatTimelineViewportHeightKey: PreferenceKey {
-  static let defaultValue: CGFloat = 0
+private struct ChatTimelinePositionMeasurement: Equatable {
+  let attempt: Int
+  let value: CGFloat
+}
 
-  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-    value = nextValue()
+private struct ChatTimelineViewportHeightKey: PreferenceKey {
+  static let defaultValue: ChatTimelinePositionMeasurement? = nil
+
+  static func reduce(
+    value: inout ChatTimelinePositionMeasurement?,
+    nextValue: () -> ChatTimelinePositionMeasurement?
+  ) {
+    value = nextValue() ?? value
   }
 }
 
 private struct ChatTimelineBottomOffsetKey: PreferenceKey {
-  static let defaultValue: CGFloat? = nil
+  static let defaultValue: ChatTimelinePositionMeasurement? = nil
 
-  static func reduce(value: inout CGFloat?, nextValue: () -> CGFloat?) {
+  static func reduce(
+    value: inout ChatTimelinePositionMeasurement?,
+    nextValue: () -> ChatTimelinePositionMeasurement?
+  ) {
     value = nextValue() ?? value
   }
 }

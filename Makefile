@@ -32,7 +32,8 @@ swift_test:
 	# AppKitのホスティング状態をテスト間で共有するとrunner上でクラッシュするため、各テストを別プロセスで実行する。
 	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsLatestAtBottom
 	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsSpecifiedItemAtCenter
-	swift test --skip-build --filter ChatTimelineScrollViewTests.keepsValidPositionWhenHiddenTimelineBecomesReady
+	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsLatestWhenHiddenTimelineBecomesReady
+	swift test --skip-build --filter ChatTimelineScrollViewTests.positionsSpecifiedItemWhenHiddenTimelineBecomesReady
 	swift test --skip-build --filter ChatTimelineScrollViewTests.preservesPositionWhenHistoryIsPrepended
 
 swift_ios_build:

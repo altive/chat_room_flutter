@@ -42,6 +42,8 @@ SwiftUI、Flutter、Jetpack Composeで揃える。
 - ステッカーpicker末尾へアプリ固有コンテンツを差し込む表示スロットとスクロール配置
 - ステッカーpicker入力面を背後のタイムラインが透けない不透明背景で覆うこと
 - ステッカー入力を明示的に有効化した場合だけ、ステッカー切替操作を表示すること
+- 再帰しない軽量な返信参照、Composerの返信選択・取消、送信済みメッセージ内の引用表示
+- 返信参照を型付き送信値へ含め、送信操作直後に入力内容と返信選択を消す操作契約
 - 課金に依存しない汎用タイムライン境界
 - アプリ固有の行を受け入れるタイムラインの初期位置、末尾追従、履歴追加時の位置保持
 - 自分の送信時または末尾付近でだけ新着へ追従し、過去閲覧中は位置を維持して
@@ -73,6 +75,7 @@ SwiftUI、Flutter、Jetpack Composeで揃える。
 - 永続化されたカード種別・design IDから汎用メッセージカードstyleへの変換
 - カードの見出し、本文、補足表示のローカライズと業務上の意味付け
 - リンクプレビューの外部取得、SSRF対策、cache、Storage、永続化、画像読み込み
+- 返信元の権限判定、永続化、再検証、引用タップ後の取得とnavigation
 
 ## Swiftのモジュール境界
 
@@ -162,6 +165,16 @@ Store、Repository、Entityへ依存させない。
   [`link-preview-contract.md`](link-preview-contract.md)とする。
 - backend、保存、SSRF、画像変換、Storage方針の正本はAltive Specsの
   `integrations/chat-link-preview.md`とする。
+
+## リプライ契約
+
+- 返信先には`ChatMessage`全体を入れず、対象が現在のpageになくても表示できる
+  非再帰の軽量snapshotを使用する。
+- packageは返信action、選択・取消、Composer preview、引用表示、型付きsubmissionを所有する。
+- appは権限、保存、backendでの再検証、削除・privacy方針、引用tap後の取得と遷移を
+  所有する。
+- 公開model、状態遷移、後方互換性、test条件の正本は
+  [`reply-message-contract.md`](reply-message-contract.md)とする。
 
 ## プラットフォーム差
 

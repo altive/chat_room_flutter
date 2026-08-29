@@ -75,7 +75,7 @@ public final class ChatLinkPreviewDraftCoordinator {
         let preview = try await resolver(nextURL)
         try Task.checkCancellation()
         guard let self, self.selectedURL == nextURL else { return }
-        if let preview, preview.sourceURL == nextURL {
+        if let preview, ChatWebURLParser.normalized(preview.sourceURL) == nextURL {
           state = .loaded(preview)
         } else {
           state = .idle
@@ -93,7 +93,8 @@ public final class ChatLinkPreviewDraftCoordinator {
   public func previewForSubmission(text: String?) -> ChatLinkPreview? {
     guard let text,
       ChatWebURLParser.firstURL(in: text) == selectedURL,
-      case .loaded(let preview) = state
+      case .loaded(let preview) = state,
+      ChatWebURLParser.normalized(preview.sourceURL) == selectedURL
     else { return nil }
     return preview
   }

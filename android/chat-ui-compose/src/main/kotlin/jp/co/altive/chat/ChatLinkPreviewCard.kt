@@ -90,7 +90,8 @@ fun rememberChatDraftLinkPreviewState(
 /** 現在の本文と一致する解決済みpreviewを送信値として返す。 */
 fun ChatDraftLinkPreviewState.previewForSubmission(draft: String): ChatLinkPreview? {
   val preview = (this as? ChatDraftLinkPreviewState.Loaded)?.preview ?: return null
-  return preview.takeIf { ChatLinkPreviewParser.firstUrl(draft) == it.sourceUrl }
+  val sourceUrl = ChatLinkPreviewParser.firstUrl(draft) ?: return null
+  return preview.takeIf { normalizeChatLinkPreviewUrl(it.sourceUrl) == sourceUrl }
 }
 
 /** 利用アプリが解決したWebリンクプレビューを表示する共通カード。 */

@@ -106,6 +106,30 @@ struct ChatLinkPreviewDraftTests {
     #expect(coordinator.state == .idle)
   }
 
+  @Test("同じURLの表記差があってもresolver結果を採用する")
+  func acceptsNormalizedResolverResult() async throws {
+    let coordinator = ChatLinkPreviewDraftCoordinator(
+      resolver: { _ in
+        preview(
+          url: URL(string: "HTTPS://EXAMPLE.JP:443/article#section")!,
+          title: "同じURL"
+        )
+      },
+      debounce: .milliseconds(1)
+    )
+
+    let text = "https://example.jp/article"
+    coordinator.update(draft: text)
+    try await Task.sleep(for: .milliseconds(150))
+
+    guard case .loaded(let loaded) = coordinator.state else {
+      Issue.record("正規化後に同じURLのpreviewが採用される必要があります")
+      return
+    }
+    #expect(loaded.title == "同じURL")
+    #expect(coordinator.previewForSubmission(text: text) == loaded)
+  }
+
   @Test("取得中でもpreviewなしのsubmissionを即座に作れる")
   func permitsSubmissionWhileLoading() throws {
     let coordinator = ChatLinkPreviewDraftCoordinator(

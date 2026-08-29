@@ -108,7 +108,7 @@ public enum ChatWebURLParser {
     return nil
   }
 
-  private static func normalized(_ url: URL) -> URL? {
+  package static func normalized(_ url: URL) -> URL? {
     guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
       let scheme = components.scheme?.lowercased(), scheme == "http" || scheme == "https",
       let host = components.host?.lowercased(), !host.isEmpty

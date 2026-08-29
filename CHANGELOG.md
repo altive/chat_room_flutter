@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.7.0 - 2026-08-29
+
 - Flutter、SwiftUI、Jetpack Composeへ、アプリが解決したWebリンクmetadataを表示する
   共通カードと、入力中の500ミリ秒debounce・古い結果破棄・型付き送信値を追加した。
 - Flutterの端末直接OGP取得を削除し、外部取得、Firebase接続、画像解決を利用アプリへ

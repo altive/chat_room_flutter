@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 1.7.1 - 2026-08-29
+
+- SwiftUIとJetpack Composeで、scheme・hostの大文字小文字、標準port、fragmentだけが
+  異なる同一URLのresolver結果を保持し、送信時のpreviewへ含めるよう修正した。
+
 ## 1.7.0 - 2026-08-29
 
 - Flutter、SwiftUI、Jetpack Composeへ、アプリが解決したWebリンクmetadataを表示する

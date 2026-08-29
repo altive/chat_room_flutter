@@ -16,6 +16,8 @@ public struct AltiveChatRoom: View {
   private let isPreparingCameraImage: Bool
   private let isSending: Bool
   private let imageLoader: ChatImageLoader
+  private let linkPreviewResolver: ChatLinkPreviewResolver?
+  private let linkPreviewImageLoader: ChatLinkPreviewImageLoader?
   private let stickerImageLoader: ChatStickerImageLoader?
   private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
@@ -25,6 +27,7 @@ public struct AltiveChatRoom: View {
     (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)?
   private let onImagePreparationFailure: ((Error) -> Void)?
   private let onImageTap: ((String, Int) -> Void)?
+  private let onLinkPreviewTap: ((URL) -> Void)?
   private let onSubmit: ((ChatComposerSubmission) -> Void)?
   private let onTextSend: ((String) -> Void)?
   private let onRetry: ((String) -> Void)?
@@ -36,11 +39,13 @@ public struct AltiveChatRoom: View {
   @State private var photoDraftIDs: [PhotosPickerItem: String] = [:]
   @State private var isPreparingPhotoLibraryItem = false
   @State private var hasPresentedMessages = false
+  @State private var linkPreviewCoordinator: ChatLinkPreviewDraftCoordinator
 
   /// テキスト送信だけを利用するチャット画面を作成する。
   ///
-  /// `messages` は作成日時の昇順で渡す。送信や永続化は `onSend` を受け取る
-  /// アプリ側が担当する。このinitializerでは画像入力ボタンを表示しない。
+  /// `messages` は作成日時の昇順で渡す。送信や永続化は `onSubmit` または
+  /// `onSend` を受け取るアプリ側が担当する。このinitializerでは画像入力ボタンを
+  /// 表示しない。両方を指定した場合は `onSubmit` だけを呼ぶ。
   public init(
     messages: [ChatMessage],
     currentUserID: String,
@@ -50,13 +55,17 @@ public struct AltiveChatRoom: View {
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
     imageLoader: ChatImageLoader = .standard,
+    linkPreviewResolver: ChatLinkPreviewResolver? = nil,
+    linkPreviewImageLoader: ChatLinkPreviewImageLoader? = nil,
     stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     latestProximityThreshold: CGFloat = 80,
     onImageTap: ((String, Int) -> Void)? = nil,
+    onLinkPreviewTap: ((URL) -> Void)? = nil,
     onRetry: ((String) -> Void)? = nil,
-    onSend: @escaping (String) -> Void
+    onSubmit: ((ChatComposerSubmission) -> Void)? = nil,
+    onSend: ((String) -> Void)? = nil
   ) {
     self.messages = messages
     self.currentUserID = currentUserID
@@ -71,6 +80,8 @@ public struct AltiveChatRoom: View {
     isPreparingCameraImage = false
     isSending = false
     self.imageLoader = imageLoader
+    self.linkPreviewResolver = linkPreviewResolver
+    self.linkPreviewImageLoader = linkPreviewImageLoader
     self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
@@ -79,9 +90,13 @@ public struct AltiveChatRoom: View {
     resolvePhotoLibraryItem = nil
     onImagePreparationFailure = nil
     self.onImageTap = onImageTap
-    onSubmit = nil
+    self.onLinkPreviewTap = onLinkPreviewTap
+    self.onSubmit = onSubmit
     onTextSend = onSend
     self.onRetry = onRetry
+    _linkPreviewCoordinator = State(
+      initialValue: ChatLinkPreviewDraftCoordinator(resolver: linkPreviewResolver)
+    )
   }
 
   /// テキストと複数画像を送信できるチャット画面を作成する。
@@ -102,6 +117,8 @@ public struct AltiveChatRoom: View {
     showsSenderName: Bool = false,
     draftPolicy: ChatDraftPolicy = .unrestricted,
     imageLoader: ChatImageLoader = .standard,
+    linkPreviewResolver: ChatLinkPreviewResolver? = nil,
+    linkPreviewImageLoader: ChatLinkPreviewImageLoader? = nil,
     stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
@@ -111,6 +128,7 @@ public struct AltiveChatRoom: View {
       (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)? = nil,
     onImagePreparationFailure: ((Error) -> Void)? = nil,
     onImageTap: ((String, Int) -> Void)? = nil,
+    onLinkPreviewTap: ((URL) -> Void)? = nil,
     onRetry: ((String) -> Void)? = nil,
     onSubmit: @escaping (ChatComposerSubmission) -> Void
   ) {
@@ -127,6 +145,8 @@ public struct AltiveChatRoom: View {
     self.isPreparingCameraImage = isPreparingCameraImage
     self.isSending = isSending
     self.imageLoader = imageLoader
+    self.linkPreviewResolver = linkPreviewResolver
+    self.linkPreviewImageLoader = linkPreviewImageLoader
     self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
@@ -135,9 +155,13 @@ public struct AltiveChatRoom: View {
     self.resolvePhotoLibraryItem = resolvePhotoLibraryItem
     self.onImagePreparationFailure = onImagePreparationFailure
     self.onImageTap = onImageTap
+    self.onLinkPreviewTap = onLinkPreviewTap
     self.onSubmit = onSubmit
     onTextSend = nil
     self.onRetry = onRetry
+    _linkPreviewCoordinator = State(
+      initialValue: ChatLinkPreviewDraftCoordinator(resolver: linkPreviewResolver)
+    )
   }
 
   public var body: some View {
@@ -173,10 +197,12 @@ public struct AltiveChatRoom: View {
               strings: strings,
               showsSenderName: showsSenderName,
               imageLoader: imageLoader,
+              linkPreviewImageLoader: linkPreviewImageLoader,
               stickerImageLoader: stickerImageLoader,
               singleImageLayout: singleImageLayout,
               multipleImageLayout: multipleImageLayout,
               onImageTap: onImageTap,
+              onLinkPreviewTap: onLinkPreviewTap,
               onRetry: onRetry.map { retry in
                 { retry(message.id) }
               }
@@ -197,6 +223,16 @@ public struct AltiveChatRoom: View {
     }
     .task(id: selectedPhotoItems) {
       await synchronizePhotoLibrarySelection()
+    }
+    .onChange(of: draft, initial: true) { _, currentDraft in
+      if imageInputConfiguration != nil {
+        linkPreviewCoordinator.update(draft: imageDrafts.isEmpty ? currentDraft : "")
+      }
+    }
+    .onChange(of: imageDrafts.map(\.id), initial: true) { _, currentImageIDs in
+      if imageInputConfiguration != nil {
+        linkPreviewCoordinator.update(draft: currentImageIDs.isEmpty ? draft : "")
+      }
     }
   }
 
@@ -219,6 +255,12 @@ public struct AltiveChatRoom: View {
         draftPolicy: draftPolicy,
         theme: theme,
         imageLoader: imageLoader,
+        linkPreview: resolvedDraftLinkPreview,
+        isLinkPreviewLoading: isDraftLinkPreviewLoading,
+        linkPreviewImageLoader: linkPreviewImageLoader,
+        linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
+        linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
+        onLinkPreviewTap: onLinkPreviewTap,
         onRequestCamera: onRequestCamera,
         onRemoveImage: removeImageDraft,
         onSubmit: submitImagesAndText
@@ -237,10 +279,21 @@ public struct AltiveChatRoom: View {
         characterCountWarningThreshold: nil,
         draftPolicy: draftPolicy,
         theme: theme,
+        linkPreviewResolver: linkPreviewResolver,
+        linkPreviewImageLoader: linkPreviewImageLoader,
+        linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
+        linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
+        onLinkPreviewTap: onLinkPreviewTap,
         onToggleInputSurface: {},
         onSend: { text in
           onTextSend?(text)
           draft = ""
+        },
+        onSubmit: onSubmit.map { submit in
+          { submission in
+            submit(submission)
+            draft = ""
+          }
         },
         attachmentPreview: { EmptyView() },
         inputSurface: { EmptyView() }
@@ -257,6 +310,16 @@ public struct AltiveChatRoom: View {
         resolvePhotoLibraryItem != nil
       }
     }
+  }
+
+  private var resolvedDraftLinkPreview: ChatLinkPreview? {
+    guard case .loaded(let preview) = linkPreviewCoordinator.state else { return nil }
+    return preview
+  }
+
+  private var isDraftLinkPreviewLoading: Bool {
+    guard case .loading = linkPreviewCoordinator.state else { return false }
+    return true
   }
 
   private var mappedPhotoDraftIDs: Set<String> {
@@ -357,7 +420,10 @@ public struct AltiveChatRoom: View {
       let submission = ChatComposerSubmission(
         draft: draft,
         images: imageDrafts,
-        policy: draftPolicy
+        policy: draftPolicy,
+        linkPreview: imageDrafts.isEmpty
+          ? linkPreviewCoordinator.previewForSubmission(text: draft)
+          : nil
       )
     else { return }
 

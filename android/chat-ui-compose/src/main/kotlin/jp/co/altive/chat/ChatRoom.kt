@@ -56,6 +56,8 @@ data class ChatRoomStrings(
   val latestButtonLabel: String = "Latest messages",
   val stickerLabel: String = "Sticker",
   val stickerLoadingFailedLabel: String = "Failed to load sticker",
+  val linkPreviewLabel: String = "Link preview",
+  val linkPreviewLoadingLabel: String = "Loading link preview",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -79,6 +81,8 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_latest),
         stringResource(R.string.altive_chat_sticker),
         stringResource(R.string.altive_chat_sticker_loading_failed),
+        stringResource(R.string.altive_chat_link_preview),
+        stringResource(R.string.altive_chat_link_preview_loading),
       )
     }
   }
@@ -107,6 +111,10 @@ fun AltiveChatRoom(
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   stickerImageLoader: ChatStickerImageLoader? = null,
+  linkPreviewResolver: (suspend (String) -> ChatLinkPreview?)? = null,
+  linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
+  onLinkPreviewTap: ((String) -> Unit)? = null,
+  onSubmit: ((ChatComposerSubmission) -> Unit)? = null,
   onSend: (String) -> Unit,
 ) {
   val timelineState = rememberChatTimelineState()
@@ -117,6 +125,7 @@ fun AltiveChatRoom(
         timelineState.listState.canScrollForward
     }
   }
+  val draftLinkPreviewState = rememberChatDraftLinkPreviewState(draft, linkPreviewResolver)
   Column(modifier.background(theme.background).imePadding()) {
     Box(Modifier.weight(1f).fillMaxWidth()) {
       ChatTimeline(
@@ -149,6 +158,8 @@ fun AltiveChatRoom(
               imageContent = imageContent,
               transitioningImageContent = transitioningImageContent,
               stickerImageLoader = stickerImageLoader,
+              linkPreviewImageContent = linkPreviewImageContent,
+              onLinkPreviewTap = onLinkPreviewTap,
             )
           }
         }
@@ -169,7 +180,24 @@ fun AltiveChatRoom(
       sendButtonLabel = strings.sendButtonLabel,
       draftPolicy = draftPolicy,
       theme = theme,
-      onSend = { text -> onSend(text); onDraftChange("") },
+      attachmentPreview = {
+        ChatDraftLinkPreview(
+          state = draftLinkPreviewState,
+          strings = strings,
+          imageContent = linkPreviewImageContent,
+          onOpenLink = onLinkPreviewTap,
+        )
+      },
+      onSend = { text ->
+        val submission = ChatComposerSubmission.create(
+          draft = text,
+          images = emptyList(),
+          policy = draftPolicy,
+          linkPreview = draftLinkPreviewState.previewForSubmission(text),
+        )
+        if (submission != null && onSubmit != null) onSubmit(submission) else onSend(text)
+        onDraftChange("")
+      },
     )
   }
 }
@@ -210,6 +238,9 @@ fun AltiveChatRoom(
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   stickerImageLoader: ChatStickerImageLoader? = null,
+  linkPreviewResolver: (suspend (String) -> ChatLinkPreview?)? = null,
+  linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
+  onLinkPreviewTap: ((String) -> Unit)? = null,
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
@@ -224,6 +255,10 @@ fun AltiveChatRoom(
         timelineState.listState.canScrollForward
     }
   }
+  val draftLinkPreviewState = rememberChatDraftLinkPreviewState(
+    draft = if (imageDrafts.isEmpty()) draft else "",
+    resolver = linkPreviewResolver,
+  )
 
   val latestImageDrafts by rememberUpdatedState(imageDrafts)
   val latestOnImageDraftsChange by rememberUpdatedState(onImageDraftsChange)
@@ -355,6 +390,8 @@ fun AltiveChatRoom(
                 imageContent = imageContent,
                 transitioningImageContent = transitioningImageContent,
                 stickerImageLoader = stickerImageLoader,
+                linkPreviewImageContent = linkPreviewImageContent,
+                onLinkPreviewTap = onLinkPreviewTap,
               )
             }
           }
@@ -400,6 +437,7 @@ fun AltiveChatRoom(
             draft = draft,
             images = imageDrafts,
             policy = draftPolicy,
+            linkPreview = draftLinkPreviewState.previewForSubmission(draft),
           ) ?: return@ChatImageComposer
           onSubmit(submission)
           onDraftChange("")
@@ -410,6 +448,14 @@ fun AltiveChatRoom(
           Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(strings.imageLabel)
           }
+        },
+        linkPreviewContent = {
+          ChatDraftLinkPreview(
+            state = draftLinkPreviewState,
+            strings = strings,
+            imageContent = linkPreviewImageContent,
+            onOpenLink = onLinkPreviewTap,
+          )
         },
       )
     }
@@ -430,6 +476,8 @@ fun ChatMessageRow(
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)? = null,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)? = null,
   stickerImageLoader: ChatStickerImageLoader? = null,
+  linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
+  onLinkPreviewTap: ((String) -> Unit)? = null,
 ) {
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
@@ -450,16 +498,28 @@ fun ChatMessageRow(
         Column(horizontalAlignment = if (own) Alignment.End else Alignment.Start) {
           if (showsSenderName && !own) Text(message.sender?.displayName ?: strings.unknownSender, style = MaterialTheme.typography.labelSmall)
           ChatMessageBubble(isOwnMessage = own, theme = theme) {
-            ChatLinkifiedText(
-              text = content.value,
-              strings = strings,
-              modifier = Modifier.padding(
+            Column(
+              Modifier.padding(
                 start = if (own) 14.dp else 22.dp,
                 end = if (own) 22.dp else 14.dp,
                 top = 10.dp,
                 bottom = 10.dp,
               ),
-            )
+            ) {
+              ChatLinkifiedText(
+                text = content.value,
+                strings = strings,
+              )
+              message.linkPreview?.takeIf { it.isDisplayable }?.let { preview ->
+                Spacer(Modifier.height(8.dp))
+                ChatLinkPreviewCard(
+                  preview = preview,
+                  linkPreviewLabel = strings.linkPreviewLabel,
+                  imageContent = linkPreviewImageContent,
+                  onOpenLink = onLinkPreviewTap,
+                )
+              }
+            }
           }
           Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             Text(formatTime(message.createdAtEpochMillis), style = MaterialTheme.typography.labelSmall)

@@ -40,6 +40,8 @@ data class ChatImageDraft(
 data class ChatComposerSubmission(
   val text: String?,
   val images: List<ChatImageDraft>,
+  /** 楽観表示へ利用できる送信時点のdraftリンクプレビュー。 */
+  val linkPreview: ChatLinkPreview? = null,
 ) {
   companion object {
     /** 入力方針を適用し、テキストまたは画像がある場合だけ送信要求を返す。 */
@@ -47,10 +49,11 @@ data class ChatComposerSubmission(
       draft: String,
       images: List<ChatImageDraft>,
       policy: ChatDraftPolicy,
+      linkPreview: ChatLinkPreview? = null,
     ): ChatComposerSubmission? {
       val text = policy.normalizedText(draft)
       if (text == null && images.isEmpty()) return null
-      return ChatComposerSubmission(text, images.toList())
+      return ChatComposerSubmission(text, images.toList(), text?.let { linkPreview })
     }
   }
 }

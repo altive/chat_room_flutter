@@ -9,10 +9,12 @@ public struct ChatMessageRow: View {
   private let strings: ChatRoomStrings
   private let showsSenderName: Bool
   private let imageLoader: ChatImageLoader
+  private let linkPreviewImageLoader: ChatLinkPreviewImageLoader?
   private let stickerImageLoader: ChatStickerImageLoader?
   private let singleImageLayout: ChatSingleImageLayout
   private let multipleImageLayout: ChatMultipleImageLayout
   private let onImageTap: ((String, Int) -> Void)?
+  private let onLinkPreviewTap: ((URL) -> Void)?
   private let onRetry: (() -> Void)?
 
   /// 1件分のメッセージ行を作成する。
@@ -23,10 +25,12 @@ public struct ChatMessageRow: View {
     strings: ChatRoomStrings = .localized,
     showsSenderName: Bool = false,
     imageLoader: ChatImageLoader = .standard,
+    linkPreviewImageLoader: ChatLinkPreviewImageLoader? = nil,
     stickerImageLoader: ChatStickerImageLoader? = nil,
     singleImageLayout: ChatSingleImageLayout = .adaptiveBounded(),
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     onImageTap: ((String, Int) -> Void)? = nil,
+    onLinkPreviewTap: ((URL) -> Void)? = nil,
     onRetry: (() -> Void)? = nil
   ) {
     self.message = message
@@ -35,10 +39,12 @@ public struct ChatMessageRow: View {
     self.strings = strings
     self.showsSenderName = showsSenderName
     self.imageLoader = imageLoader
+    self.linkPreviewImageLoader = linkPreviewImageLoader
     self.stickerImageLoader = stickerImageLoader
     self.singleImageLayout = singleImageLayout
     self.multipleImageLayout = multipleImageLayout
     self.onImageTap = onImageTap
+    self.onLinkPreviewTap = onLinkPreviewTap
     self.onRetry = onRetry
   }
 
@@ -146,13 +152,24 @@ public struct ChatMessageRow: View {
         }
 
         ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
-          ChatLinkedText(text: text, strings: strings)
-            .tint(isOwnMessage ? theme.outgoingText : Color.accentColor)
+          VStack(alignment: .leading, spacing: 8) {
+            ChatLinkedText(text: text, strings: strings)
+              .tint(isOwnMessage ? theme.outgoingText : Color.accentColor)
+
+            if let linkPreview = message.linkPreview {
+              ChatLinkPreviewCard(
+                preview: linkPreview,
+                imageLoader: linkPreviewImageLoader,
+                accessibilityLabel: strings.linkPreviewLabel,
+                onTap: onLinkPreviewTap
+              )
+            }
+          }
         }
 
         deliveryMetadata
       }
-      .accessibilityElement(children: .combine)
+      .accessibilityElement(children: message.linkPreview == nil ? .combine : .contain)
 
       if !isOwnMessage {
         Spacer(minLength: 44)

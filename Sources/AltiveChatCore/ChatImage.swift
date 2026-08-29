@@ -94,22 +94,38 @@ public struct ChatComposerSubmission: Hashable, Sendable {
   /// 選択順の送信画像。
   public let images: [ChatImageDraft]
 
+  /// 入力中に解決済みだった任意のリンクプレビュー。
+  ///
+  /// アプリ側は楽観表示にだけ使用し、永続化時はbackendの検証結果を使用する。
+  public let linkPreview: ChatLinkPreview?
+
   /// 正規化済みテキストと画像から送信要求を作成する。
   ///
   /// 両方が空の場合は `nil` を返す。
-  public init?(text: String?, images: [ChatImageDraft]) {
+  public init?(
+    text: String?,
+    images: [ChatImageDraft],
+    linkPreview: ChatLinkPreview? = nil
+  ) {
     let normalizedText = text?.trimmingCharacters(in: .whitespacesAndNewlines)
     let nonemptyText = normalizedText.flatMap { $0.isEmpty ? nil : $0 }
     guard nonemptyText != nil || !images.isEmpty else { return nil }
     self.text = nonemptyText
     self.images = images
+    self.linkPreview = nonemptyText == nil ? nil : linkPreview
   }
 
   /// 入力方針を適用した送信要求を作成する。
-  public init?(draft: String, images: [ChatImageDraft], policy: ChatDraftPolicy) {
+  public init?(
+    draft: String,
+    images: [ChatImageDraft],
+    policy: ChatDraftPolicy,
+    linkPreview: ChatLinkPreview? = nil
+  ) {
     let text = policy.normalizedText(from: draft)
     guard text != nil || !images.isEmpty else { return nil }
     self.text = text
     self.images = images
+    self.linkPreview = text == nil ? nil : linkPreview
   }
 }

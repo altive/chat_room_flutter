@@ -23,6 +23,8 @@ data class ChatMessage(
   val sender: ChatUser?,
   val content: ChatMessageContent,
   val deliveryState: ChatMessageDeliveryState = ChatMessageDeliveryState.Sent,
+  /** テキストメッセージへ任意に表示するWebリンクプレビュー。 */
+  val linkPreview: ChatLinkPreview? = null,
 ) {
   fun isSentBy(userId: String): Boolean = sender?.id == userId
 }

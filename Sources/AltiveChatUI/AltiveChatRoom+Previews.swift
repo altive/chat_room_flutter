@@ -4,10 +4,28 @@
 
   @MainActor
   private struct AltiveChatRoomPreview: View {
-    @State private var draft = ""
+    @State private var draft = "https://altive.dev"
 
     private let me = ChatUser(id: "me", displayName: "Me")
     private let other = ChatUser(id: "other", displayName: "Altive")
+    private let previewImageData = Data(
+      base64Encoded:
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    )!
+
+    private var linkPreview: ChatLinkPreview {
+      ChatLinkPreview(
+        sourceURL: URL(string: "https://altive.dev")!,
+        title: "Altive",
+        description: "プロダクト開発に関する情報を紹介します。",
+        siteName: "altive.dev",
+        image: ChatLinkPreviewImage(
+          resource: "preview/altive.webp",
+          pixelWidth: 1200,
+          pixelHeight: 630
+        )!
+      )!
+    }
 
     var body: some View {
       AltiveChatRoom(
@@ -22,7 +40,8 @@
             id: "incoming",
             createdAt: .init(timeIntervalSince1970: 1_700_000_060),
             sender: other,
-            content: .text("Hello!")
+            content: .text("https://altive.dev を確認してください"),
+            linkPreview: linkPreview
           ),
           .init(
             id: "outgoing",
@@ -35,6 +54,20 @@
         currentUserID: me.id,
         draft: $draft,
         showsSenderName: true,
+        linkPreviewResolver: { url in
+          ChatLinkPreview(
+            sourceURL: url,
+            title: "入力中の固定プレビュー",
+            description: "外部networkへ接続しないPreview用fixtureです。",
+            siteName: "altive.dev",
+            image: ChatLinkPreviewImage(
+              resource: "preview/altive.webp",
+              pixelWidth: 1200,
+              pixelHeight: 630
+            )!
+          )
+        },
+        linkPreviewImageLoader: ChatLinkPreviewImageLoader { _ in previewImageData },
         onSend: { _ in }
       )
     }

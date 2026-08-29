@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
+import 'chat_link_preview.dart';
 import 'chat_user.dart';
 import 'sticker.dart';
 
@@ -97,6 +98,7 @@ class ChatTextMessage extends ChatUserMessage {
     required super.sender,
     super.deliveryState,
     required this.text,
+    this.linkPreview,
     this.highlight = false,
     this.button,
     super.isRead,
@@ -109,6 +111,9 @@ class ChatTextMessage extends ChatUserMessage {
   ///
   /// テキストメッセージ内のURLはタップ可能。
   final String text;
+
+  /// 本文の先頭Web URLに対応する任意のプレビュー。
+  final ChatLinkPreview? linkPreview;
 
   /// メッセージをハイライト表示するかどうか。
   final bool highlight;
@@ -125,6 +130,8 @@ class ChatTextMessage extends ChatUserMessage {
     ChatUser? sender,
     ChatMessageDeliveryState? deliveryState,
     String? text,
+    ChatLinkPreview? linkPreview,
+    bool clearLinkPreview = false,
     bool? highlight,
     MessageActionButton? button,
     bool? isRead,
@@ -138,6 +145,7 @@ class ChatTextMessage extends ChatUserMessage {
       sender: sender ?? this.sender,
       deliveryState: deliveryState ?? this.deliveryState,
       text: text ?? this.text,
+      linkPreview: clearLinkPreview ? null : linkPreview ?? this.linkPreview,
       highlight: highlight ?? this.highlight,
       button: button ?? this.button,
       isRead: isRead ?? this.isRead,
@@ -154,6 +162,7 @@ class ChatTextMessage extends ChatUserMessage {
       'createdAt: $createdAt, '
       'sender: $sender, '
       'text: $text, '
+      'linkPreview: $linkPreview, '
       'highlight: $highlight, '
       'button: $button, '
       'isRead: $isRead, '
@@ -163,7 +172,13 @@ class ChatTextMessage extends ChatUserMessage {
       ')';
 
   @override
-  List<Object?> get props => [...super.props, text, highlight, button];
+  List<Object?> get props => [
+    ...super.props,
+    text,
+    linkPreview,
+    highlight,
+    button,
+  ];
 }
 
 /// {@template altive_chat_room.MessageActionButton}

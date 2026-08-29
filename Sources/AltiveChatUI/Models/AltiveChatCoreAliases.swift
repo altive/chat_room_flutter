@@ -27,6 +27,15 @@ public typealias ChatImageDraft = AltiveChatCore.ChatImageDraft
 /// テキストと画像をまとめた送信要求。
 public typealias ChatComposerSubmission = AltiveChatCore.ChatComposerSubmission
 
+/// 解決済みのWebリンクプレビュー表示値。
+public typealias ChatLinkPreview = AltiveChatCore.ChatLinkPreview
+
+/// リンクプレビュー画像のopaqueな参照と寸法。
+public typealias ChatLinkPreviewImage = AltiveChatCore.ChatLinkPreviewImage
+
+/// テキスト内の先頭HTTP(S) URLを選ぶparser。
+public typealias ChatWebURLParser = AltiveChatCore.ChatWebURLParser
+
 /// チャット入力の方針。
 public typealias ChatDraftPolicy = AltiveChatCore.ChatDraftPolicy
 

@@ -16,6 +16,8 @@
 "chat.link.phone.call" = "Call";
 "chat.link.phone.message" = "Send message";
 "chat.link.phone.cancel" = "Cancel";
+"chat.linkPreview.label" = "Link preview";
+"chat.linkPreview.loading" = "Loading link preview";
 "chat.sender.unknown" = "Unknown user";
 "chat.system.expand" = "Show grouped events";
 "chat.system.collapse" = "Hide grouped events";

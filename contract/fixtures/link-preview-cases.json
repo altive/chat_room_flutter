@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "selectionCases": [
+    {
+      "name": "複数URLでは本文の先頭だけを選ぶ",
+      "text": "先頭 https://first.example/path と https://second.example/",
+      "sourceUrl": "https://first.example/path"
+    },
+    {
+      "name": "scheme省略URLをHTTPSへ正規化する",
+      "text": "example.jp/news",
+      "sourceUrl": "https://example.jp/news"
+    },
+    {
+      "name": "hostと既定portを正規化してfragmentを除く",
+      "text": "HTTPS://EXAMPLE.COM:443/path?x=1#section",
+      "sourceUrl": "https://example.com/path?x=1"
+    },
+    {
+      "name": "メールアドレスは選ばない",
+      "text": "support@example.jp",
+      "sourceUrl": null
+    }
+  ],
+  "previewCases": [
+    {
+      "name": "タイトルだけ",
+      "sourceUrl": "https://example.com/title",
+      "title": "タイトル"
+    },
+    {
+      "name": "タイトルと説明",
+      "sourceUrl": "https://example.com/description",
+      "title": "Title",
+      "description": "Description"
+    },
+    {
+      "name": "タイトルと画像",
+      "sourceUrl": "https://example.com/image",
+      "title": "画像あり",
+      "image": {
+        "resource": "chat-link-previews/v1/example.webp",
+        "pixelWidth": 1200,
+        "pixelHeight": 630
+      }
+    },
+    {
+      "name": "全フィールド",
+      "sourceUrl": "https://example.com/full",
+      "title": "すべての表示値",
+      "description": "日本語とEnglishを含む説明",
+      "siteName": "Example",
+      "image": {
+        "resource": "chat-link-previews/v1/full.webp",
+        "pixelWidth": 1200,
+        "pixelHeight": 630
+      }
+    },
+    {
+      "name": "長いCJKメタデータ",
+      "sourceUrl": "https://example.com/cjk",
+      "title": "長い日本語タイトル長い日本語タイトル長い日本語タイトル",
+      "description": "説明文を複数行に折り返してもカード幅を超えず省略されることを確認するための文章です。"
+    },
+    {
+      "name": "RTLメタデータ",
+      "sourceUrl": "https://example.com/rtl",
+      "title": "معاينة الرابط",
+      "description": "وصف طويل لاختبار اتجاه النص"
+    }
+  ],
+  "rejectedCases": [
+    {
+      "name": "空タイトル",
+      "sourceUrl": "https://example.com/empty",
+      "title": ""
+    },
+    {
+      "name": "不正scheme",
+      "sourceUrl": "file:///private/data",
+      "title": "表示しない"
+    },
+    {
+      "name": "未知schema",
+      "schemaVersion": 999,
+      "sourceUrl": "https://example.com/future",
+      "title": "アプリ変換で除外する"
+    }
+  ],
+  "stateCases": [
+    "URL変更前のresolver結果を破棄する",
+    "画像読み込み失敗時はmetadataだけを表示する"
+  ]
+}

@@ -76,19 +76,24 @@ public struct ChatMessage: Hashable, Identifiable, Sendable {
   /// メッセージの送信状態。
   public let deliveryState: ChatMessageDeliveryState
 
+  /// テキスト本文の先頭Web URLに対応する任意のリンクプレビュー。
+  public let linkPreview: ChatLinkPreview?
+
   /// チャットへ表示するメッセージを作成する。
   public init(
     id: String,
     createdAt: Date,
     sender: ChatUser?,
     content: ChatMessageContent,
-    deliveryState: ChatMessageDeliveryState = .sent
+    deliveryState: ChatMessageDeliveryState = .sent,
+    linkPreview: ChatLinkPreview? = nil
   ) {
     self.id = id
     self.createdAt = createdAt
     self.sender = sender
     self.content = content
     self.deliveryState = deliveryState
+    self.linkPreview = linkPreview
   }
 
   /// 指定したユーザーが送信したメッセージかどうかを返す。

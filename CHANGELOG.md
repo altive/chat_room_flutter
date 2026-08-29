@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Flutter、SwiftUI、Jetpack Composeへ、アプリが解決したWebリンクmetadataを表示する
+  共通カードと、入力中の500ミリ秒debounce・古い結果破棄・型付き送信値を追加した。
+- Flutterの端末直接OGP取得を削除し、外部取得、Firebase接続、画像解決を利用アプリへ
+  委譲する責務へ統一した。
+
 ## 1.6.2 - 2026-08-28
 
 - SwiftUIで非表示中に項目を受信したタイムラインを表示する際、再生成前の

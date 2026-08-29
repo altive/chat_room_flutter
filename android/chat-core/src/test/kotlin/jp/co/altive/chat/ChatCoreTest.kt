@@ -1,5 +1,7 @@
 package jp.co.altive.chat
 
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -68,11 +70,18 @@ class ChatCoreTest {
 
   @Test fun createsTextAndImageSubmissionTogether() {
     val image = ChatImageDraft("image-1", "content://chat/image-1")
+    val preview = ChatLinkPreview("https://example.com/article", "記事タイトル")
     val submission = requireNotNull(
-      ChatComposerSubmission.create("  hello\n", listOf(image), ChatDraftPolicy.Unrestricted),
+      ChatComposerSubmission.create(
+        "  hello\n",
+        listOf(image),
+        ChatDraftPolicy.Unrestricted,
+        preview,
+      ),
     )
     assertEquals("hello", submission.text)
     assertEquals(listOf(image), submission.images)
+    assertEquals(preview, submission.linkPreview)
   }
 
   @Test fun acceptsImageOnlyAndRejectsEmptySubmission() {
@@ -119,9 +128,96 @@ class ChatCoreTest {
     assertEquals(reference, content.reference)
   }
 
+  @Test fun `本文中の先頭Web URLだけをリンクプレビュー対象にする`() {
+    assertEquals(
+      "https://first.example/path?q=chat",
+      ChatLinkPreviewParser.firstUrl(
+        "メール support@example.com の後に https://first.example/path?q=chat、次に http://second.example",
+      ),
+    )
+  }
+
+  @Test fun `scheme省略Web URLをHTTPSへ正規化してメールアドレスを除外する`() {
+    assertEquals("https://example.jp/news", ChatLinkPreviewParser.firstUrl("example.jp/news"))
+    assertEquals("https://www.example.com", ChatLinkPreviewParser.firstUrl("www.example.com"))
+    assertNull(ChatLinkPreviewParser.firstUrl("support@example.jp"))
+  }
+
+  @Test fun `共通fixtureのselectionCasesを全件検証する`() {
+    val fixture = Files.readString(linkPreviewFixturePath())
+    val selectionCases = fixture
+      .substringAfter("\"selectionCases\": [")
+      .substringBefore("\n  ],")
+    val cases = Regex("\\{[^{}]*}").findAll(selectionCases).map { objectMatch ->
+      val value = objectMatch.value
+      val name = requireNotNull(jsonString(value, "name"))
+      val text = requireNotNull(jsonString(value, "text"))
+      val expected = jsonString(value, "sourceUrl")
+      Triple(name, text, expected)
+    }.toList()
+
+    assertTrue(cases.isNotEmpty())
+    cases.forEach { (name, text, expected) ->
+      assertEquals(expected, ChatLinkPreviewParser.firstUrl(text), name)
+    }
+  }
+
+  @Test fun `不正schemeと不完全URLをリンクプレビュー対象にしない`() {
+    assertNull(ChatLinkPreviewParser.firstUrl("ftp://example.com javascript:alert(1) https://"))
+    assertNull(ChatLinkPreviewParser.firstUrl("javascript:https://example.com"))
+  }
+
+  @Test fun `表示可能なリンクプレビューと壊れた画像寸法を安全に判定する`() {
+    val preview = ChatLinkPreview(
+      sourceUrl = "https://example.com",
+      title = "タイトル",
+      image = ChatLinkPreviewImage("storage/path", pixelWidth = 1200, pixelHeight = 630),
+    )
+    assertTrue(preview.isDisplayable)
+    assertEquals(1200f / 630f, preview.image?.aspectRatio)
+    assertFalse(preview.copy(title = " ").isDisplayable)
+    assertFalse(preview.copy(title = "a".repeat(201)).isDisplayable)
+    assertFalse(preview.copy(description = "a".repeat(501)).isDisplayable)
+    assertFalse(preview.copy(siteName = "a".repeat(101)).isDisplayable)
+    assertFalse(preview.copy(sourceUrl = "javascript:alert(1)").isDisplayable)
+    val brokenImage = ChatLinkPreviewImage("storage/path", pixelWidth = -1, pixelHeight = 630)
+    assertFalse(brokenImage.isDisplayable)
+    assertNull(brokenImage.aspectRatio)
+  }
+
+  @Test fun `本文なしsubmissionはリンクプレビューを保持しない`() {
+    val preview = ChatLinkPreview("https://example.com", "Example")
+    val image = ChatImageDraft(
+      id = "image",
+      localUri = "content://image",
+    )
+
+    assertNull(
+      ChatComposerSubmission.create(
+        draft = "",
+        images = listOf(image),
+        policy = ChatDraftPolicy.Unrestricted,
+        linkPreview = preview,
+      )?.linkPreview,
+    )
+  }
+
   @Test fun clampsInputSurfaceGeometry() {
     assertEquals(310f, ChatInputSurfaceGeometry.keyboardContentHeight(344f, 34f))
     assertEquals(261f, ChatInputSurfaceGeometry.inputSurfaceHeight(310f, 49f))
     assertEquals(0f, ChatInputSurfaceGeometry.inputSurfaceHeight(40f, 49f))
   }
+}
+
+private fun linkPreviewFixturePath(): Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }
+  .map { it.resolve("contract/fixtures/link-preview-cases.json") }
+  .firstOrNull(Files::exists)
+  ?: error("contract/fixtures/link-preview-cases.jsonが見つかりません")
+
+private fun jsonString(objectJson: String, key: String): String? {
+  if (Regex("\\\"$key\\\"\\s*:\\s*null").containsMatchIn(objectJson)) return null
+  return Regex("\\\"$key\\\"\\s*:\\s*\\\"([^\\\"]*)\\\"")
+    .find(objectJson)
+    ?.groupValues
+    ?.get(1)
 }

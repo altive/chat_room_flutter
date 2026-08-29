@@ -18,6 +18,8 @@
   <string name="altive_chat_sms">SMS</string>
   <string name="altive_chat_cancel">Cancel</string>
   <string name="altive_chat_latest">Latest messages</string>
+  <string name="altive_chat_link_preview">Link preview</string>
+  <string name="altive_chat_link_preview_loading">Loading link preview</string>
   <string name="altive_chat_expand">Expand events</string>
   <string name="altive_chat_collapse">Collapse events</string>
 </resources>

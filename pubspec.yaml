@@ -23,8 +23,6 @@ dependencies:
     sdk: flutter
   flutter_cache_manager: ^3.4.1
   flutter_svg: ^2.2.3
-  html: ^0.15.6
-  http: ^1.6.0
   intl: ^0.20.2
   url_launcher: ^6.3.2
 

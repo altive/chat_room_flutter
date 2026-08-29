@@ -16,6 +16,8 @@
 "chat.link.phone.call" = "電話";
 "chat.link.phone.message" = "SMS";
 "chat.link.phone.cancel" = "キャンセル";
+"chat.linkPreview.label" = "リンクプレビュー";
+"chat.linkPreview.loading" = "リンクプレビューを読み込み中";
 "chat.sender.unknown" = "不明なユーザー";
 "chat.system.expand" = "まとめられた出来事を表示";
 "chat.system.collapse" = "まとめられた出来事を閉じる";

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'bottom_widget.dart';
+import 'chat_link_preview_scope.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
@@ -52,6 +53,12 @@ class AltiveChatRoom extends StatefulWidget {
     required this.currentUserId,
     required this.messages,
     required this.onSendIconPressed,
+    this.onSubmit,
+    this.linkPreviewResolver,
+    this.linkPreviewImageBuilder,
+    this.onWebLinkTap,
+    this.linkPreviewSemanticLabel = 'Link preview',
+    this.linkPreviewLoadingSemanticLabel = 'Loading link preview',
     this.textEditingController,
     this.draftPolicy = const ChatDraftPolicy.unrestricted(),
     this.isGroupChat = false,
@@ -123,6 +130,26 @@ class AltiveChatRoom extends StatefulWidget {
   /// テキストメッセージを送信する際に使用する。
   /// ステッカーが選択されている場合はステッカーメッセージも送信する。
   final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
+
+  /// 型付きの送信値を受け取る処理。
+  ///
+  /// 指定時は[onSendIconPressed]より優先される。
+  final ValueChanged<ChatComposerSubmission>? onSubmit;
+
+  /// 入力中の先頭Web URLを解決する任意の処理。
+  final ChatLinkPreviewResolver? linkPreviewResolver;
+
+  /// リンクプレビュー画像をアプリ側で構築する任意の処理。
+  final ChatLinkPreviewImageBuilder? linkPreviewImageBuilder;
+
+  /// 本文またはカードのWebリンクを操作した時の任意の処理。
+  final ChatWebLinkTapCallback? onWebLinkTap;
+
+  /// リンクプレビューの読み上げ文。
+  final String linkPreviewSemanticLabel;
+
+  /// 読み込み中リンクプレビューの読み上げ文。
+  final String linkPreviewLoadingSemanticLabel;
 
   /// グループチャットかどうか。
   final bool isGroupChat;
@@ -385,6 +412,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
   @override
   Widget build(BuildContext context) {
     final lightThemeData = ThemeData.light();
+    const refreshIndicator = CircularProgressIndicator.adaptive();
     final messages = _newestFirstMessages(widget.messages);
     // メッセージリストの高さを計算するために使用するキー。
     final messageListViewKey = GlobalObjectKey(context);
@@ -459,120 +487,135 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
     return InheritedAltiveChatRoomTheme(
       theme: widget.theme,
       messageListViewKey: messageListViewKey,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          primaryColor: widget.theme.primaryColor,
-          scaffoldBackgroundColor: widget.theme.backgroundColor,
-          inputDecorationTheme: widget.theme.inputDecorationTheme,
-          colorScheme: lightThemeData.colorScheme.copyWith(
-            primary: widget.theme.primaryColor,
-            surface: widget.theme.backgroundColor,
+      child: ChatLinkPreviewScope(
+        resolver: widget.linkPreviewResolver,
+        imageBuilder: widget.linkPreviewImageBuilder,
+        onWebLinkTap: widget.onWebLinkTap,
+        semanticLabel: widget.linkPreviewSemanticLabel,
+        loadingSemanticLabel: widget.linkPreviewLoadingSemanticLabel,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            primaryColor: widget.theme.primaryColor,
+            scaffoldBackgroundColor: widget.theme.backgroundColor,
+            inputDecorationTheme: widget.theme.inputDecorationTheme,
+            colorScheme: lightThemeData.colorScheme.copyWith(
+              primary: widget.theme.primaryColor,
+              surface: widget.theme.backgroundColor,
+            ),
           ),
-        ),
-        child: Scaffold(
-          body: SafeArea(
-            // bottom部分は特定のカラーを指定したいのでfalseにする。
-            // trueにすると、Scaffold.backgroundColorのカラーが表示されてしまう。
-            bottom: false,
-            child: Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      if (widget.messages.isEmpty)
-                        // メッセージがない場合
-                        emptyWidget
-                      else
-                        // メッセージがある場合
-                        onRefresh == null
-                            ? child
-                            // NOTE: ListViewを反転させている為、
-                            // 上に引っ張って Pull-to-Refreshを表示させる。
-                            // この際、RefreshIndicatorは使用できないので、
-                            // 代わりにCustomMaterialIndicatorを使用している。
-                            : CustomMaterialIndicator(
-                                onRefresh: onRefresh,
-                                trailingScrollIndicatorVisible: false,
-                                leadingScrollIndicatorVisible: true,
-                                indicatorBuilder: (_, _) =>
-                                    const CircularProgressIndicator.adaptive(),
-                                child: child,
-                              ),
-                      if (selectedSticker != null)
-                        _StickerPreview(
-                          backgroundColor: widget.theme.backgroundColor
-                              ?.withValues(alpha: 0.5),
-                          sticker: selectedSticker,
-                          onSelected: (sticker) {
-                            widget.onSendIconPressed.call((
-                              text: '',
-                              sticker: sticker,
-                            ));
-                            setState(() {
-                              _selectedSticker = null;
-                            });
-                          },
-                          onClosed: () {
-                            setState(() {
-                              _selectedSticker = null;
-                            });
-                          },
-                        ),
-                      if (widget.showScrollToLatestButton && !_isNearLatest)
-                        Positioned(
-                          right: 16,
-                          bottom: 8,
-                          child:
-                              widget.scrollToLatestButtonBuilder?.call(
-                                _scrollToLatest,
-                              ) ??
-                              FloatingActionButton.small(
-                                onPressed: _scrollToLatest,
-                                child: const Icon(Icons.arrow_downward),
-                              ),
-                        ),
-                    ],
+          child: Scaffold(
+            body: SafeArea(
+              // bottom部分は特定のカラーを指定したいのでfalseにする。
+              // trueにすると、Scaffold.backgroundColorのカラーが表示されてしまう。
+              bottom: false,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        if (widget.messages.isEmpty)
+                          // メッセージがない場合
+                          emptyWidget
+                        else
+                          // メッセージがある場合
+                          onRefresh == null
+                              ? child
+                              // NOTE: ListViewを反転させている為、
+                              // 上に引っ張って Pull-to-Refreshを表示させる。
+                              // この際、RefreshIndicatorは使用できないので、
+                              // 代わりにCustomMaterialIndicatorを使用している。
+                              : CustomMaterialIndicator(
+                                  onRefresh: onRefresh,
+                                  trailingScrollIndicatorVisible: false,
+                                  leadingScrollIndicatorVisible: true,
+                                  indicatorBuilder: (_, _) => refreshIndicator,
+                                  child: child,
+                                ),
+                        if (selectedSticker != null)
+                          _StickerPreview(
+                            backgroundColor: widget.theme.backgroundColor
+                                ?.withValues(alpha: 0.5),
+                            sticker: selectedSticker,
+                            onSelected: (sticker) {
+                              widget.onSendIconPressed.call((
+                                text: '',
+                                sticker: sticker,
+                              ));
+                              setState(() {
+                                _selectedSticker = null;
+                              });
+                            },
+                            onClosed: () {
+                              setState(() {
+                                _selectedSticker = null;
+                              });
+                            },
+                          ),
+                        if (widget.showScrollToLatestButton && !_isNearLatest)
+                          Positioned(
+                            right: 16,
+                            bottom: 8,
+                            child:
+                                widget.scrollToLatestButtonBuilder?.call(
+                                  _scrollToLatest,
+                                ) ??
+                                FloatingActionButton.small(
+                                  onPressed: _scrollToLatest,
+                                  child: const Icon(Icons.arrow_downward),
+                                ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                if (!widget.hideBottomWidget) ...[
-                  BottomWidget(
-                    textEditingController: widget.textEditingController,
-                    draftPolicy: widget.draftPolicy,
-                    onSendIconPressed: (value) {
-                      widget.onSendIconPressed(value);
-                      setState(() {
-                        _selectedSticker = null;
-                      });
-                    },
-                    hintText: widget.hintText,
-                    showSendButtonInTextField: widget.showSendButtonInTextField,
-                    sendButtonWidget: widget.sendButtonWidget,
-                    expandButtonIcon: widget.expandButtonIcon,
-                    textFieldSuffixBuilder: widget.textFieldSuffixBuilder,
-                    messageTypeNotifier: messageTypeNotifier,
-                    leadingWidgets: widget.bottomLeadingWidgets,
-                    replyToMessageBar: widget.replyToMessageBar,
-                    stickerPackages: widget.stickerPackages,
-                    stickerPickerFooter: widget.stickerPickerFooter,
-                    onLockedStickerTap: widget.onLockedStickerTap,
-                    lockedStickerSemanticLabel:
-                        widget.lockedStickerSemanticLabel,
-                    selectedSticker: _selectedSticker,
-                    onStickerSelected: (sticker) {
-                      setState(() {
-                        _selectedSticker = sticker;
-                      });
-                    },
-                  ),
-                  // SafeAreaのbottomと同じ高さで、入力エリアと同じカラーのWidgetを配置する。
-                  Container(
-                    height: MediaQuery.paddingOf(context).bottom,
-                    color: widget.theme.inputBackgroundColor,
-                  ),
+                  const SizedBox(height: 8),
+                  if (!widget.hideBottomWidget) ...[
+                    BottomWidget(
+                      textEditingController: widget.textEditingController,
+                      draftPolicy: widget.draftPolicy,
+                      onSubmit: (submission) {
+                        final onSubmit = widget.onSubmit;
+                        if (onSubmit != null) {
+                          onSubmit(submission);
+                        } else {
+                          widget.onSendIconPressed((
+                            text: submission.text,
+                            sticker: submission.sticker,
+                          ));
+                        }
+                        setState(() {
+                          _selectedSticker = null;
+                        });
+                      },
+                      hintText: widget.hintText,
+                      showSendButtonInTextField:
+                          widget.showSendButtonInTextField,
+                      sendButtonWidget: widget.sendButtonWidget,
+                      expandButtonIcon: widget.expandButtonIcon,
+                      textFieldSuffixBuilder: widget.textFieldSuffixBuilder,
+                      messageTypeNotifier: messageTypeNotifier,
+                      leadingWidgets: widget.bottomLeadingWidgets,
+                      replyToMessageBar: widget.replyToMessageBar,
+                      stickerPackages: widget.stickerPackages,
+                      stickerPickerFooter: widget.stickerPickerFooter,
+                      onLockedStickerTap: widget.onLockedStickerTap,
+                      lockedStickerSemanticLabel:
+                          widget.lockedStickerSemanticLabel,
+                      selectedSticker: _selectedSticker,
+                      onStickerSelected: (sticker) {
+                        setState(() {
+                          _selectedSticker = sticker;
+                        });
+                      },
+                    ),
+                    // SafeAreaのbottomと同じ高さで、入力エリアと同じカラーのWidgetを配置する。
+                    Container(
+                      height: MediaQuery.paddingOf(context).bottom,
+                      color: widget.theme.inputBackgroundColor,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

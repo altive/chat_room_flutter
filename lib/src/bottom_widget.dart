@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'chat_link_preview_card.dart';
+import 'chat_link_preview_scope.dart';
 import 'common_cached_network_image.dart';
 import 'inherited_altive_chat_room_theme.dart';
+import 'message_link.dart';
 import 'models.dart';
 
 /// {@template altive_chat_room.BottomWidget}
@@ -17,7 +22,7 @@ class BottomWidget extends StatefulWidget {
     super.key,
     this.textEditingController,
     required this.draftPolicy,
-    required this.onSendIconPressed,
+    required this.onSubmit,
     required this.hintText,
     required this.showSendButtonInTextField,
     required this.sendButtonWidget,
@@ -41,7 +46,7 @@ class BottomWidget extends StatefulWidget {
   final ChatDraftPolicy draftPolicy;
 
   /// 送信ボタン押下時のコールバック。
-  final ValueChanged<({String text, Sticker? sticker})> onSendIconPressed;
+  final ValueChanged<ChatComposerSubmission> onSubmit;
 
   /// 入力欄のプレースホルダーテキスト。
   final String hintText;
@@ -98,6 +103,12 @@ class _BottomWidgetState extends State<BottomWidget> {
   TextEditingController? _controller;
   TextEditingController get _effectiveController =>
       widget.textEditingController ?? _controller!;
+  Timer? _linkPreviewTimer;
+  ChatLinkPreviewResolver? _linkPreviewResolver;
+  Uri? _activeLinkPreviewUrl;
+  ChatLinkPreview? _linkPreview;
+  var _linkPreviewGeneration = 0;
+  var _isLinkPreviewLoading = false;
 
   @override
   void initState() {
@@ -105,12 +116,39 @@ class _BottomWidgetState extends State<BottomWidget> {
     if (widget.textEditingController == null) {
       _controller = TextEditingController();
     }
+    _effectiveController.addListener(_handleDraftChanged);
     focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final resolver = ChatLinkPreviewScope.maybeOf(context)?.resolver;
+    if (!identical(resolver, _linkPreviewResolver)) {
+      _linkPreviewResolver = resolver;
+      _scheduleLinkPreviewResolution(force: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BottomWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.textEditingController != widget.textEditingController) {
+      final oldController = oldWidget.textEditingController ?? _controller;
+      oldController?.removeListener(_handleDraftChanged);
+      if (widget.textEditingController == null && _controller == null) {
+        _controller = TextEditingController();
+      }
+      _effectiveController.addListener(_handleDraftChanged);
+      _scheduleLinkPreviewResolution(force: true);
+    }
   }
 
   @override
   void dispose() {
     focusNode.removeListener(_handleFocusChange);
+    _effectiveController.removeListener(_handleDraftChanged);
+    _linkPreviewTimer?.cancel();
     _controller?.dispose();
     focusNode.dispose();
     super.dispose();
@@ -124,10 +162,61 @@ class _BottomWidgetState extends State<BottomWidget> {
     }
   }
 
+  void _handleDraftChanged() {
+    _scheduleLinkPreviewResolution();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _scheduleLinkPreviewResolution({bool force = false}) {
+    final sourceUrl = firstWebLinkInMessage(_effectiveController.text);
+    final resolver = _linkPreviewResolver;
+    if (!force && sourceUrl == _activeLinkPreviewUrl) {
+      return;
+    }
+    _linkPreviewTimer?.cancel();
+    final generation = ++_linkPreviewGeneration;
+    _activeLinkPreviewUrl = sourceUrl;
+    _linkPreview = null;
+    _isLinkPreviewLoading = sourceUrl != null && resolver != null;
+    if (sourceUrl == null || resolver == null) {
+      return;
+    }
+    _linkPreviewTimer = Timer(const Duration(milliseconds: 500), () {
+      unawaited(_resolveLinkPreview(sourceUrl, resolver, generation));
+    });
+  }
+
+  Future<void> _resolveLinkPreview(
+    Uri sourceUrl,
+    ChatLinkPreviewResolver resolver,
+    int generation,
+  ) async {
+    ChatLinkPreview? preview;
+    try {
+      preview = await resolver(sourceUrl);
+    } on Object catch (_) {
+      // 取得失敗は本文編集と送信を妨げず、プレビューを表示しない。
+    }
+    if (!mounted ||
+        generation != _linkPreviewGeneration ||
+        sourceUrl != _activeLinkPreviewUrl ||
+        (preview != null &&
+            normalizeWebLinkPreviewUrl(preview.sourceUrl) != sourceUrl)) {
+      return;
+    }
+    setState(() {
+      _isLinkPreviewLoading = false;
+      _linkPreview = preview?.isDisplayable ?? false ? preview : null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
+    final linkPreviewScope = ChatLinkPreviewScope.maybeOf(context);
     final leadingWidgets = widget.leadingWidgets;
     final replyToMessageBar = widget.replyToMessageBar;
     final textFieldSuffixBuilder = widget.textFieldSuffixBuilder;
@@ -155,13 +244,14 @@ class _BottomWidgetState extends State<BottomWidget> {
         if (normalizedText == null && widget.selectedSticker == null) {
           return;
         }
-        widget.onSendIconPressed.call((
-          text: normalizedText ?? '',
-          sticker: widget.selectedSticker,
-        ));
-        setState(() {
-          _effectiveController.clear();
-        });
+        widget.onSubmit.call(
+          ChatComposerSubmission(
+            text: normalizedText ?? '',
+            sticker: widget.selectedSticker,
+            linkPreview: widget.selectedSticker == null ? _linkPreview : null,
+          ),
+        );
+        _effectiveController.clear();
       },
     );
 
@@ -196,6 +286,28 @@ class _BottomWidgetState extends State<BottomWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ?replyToMessageBar,
+            if (_isLinkPreviewLoading || _linkPreview != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
+                child: _isLinkPreviewLoading
+                    ? ChatLinkPreviewPlaceholder(
+                        semanticLabel:
+                            linkPreviewScope?.loadingSemanticLabel ??
+                            'Loading link preview',
+                      )
+                    : ChatLinkPreviewCard(
+                        preview: _linkPreview!,
+                        imageBuilder: linkPreviewScope?.imageBuilder,
+                        semanticLabel:
+                            linkPreviewScope?.semanticLabel ?? 'Link preview',
+                        onTap: linkPreviewScope?.onWebLinkTap == null
+                            ? null
+                            : () => linkPreviewScope!.onWebLinkTap!(
+                                _linkPreview!.sourceUrl,
+                              ),
+                        compact: true,
+                      ),
+              ),
             Container(
               color:
                   altiveChatRoomTheme.inputBackgroundColor ??
@@ -250,9 +362,6 @@ class _BottomWidgetState extends State<BottomWidget> {
                                 children: suffixWidgets,
                               ),
                       ),
-                      onChanged: (_) {
-                        setState(() {});
-                      },
                       onTap: () {
                         setState(() {
                           messageTypeNotifier.value = MessageInputType.text;

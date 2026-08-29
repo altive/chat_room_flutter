@@ -62,6 +62,22 @@ void main() {
       expect(failed.deliveryState, ChatMessageDeliveryState.failed);
       expect(failed, isNot(message));
     });
+
+    test('copyWith はリンクプレビューを明示的に削除できる', () {
+      final message = ChatTextMessage(
+        id: 'm-link-preview',
+        createdAt: DateTime(2026, 2, 9),
+        sender: _user(id: 'u1'),
+        text: 'https://example.com',
+        linkPreview: ChatLinkPreview(
+          sourceUrl: Uri.parse('https://example.com'),
+          title: 'Example',
+        ),
+      );
+
+      expect(message.copyWith().linkPreview, message.linkPreview);
+      expect(message.copyWith(clearLinkPreview: true).linkPreview, isNull);
+    });
   });
 
   group('ChatImagesMessage', () {

@@ -18,6 +18,8 @@
   <string name="altive_chat_sms">SMS</string>
   <string name="altive_chat_cancel">キャンセル</string>
   <string name="altive_chat_latest">最新のメッセージ</string>
+  <string name="altive_chat_link_preview">リンクプレビュー</string>
+  <string name="altive_chat_link_preview_loading">リンクプレビューを読み込み中</string>
   <string name="altive_chat_expand">イベントを展開</string>
   <string name="altive_chat_collapse">イベントを折りたたむ</string>
 </resources>

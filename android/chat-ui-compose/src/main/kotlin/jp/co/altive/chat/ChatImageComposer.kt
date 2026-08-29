@@ -69,6 +69,8 @@ fun ChatImageComposer(
   imageContent: @Composable BoxScope.(ChatImage) -> Unit,
   additionalSourceContent: (@Composable () -> Unit)? = null,
   focusRequester: FocusRequester = remember { FocusRequester() },
+  /** 選択画像と入力欄の間へ表示するdraftリンクプレビュー。 */
+  linkPreviewContent: @Composable () -> Unit = {},
 ) {
   val canSend = ChatComposerSendPolicy.canSend(
     draft = draft,
@@ -125,6 +127,8 @@ fun ChatImageComposer(
         }
       }
     }
+
+    linkPreviewContent()
 
     Row(
       verticalAlignment = Alignment.Bottom,

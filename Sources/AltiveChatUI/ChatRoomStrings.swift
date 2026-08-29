@@ -59,6 +59,12 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 電話番号の操作をキャンセルする文言。
   public var cancelActionLabel: String
 
+  /// リンクプレビューのアクセシビリティラベル。
+  public var linkPreviewLabel: String
+
+  /// 入力中リンクプレビューの読み込み中を示す文言。
+  public var linkPreviewLoadingLabel: String
+
   /// チャット画面で使用する文言を作成する。
   public init(
     emptyMessage: String,
@@ -79,7 +85,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
     phoneActionTitle: String = "Choose an action",
     callActionLabel: String = "Call",
     messageActionLabel: String = "Send message",
-    cancelActionLabel: String = "Cancel"
+    cancelActionLabel: String = "Cancel",
+    linkPreviewLabel: String = "Link preview",
+    linkPreviewLoadingLabel: String = "Loading link preview"
   ) {
     self.emptyMessage = emptyMessage
     self.messagePlaceholder = messagePlaceholder
@@ -100,6 +108,8 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.callActionLabel = callActionLabel
     self.messageActionLabel = messageActionLabel
     self.cancelActionLabel = cancelActionLabel
+    self.linkPreviewLabel = linkPreviewLabel
+    self.linkPreviewLoadingLabel = linkPreviewLoadingLabel
   }
 
   /// Package内のローカライズ済み文言。
@@ -129,7 +139,12 @@ public struct ChatRoomStrings: Equatable, Sendable {
       phoneActionTitle: String(localized: "chat.link.phone.title", bundle: .module),
       callActionLabel: String(localized: "chat.link.phone.call", bundle: .module),
       messageActionLabel: String(localized: "chat.link.phone.message", bundle: .module),
-      cancelActionLabel: String(localized: "chat.link.phone.cancel", bundle: .module)
+      cancelActionLabel: String(localized: "chat.link.phone.cancel", bundle: .module),
+      linkPreviewLabel: String(localized: "chat.linkPreview.label", bundle: .module),
+      linkPreviewLoadingLabel: String(
+        localized: "chat.linkPreview.loading",
+        bundle: .module
+      )
     )
   }
 }

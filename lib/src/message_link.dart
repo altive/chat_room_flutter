@@ -232,6 +232,33 @@ Iterable<MessageLink> webLinksInMessage(String text) => parseMessageLinks(text)
     .whereType<MessageLink>()
     .where((link) => link.kind == MessageLinkKind.web);
 
+/// メッセージ本文の先頭HTTP(S)リンクを返す。
+Uri? firstWebLinkInMessage(String text) {
+  for (final link in webLinksInMessage(text)) {
+    return normalizeWebLinkPreviewUrl(link.destination);
+  }
+  return null;
+}
+
+/// resolverと保存値の比較に使うHTTP(S) URLへ正規化する。
+Uri? normalizeWebLinkPreviewUrl(Uri url) {
+  final scheme = url.scheme.toLowerCase();
+  if ((scheme != 'http' && scheme != 'https') || url.host.isEmpty) {
+    return null;
+  }
+  final isDefaultPort =
+      (scheme == 'http' && url.port == 80) ||
+      (scheme == 'https' && url.port == 443);
+  return Uri(
+    scheme: scheme,
+    userInfo: url.userInfo,
+    host: url.host.toLowerCase(),
+    port: url.hasPort && !isDefaultPort ? url.port : null,
+    path: url.path,
+    query: url.hasQuery ? url.query : null,
+  );
+}
+
 /// リンクを含む本文の [InlineSpan] を生成する。
 List<InlineSpan> buildMessageLinkSpans({
   required String text,

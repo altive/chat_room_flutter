@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -346,5 +347,132 @@ class AltiveChatRoomTest {
     compose.onNodeWithText("お誕生日おめでとう").assertIsDisplayed()
     compose.onNodeWithText("すてきな一年になりますように").assertIsDisplayed()
     compose.onNodeWithText("補足").assertIsDisplayed()
+  }
+
+  @Test fun `送信済みリンクプレビューを読み上げ可能なカードとして表示して開く`() {
+    var openedUrl: String? = null
+    val preview = ChatLinkPreview(
+      sourceUrl = "https://example.com/article",
+      title = "長い記事タイトル",
+      description = "記事の説明",
+      siteName = "Example",
+      image = ChatLinkPreviewImage("link-preview/article", 1200, 630),
+    )
+    compose.setContent {
+      MaterialTheme {
+        ChatMessageRow(
+          message = ChatMessage(
+            id = "message",
+            createdAtEpochMillis = 1L,
+            sender = ChatUser("other", "Other"),
+            content = ChatMessageContent.Text("https://example.com/article"),
+            linkPreview = preview,
+          ),
+          currentUserId = "me",
+          strings = ChatRoomStrings("", "", "", "", "", "", linkPreviewLabel = "リンクプレビュー"),
+          linkPreviewImageContent = { Text("Preview image: ${it.resource}") },
+          onLinkPreviewTap = { openedUrl = it },
+        )
+      }
+    }
+
+    compose.onNodeWithText("長い記事タイトル").assertIsDisplayed()
+    compose.onNodeWithText("Preview image: link-preview/article").assertIsDisplayed()
+    compose.onNodeWithContentDescription(
+      "リンクプレビュー. Example. 長い記事タイトル. 記事の説明. https://example.com/article",
+    ).performClick()
+    compose.runOnIdle { assertEquals(preview.sourceUrl, openedUrl) }
+  }
+
+  @Test fun `入力中リンクを500ミリ秒待って解決しsubmissionへ含める`() {
+    compose.mainClock.autoAdvance = false
+    var calls = 0
+    var submission: ChatComposerSubmission? = null
+    val preview = ChatLinkPreview("https://example.com/article", "draft preview")
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = emptyList(),
+          currentUserId = "me",
+          draft = "https://example.com/article",
+          onDraftChange = {},
+          imageDrafts = emptyList(),
+          onImageDraftsChange = {},
+          resolvePhotoLibraryUri = { error("使用しません") },
+          availableImageInputSources = emptySet(),
+          linkPreviewResolver = {
+            calls += 1
+            preview
+          },
+          onSubmit = { submission = it },
+        )
+      }
+    }
+
+    compose.waitForIdle()
+    compose.onNodeWithTag("AltiveChatUI.LinkPreviewLoading").assertIsDisplayed()
+    compose.mainClock.advanceTimeBy(400)
+    compose.runOnIdle { assertEquals(0, calls) }
+    compose.mainClock.advanceTimeBy(200)
+    compose.waitForIdle()
+    compose.onNodeWithText("draft preview").assertIsDisplayed()
+    compose.onNodeWithTag("AltiveChatUI.SendButton").performClick()
+    compose.runOnIdle { assertEquals(preview, submission?.linkPreview) }
+  }
+
+  @Test fun `URL変更後に完了した古いリンクプレビューを表示しない`() {
+    compose.mainClock.autoAdvance = false
+    var draft by mutableStateOf("https://old.example")
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = emptyList(),
+          currentUserId = "me",
+          draft = draft,
+          onDraftChange = { draft = it },
+          linkPreviewResolver = { url ->
+            if (url.contains("old")) delay(1_000)
+            ChatLinkPreview(url, if (url.contains("old")) "古い結果" else "新しい結果")
+          },
+          onSend = {},
+        )
+      }
+    }
+
+    compose.waitForIdle()
+    compose.mainClock.advanceTimeBy(550)
+    compose.runOnIdle { draft = "https://new.example" }
+    compose.mainClock.advanceTimeBy(700)
+    compose.waitForIdle()
+    compose.onNodeWithText("新しい結果").assertIsDisplayed()
+    assertEquals(0, compose.onAllNodesWithText("古い結果").fetchSemanticsNodes().size)
+  }
+
+  @Test fun `リンクプレビュー解決中でも本文を送信できる`() {
+    compose.mainClock.autoAdvance = false
+    var submission: ChatComposerSubmission? = null
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = emptyList(),
+          currentUserId = "me",
+          draft = "https://example.com",
+          onDraftChange = {},
+          imageDrafts = emptyList(),
+          onImageDraftsChange = {},
+          resolvePhotoLibraryUri = { error("使用しません") },
+          availableImageInputSources = emptySet(),
+          linkPreviewResolver = { error("送信前には呼ばれません") },
+          onSubmit = { submission = it },
+        )
+      }
+    }
+
+    compose.waitForIdle()
+    compose.onNodeWithTag("AltiveChatUI.SendButton").performClick()
+    compose.runOnIdle {
+      assertEquals("https://example.com", submission?.text)
+      assertEquals(null, submission?.linkPreview)
+    }
   }
 }

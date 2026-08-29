@@ -40,6 +40,12 @@ public struct ChatImageComposer: View {
   let draftPolicy: ChatDraftPolicy
   let theme: ChatRoomTheme
   let imageLoader: ChatImageLoader
+  let linkPreview: ChatLinkPreview?
+  let isLinkPreviewLoading: Bool
+  let linkPreviewImageLoader: ChatLinkPreviewImageLoader?
+  let linkPreviewAccessibilityLabel: String
+  let linkPreviewLoadingLabel: String
+  let onLinkPreviewTap: ((URL) -> Void)?
   let onRequestCamera: (() -> Void)?
   let onRemoveImage: (String) -> Void
   let onSubmit: () -> Void
@@ -62,6 +68,12 @@ public struct ChatImageComposer: View {
     draftPolicy: ChatDraftPolicy = .unrestricted,
     theme: ChatRoomTheme = .fanely,
     imageLoader: ChatImageLoader = .standard,
+    linkPreview: ChatLinkPreview? = nil,
+    isLinkPreviewLoading: Bool = false,
+    linkPreviewImageLoader: ChatLinkPreviewImageLoader? = nil,
+    linkPreviewAccessibilityLabel: String = "Link preview",
+    linkPreviewLoadingLabel: String = "Loading link preview",
+    onLinkPreviewTap: ((URL) -> Void)? = nil,
     onRequestCamera: (() -> Void)?,
     onRemoveImage: @escaping (String) -> Void,
     onSubmit: @escaping () -> Void,
@@ -82,6 +94,12 @@ public struct ChatImageComposer: View {
     self.draftPolicy = draftPolicy
     self.theme = theme
     self.imageLoader = imageLoader
+    self.linkPreview = linkPreview
+    self.isLinkPreviewLoading = isLinkPreviewLoading
+    self.linkPreviewImageLoader = linkPreviewImageLoader
+    self.linkPreviewAccessibilityLabel = linkPreviewAccessibilityLabel
+    self.linkPreviewLoadingLabel = linkPreviewLoadingLabel
+    self.onLinkPreviewTap = onLinkPreviewTap
     self.onRequestCamera = onRequestCamera
     self.onRemoveImage = onRemoveImage
     self.onSubmit = onSubmit
@@ -91,6 +109,8 @@ public struct ChatImageComposer: View {
   public var body: some View {
     VStack(alignment: .trailing, spacing: 7) {
       previewStrip
+
+      linkPreviewContent
 
       HStack(alignment: .bottom, spacing: 7) {
         if hasSourceButtons {
@@ -167,6 +187,30 @@ public struct ChatImageComposer: View {
     .background(.ultraThinMaterial)
     .overlay(alignment: .top) {
       Divider().opacity(0.35)
+    }
+  }
+
+  @ViewBuilder
+  private var linkPreviewContent: some View {
+    if isLinkPreviewLoading {
+      HStack(spacing: 10) {
+        ProgressView()
+        Text(linkPreviewLoadingLabel)
+          .font(.caption)
+          .foregroundStyle(.secondary)
+        Spacer(minLength: 0)
+      }
+      .padding(12)
+      .frame(maxWidth: .infinity, minHeight: 64)
+      .background(.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+      .accessibilityElement(children: .combine)
+    } else if let linkPreview {
+      ChatLinkPreviewCard(
+        preview: linkPreview,
+        imageLoader: linkPreviewImageLoader,
+        accessibilityLabel: linkPreviewAccessibilityLabel,
+        onTap: onLinkPreviewTap
+      )
     }
   }
 

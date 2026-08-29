@@ -224,7 +224,7 @@ fun ChatLinkifiedText(
   }
 }
 
-private fun defaultChatLinkOpener(context: Context): (String) -> Unit = { destination ->
+internal fun defaultChatLinkOpener(context: Context): (String) -> Unit = { destination ->
   try {
     context.startActivity(
       Intent(Intent.ACTION_VIEW, Uri.parse(destination)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

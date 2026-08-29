@@ -26,9 +26,16 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
   private let theme: ChatRoomTheme
   private let accessibilityIdentifier: String
   private let onToggleInputSurface: () -> Void
-  private let onSend: (String) -> Void
+  private let onSend: ((String) -> Void)?
+  private let onSubmit: ((ChatComposerSubmission) -> Void)?
+  private let linkPreviewImageLoader: ChatLinkPreviewImageLoader?
+  private let linkPreviewAccessibilityLabel: String
+  private let linkPreviewLoadingLabel: String
+  private let onLinkPreviewTap: ((URL) -> Void)?
   private let attachmentPreview: AttachmentPreview
   private let inputSurface: InputSurface
+
+  @State private var linkPreviewCoordinator: ChatLinkPreviewDraftCoordinator
 
   /// チャット入力欄を作成する。
   public init(
@@ -48,8 +55,14 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     lineLimit: ClosedRange<Int> = 1...5,
     theme: ChatRoomTheme = .fanely,
     accessibilityIdentifier: String = "AltiveChatUI.Composer",
+    linkPreviewResolver: ChatLinkPreviewResolver? = nil,
+    linkPreviewImageLoader: ChatLinkPreviewImageLoader? = nil,
+    linkPreviewAccessibilityLabel: String = "Link preview",
+    linkPreviewLoadingLabel: String = "Loading link preview",
+    onLinkPreviewTap: ((URL) -> Void)? = nil,
     onToggleInputSurface: @escaping () -> Void,
-    onSend: @escaping (String) -> Void,
+    onSend: ((String) -> Void)? = nil,
+    onSubmit: ((ChatComposerSubmission) -> Void)? = nil,
     @ViewBuilder attachmentPreview: () -> AttachmentPreview,
     @ViewBuilder inputSurface: () -> InputSurface
   ) {
@@ -74,13 +87,29 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     self.accessibilityIdentifier = accessibilityIdentifier
     self.onToggleInputSurface = onToggleInputSurface
     self.onSend = onSend
+    self.onSubmit = onSubmit
+    self.linkPreviewImageLoader = linkPreviewImageLoader
+    self.linkPreviewAccessibilityLabel = linkPreviewAccessibilityLabel
+    self.linkPreviewLoadingLabel = linkPreviewLoadingLabel
+    self.onLinkPreviewTap = onLinkPreviewTap
     self.attachmentPreview = attachmentPreview()
     self.inputSurface = inputSurface()
+    _linkPreviewCoordinator = State(
+      initialValue: ChatLinkPreviewDraftCoordinator(resolver: linkPreviewResolver)
+    )
   }
 
   public var body: some View {
     VStack(alignment: .trailing, spacing: 6) {
       attachmentPreview
+
+      ChatLinkPreviewDraftContent(
+        state: linkPreviewCoordinator.state,
+        imageLoader: linkPreviewImageLoader,
+        accessibilityLabel: linkPreviewAccessibilityLabel,
+        loadingLabel: linkPreviewLoadingLabel,
+        onTap: onLinkPreviewTap
+      )
 
       HStack(alignment: .bottom, spacing: 8) {
         HStack(spacing: 4) {
@@ -168,6 +197,9 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     .overlay(alignment: .top) {
       Divider().opacity(0.35)
     }
+    .onChange(of: draft, initial: true) { _, currentDraft in
+      linkPreviewCoordinator.update(draft: currentDraft)
+    }
   }
 
   private var canSend: Bool {
@@ -183,7 +215,17 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
 
   private func sendDraft() {
     guard canSend, let text = draftPolicy.normalizedText(from: draft) else { return }
-    onSend(text)
+    if let onSubmit,
+      let submission = ChatComposerSubmission(
+        text: text,
+        images: [],
+        linkPreview: linkPreviewCoordinator.previewForSubmission(text: text)
+      )
+    {
+      onSubmit(submission)
+    } else {
+      onSend?(text)
+    }
   }
 }
 

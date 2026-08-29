@@ -91,7 +91,7 @@ property、Flutterでは`ChatTextMessage`の任意propertyとして表現する�
 
 ## 共通fixture
 
-`fixtures/link-preview-cases.json`を追加し、少なくとも次を3platformで共有する。
+`contract/fixtures/link-preview-cases.json`を追加し、少なくとも次を3platformで共有する。
 
 - 先頭1件だけを選ぶ複数URL本文
 - URL変更中のstale結果

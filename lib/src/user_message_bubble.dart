@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'avatar_image.dart';
-import 'cached_ogp_data.dart';
+import 'chat_link_preview_card.dart';
+import 'chat_link_preview_scope.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
@@ -296,14 +297,19 @@ class _TextMessageBubbleContents extends StatelessWidget {
         altiveChatRoomTheme.popupMenuConfig.backgroundColor ??
         theme.colorScheme.secondary;
 
-    void onOpen(MessageLink link) => unawaited(openMessageLink(context, link));
+    final linkPreviewScope = ChatLinkPreviewScope.maybeOf(context);
+    void onOpen(MessageLink link) {
+      final onWebLinkTap = linkPreviewScope?.onWebLinkTap;
+      if (link.kind == MessageLinkKind.web && onWebLinkTap != null) {
+        onWebLinkTap(link.destination);
+        return;
+      }
+      unawaited(openMessageLink(context, link));
+    }
 
     final messageButton = message.button;
     final hasPopupMenu = widgetKey != null;
     final replyTo = message.replyTo;
-
-    // OGP情報を表示するためにメッセージ内のURLを抽出する。
-    final urlElements = webLinksInMessage(message.text);
 
     final messageLinkSpans = buildMessageLinkSpans(
       text: message.text,
@@ -396,13 +402,31 @@ class _TextMessageBubbleContents extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                   ],
-                  for (final e in urlElements)
-                    _OgpContents(
-                      urlElement: e,
-                      onOpen: onOpen,
-                      isOutgoing: isOutgoing,
-                      textStyleColor: textStyleColor,
+                  if (message.linkPreview case final preview?
+                      when preview.isDisplayable) ...[
+                    const SizedBox(height: 8),
+                    ChatLinkPreviewCard(
+                      preview: preview,
+                      imageBuilder: linkPreviewScope?.imageBuilder,
+                      semanticLabel:
+                          linkPreviewScope?.semanticLabel ?? 'Link preview',
+                      onTap: () {
+                        final onWebLinkTap = linkPreviewScope?.onWebLinkTap;
+                        if (onWebLinkTap != null) {
+                          onWebLinkTap(preview.sourceUrl);
+                        } else {
+                          onOpen(
+                            MessageLink(
+                              text: preview.sourceUrl.toString(),
+                              destination: preview.sourceUrl,
+                              kind: MessageLinkKind.web,
+                              hasExplicitScheme: true,
+                            ),
+                          );
+                        }
+                      },
                     ),
+                  ],
                 ],
               ),
             ),
@@ -556,118 +580,6 @@ bool _isNormalChar(String char) {
     '[a-zA-Z0-9ａ-ｚＡ-Ｚ０-９ぁ-んァ-ヶー一-龠々ｦ-ﾟ]',
   );
   return normalCharRegExp.hasMatch(char);
-}
-
-/// OGP 情報を表示する Widget。
-class _OgpContents extends StatelessWidget {
-  const _OgpContents({
-    required this.urlElement,
-    required this.onOpen,
-    required this.isOutgoing,
-    required this.textStyleColor,
-  });
-
-  final MessageLink urlElement;
-  final ValueChanged<MessageLink> onOpen;
-  final bool isOutgoing;
-  final Color? textStyleColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final altiveChatRoomTheme = InheritedAltiveChatRoomTheme.of(context).theme;
-    final theme = Theme.of(context);
-
-    return FutureBuilder(
-      future: cachedOgpData.get(urlElement.destination.toString()),
-      builder: (context, snapshot) {
-        final ogpTitleTextStyle =
-            (isOutgoing
-                    ? altiveChatRoomTheme.outgoingOgpTitleTextStyle ??
-                          theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          )
-                    : altiveChatRoomTheme.incomingOgpTitleTextStyle?.copyWith(
-                            color: textStyleColor,
-                          ) ??
-                          theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ))
-                ?.copyWith(color: textStyleColor);
-        final ogpDescriptionTextStyle =
-            (isOutgoing
-                    ? altiveChatRoomTheme.outgoingOgpDescriptionTextStyle ??
-                          theme.textTheme.labelSmall
-                    : altiveChatRoomTheme.incomingOgpDescriptionTextStyle ??
-                          theme.textTheme.labelSmall)
-                ?.copyWith(color: textStyleColor);
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const SizedBox.shrink();
-        }
-
-        final ogpData = snapshot.data;
-        if (ogpData == null || !ogpData.isAvailable) {
-          return const SizedBox.shrink();
-        }
-
-        return Padding(
-          // OGP 情報が表示されうる場合のみ間隔を指定したいため、
-          // 利用側ではなくこの Widget 内で指定している。
-          padding: const EdgeInsets.only(top: 8),
-          child: GestureDetector(
-            onTap: () => onOpen(urlElement),
-            // Divider の高さを Widget の高さに合わせるために `IntrinsicHeight` を使用。
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  VerticalDivider(
-                    width: 2,
-                    thickness: 2,
-                    color: isOutgoing
-                        ? altiveChatRoomTheme.outgoingOgpDividerColor
-                        : altiveChatRoomTheme.incomingOgpDividerColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (ogpData.title != null)
-                          Text(
-                            ogpData.title!,
-                            style: ogpTitleTextStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        if (ogpData.description != null)
-                          Text(
-                            ogpData.description!,
-                            style: ogpDescriptionTextStyle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (ogpData.imageUrl != null)
-                    ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(4)),
-                      child: CommonCachedNetworkImage(
-                        imageUrl: ogpData.imageUrl!,
-                        width: 40,
-                        height: 40,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class _ImagesMessageBubble extends StatelessWidget {

@@ -402,9 +402,17 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
       }
       .onPreferenceChange(ChatTimelineViewportHeightKey.self) { measurement in
         guard let measurement else { return }
+        let previousViewportHeight = viewportHeight
         viewportHeight = measurement.value
         if measurement.attempt == positioningAttempt {
           viewportMeasurement = measurement
+        }
+        if previousViewportHeight != measurement.value,
+          isNearBottom,
+          case .latest = initialPosition
+        {
+          // Composerなどでviewportが変わっても、最新付近なら末尾目標を実ScrollViewへ反映する。
+          positionLatest(using: timelineProxy)
         }
         updateLatestProximity()
         completeInitialLatestPositionIfNeeded(using: timelineProxy)

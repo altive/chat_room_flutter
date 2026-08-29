@@ -35,6 +35,8 @@ import java.util.Date
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
+private val LocalChatComposerFocusRequester = compositionLocalOf<FocusRequester?> { null }
+
 @Immutable
 data class ChatRoomStrings(
   val emptyMessage: String,
@@ -58,6 +60,10 @@ data class ChatRoomStrings(
   val stickerLoadingFailedLabel: String = "Failed to load sticker",
   val linkPreviewLabel: String = "Link preview",
   val linkPreviewLoadingLabel: String = "Loading link preview",
+  val replyActionLabel: String = "Reply",
+  val cancelReplyLabel: String = "Cancel reply",
+  val replyToLabel: String = "Replying to",
+  val replyUnavailableLabel: String = "This message is unavailable",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -83,6 +89,10 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_sticker_loading_failed),
         stringResource(R.string.altive_chat_link_preview),
         stringResource(R.string.altive_chat_link_preview_loading),
+        stringResource(R.string.altive_chat_reply),
+        stringResource(R.string.altive_chat_cancel_reply),
+        stringResource(R.string.altive_chat_reply_to),
+        stringResource(R.string.altive_chat_reply_unavailable),
       )
     }
   }
@@ -114,6 +124,7 @@ fun AltiveChatRoom(
   linkPreviewResolver: (suspend (String) -> ChatLinkPreview?)? = null,
   linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
   onLinkPreviewTap: ((String) -> Unit)? = null,
+  replyConfiguration: ChatReplyConfiguration? = null,
   onSubmit: ((ChatComposerSubmission) -> Unit)? = null,
   onSend: (String) -> Unit,
 ) {
@@ -126,6 +137,8 @@ fun AltiveChatRoom(
     }
   }
   val draftLinkPreviewState = rememberChatDraftLinkPreviewState(draft, linkPreviewResolver)
+  var selectedReply by remember { mutableStateOf<ChatReplyReference?>(null) }
+  val replyFocusRequester = remember { FocusRequester() }
   Column(modifier.background(theme.background).imePadding()) {
     Box(Modifier.weight(1f).fillMaxWidth()) {
       ChatTimeline(
@@ -145,22 +158,33 @@ fun AltiveChatRoom(
           item { Text(strings.emptyMessage, Modifier.fillMaxWidth().padding(vertical = 48.dp), textAlign = TextAlign.Center) }
         } else {
           items(messages, key = { it.id }) { message ->
-            ChatMessageRow(
+            ReplyInteraction(
               message = message,
-              currentUserId = currentUserId,
-              theme = theme,
+              configuration = replyConfiguration.takeIf { onSubmit != null },
               strings = strings,
-              showsSenderName = showsSenderName,
-              singleImageLayout = singleImageLayout,
-              multipleImageLayout = multipleImageLayout,
-              onRetry = onRetry?.let { { it(message.id) } },
-              onImageTap = onImageTap,
-              imageContent = imageContent,
-              transitioningImageContent = transitioningImageContent,
-              stickerImageLoader = stickerImageLoader,
-              linkPreviewImageContent = linkPreviewImageContent,
-              onLinkPreviewTap = onLinkPreviewTap,
-            )
+              onSelect = {
+                selectedReply = it
+                replyFocusRequester.requestFocus()
+              },
+            ) {
+              ChatMessageRow(
+                message = message,
+                currentUserId = currentUserId,
+                theme = theme,
+                strings = strings,
+                showsSenderName = showsSenderName,
+                singleImageLayout = singleImageLayout,
+                multipleImageLayout = multipleImageLayout,
+                onRetry = onRetry?.let { { it(message.id) } },
+                onImageTap = onImageTap,
+                imageContent = imageContent,
+                transitioningImageContent = transitioningImageContent,
+                stickerImageLoader = stickerImageLoader,
+                linkPreviewImageContent = linkPreviewImageContent,
+                onLinkPreviewTap = onLinkPreviewTap,
+                onReplyReferenceTap = replyConfiguration?.onReferenceTap,
+              )
+            }
           }
         }
       }
@@ -173,32 +197,44 @@ fun AltiveChatRoom(
         ) { Text("↓") }
       }
     }
-    ChatComposer(
-      draft = draft,
-      onDraftChange = onDraftChange,
-      placeholder = strings.messagePlaceholder,
-      sendButtonLabel = strings.sendButtonLabel,
-      draftPolicy = draftPolicy,
-      theme = theme,
-      attachmentPreview = {
-        ChatDraftLinkPreview(
-          state = draftLinkPreviewState,
-          strings = strings,
-          imageContent = linkPreviewImageContent,
-          onOpenLink = onLinkPreviewTap,
-        )
-      },
-      onSend = { text ->
-        val submission = ChatComposerSubmission.create(
-          draft = text,
-          images = emptyList(),
-          policy = draftPolicy,
-          linkPreview = draftLinkPreviewState.previewForSubmission(text),
-        )
-        if (submission != null && onSubmit != null) onSubmit(submission) else onSend(text)
-        onDraftChange("")
-      },
-    )
+    selectedReply?.let { replyTo ->
+      ChatReplyComposerBar(
+        reference = replyTo,
+        onCancel = { selectedReply = null },
+        strings = strings,
+        stickerImageLoader = stickerImageLoader,
+      )
+    }
+    CompositionLocalProvider(LocalChatComposerFocusRequester provides replyFocusRequester) {
+      ChatComposer(
+        draft = draft,
+        onDraftChange = onDraftChange,
+        placeholder = strings.messagePlaceholder,
+        sendButtonLabel = strings.sendButtonLabel,
+        draftPolicy = draftPolicy,
+        theme = theme,
+        attachmentPreview = {
+          ChatDraftLinkPreview(
+            state = draftLinkPreviewState,
+            strings = strings,
+            imageContent = linkPreviewImageContent,
+            onOpenLink = onLinkPreviewTap,
+          )
+        },
+        onSend = { text ->
+          val submission = ChatComposerSubmission.create(
+            draft = text,
+            images = emptyList(),
+            policy = draftPolicy,
+            linkPreview = draftLinkPreviewState.previewForSubmission(text),
+            replyTo = selectedReply,
+          )
+          if (submission != null && onSubmit != null) onSubmit(submission) else onSend(text)
+          onDraftChange("")
+          selectedReply = null
+        },
+      )
+    }
   }
 }
 
@@ -241,6 +277,7 @@ fun AltiveChatRoom(
   linkPreviewResolver: (suspend (String) -> ChatLinkPreview?)? = null,
   linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
   onLinkPreviewTap: ((String) -> Unit)? = null,
+  replyConfiguration: ChatReplyConfiguration? = null,
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
@@ -259,6 +296,7 @@ fun AltiveChatRoom(
     draft = if (imageDrafts.isEmpty()) draft else "",
     resolver = linkPreviewResolver,
   )
+  var selectedReply by remember { mutableStateOf<ChatReplyReference?>(null) }
 
   val latestImageDrafts by rememberUpdatedState(imageDrafts)
   val latestOnImageDraftsChange by rememberUpdatedState(onImageDraftsChange)
@@ -377,22 +415,33 @@ fun AltiveChatRoom(
             }
           } else {
             items(messages, key = { it.id }) { message ->
-              ChatMessageRow(
+              ReplyInteraction(
                 message = message,
-                currentUserId = currentUserId,
-                theme = theme,
+                configuration = replyConfiguration,
                 strings = strings,
-                showsSenderName = showsSenderName,
-                singleImageLayout = singleImageLayout,
-                multipleImageLayout = multipleImageLayout,
-                onRetry = onRetry?.let { { it(message.id) } },
-                onImageTap = onImageTap,
-                imageContent = imageContent,
-                transitioningImageContent = transitioningImageContent,
-                stickerImageLoader = stickerImageLoader,
-                linkPreviewImageContent = linkPreviewImageContent,
-                onLinkPreviewTap = onLinkPreviewTap,
-              )
+                onSelect = {
+                  selectedReply = it
+                  focusRequester.requestFocus()
+                },
+              ) {
+                ChatMessageRow(
+                  message = message,
+                  currentUserId = currentUserId,
+                  theme = theme,
+                  strings = strings,
+                  showsSenderName = showsSenderName,
+                  singleImageLayout = singleImageLayout,
+                  multipleImageLayout = multipleImageLayout,
+                  onRetry = onRetry?.let { { it(message.id) } },
+                  onImageTap = onImageTap,
+                  imageContent = imageContent,
+                  transitioningImageContent = transitioningImageContent,
+                  stickerImageLoader = stickerImageLoader,
+                  linkPreviewImageContent = linkPreviewImageContent,
+                  onLinkPreviewTap = onLinkPreviewTap,
+                  onReplyReferenceTap = replyConfiguration?.onReferenceTap,
+                )
+              }
             }
           }
         }
@@ -406,6 +455,14 @@ fun AltiveChatRoom(
         }
       }
 
+      selectedReply?.let { replyTo ->
+        ChatReplyComposerBar(
+          reference = replyTo,
+          onCancel = { selectedReply = null },
+          strings = strings,
+          stickerImageLoader = stickerImageLoader,
+        )
+      }
       ChatImageComposer(
         draft = draft,
         onDraftChange = onDraftChange,
@@ -438,11 +495,13 @@ fun AltiveChatRoom(
             images = imageDrafts,
             policy = draftPolicy,
             linkPreview = draftLinkPreviewState.previewForSubmission(draft),
+            replyTo = selectedReply,
           ) ?: return@ChatImageComposer
           onSubmit(submission)
           onDraftChange("")
           onImageDraftsChange(emptyList())
           updatePhotoDraftIds(emptyMap())
+          selectedReply = null
         },
         imageContent = imageContent ?: {
           Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -463,6 +522,36 @@ fun AltiveChatRoom(
 }
 
 @Composable
+private fun ReplyInteraction(
+  message: ChatMessage,
+  configuration: ChatReplyConfiguration?,
+  strings: ChatRoomStrings,
+  onSelect: (ChatReplyReference) -> Unit,
+  content: @Composable () -> Unit,
+) {
+  val reference = configuration?.referenceFor(message)
+  if (reference == null) {
+    content()
+    return
+  }
+  var expanded by remember(message.id) { mutableStateOf(false) }
+  ChatInteractionPopover(
+    expanded = expanded,
+    onExpandedChange = { expanded = it },
+    actions = {
+      DropdownMenuItem(
+        text = { Text(strings.replyActionLabel) },
+        onClick = {
+          expanded = false
+          onSelect(reference)
+        },
+      )
+    },
+    content = content,
+  )
+}
+
+@Composable
 fun ChatMessageRow(
   message: ChatMessage,
   currentUserId: String,
@@ -478,6 +567,7 @@ fun ChatMessageRow(
   stickerImageLoader: ChatStickerImageLoader? = null,
   linkPreviewImageContent: (@Composable BoxScope.(ChatLinkPreviewImage) -> Unit)? = null,
   onLinkPreviewTap: ((String) -> Unit)? = null,
+  onReplyReferenceTap: ((messageId: String, imageIndex: Int?) -> Unit)? = null,
 ) {
   when (val content = message.content) {
     is ChatMessageContent.System -> ChatSystemEventCard(theme) {
@@ -506,6 +596,17 @@ fun ChatMessageRow(
                 bottom = 10.dp,
               ),
             ) {
+              message.replyTo?.let { replyTo ->
+                ChatReplyQuote(
+                  reference = replyTo,
+                  strings = strings,
+                  stickerImageLoader = stickerImageLoader,
+                  onTap = onReplyReferenceTap?.let { callback ->
+                    { callback(replyTo.messageId, replyTo.imageIndex) }
+                  },
+                )
+                Spacer(Modifier.height(8.dp))
+              }
               ChatLinkifiedText(
                 text = content.value,
                 strings = strings,
@@ -543,6 +644,8 @@ fun ChatMessageRow(
         multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
         transitioningImageContent = transitioningImageContent,
+        onReplyReferenceTap = onReplyReferenceTap,
+        stickerImageLoader = stickerImageLoader,
       )
     }
     is ChatMessageContent.ImagesWithCaption -> {
@@ -560,6 +663,8 @@ fun ChatMessageRow(
         multipleImageLayout = multipleImageLayout,
         imageContent = imageContent,
         transitioningImageContent = transitioningImageContent,
+        onReplyReferenceTap = onReplyReferenceTap,
+        stickerImageLoader = stickerImageLoader,
       )
     }
     is ChatMessageContent.Sticker -> {
@@ -572,6 +677,7 @@ fun ChatMessageRow(
         showsSenderName = showsSenderName,
         imageLoader = stickerImageLoader,
         onRetry = onRetry,
+        onReplyReferenceTap = onReplyReferenceTap,
       )
     }
   }
@@ -587,6 +693,7 @@ private fun ChatStickerMessageRow(
   showsSenderName: Boolean,
   imageLoader: ChatStickerImageLoader?,
   onRetry: (() -> Unit)?,
+  onReplyReferenceTap: ((messageId: String, imageIndex: Int?) -> Unit)?,
 ) {
   val own = message.isSentBy(currentUserId)
   Row(
@@ -599,6 +706,17 @@ private fun ChatStickerMessageRow(
           message.sender?.displayName ?: strings.unknownSender,
           style = MaterialTheme.typography.labelSmall,
         )
+      }
+      message.replyTo?.let { replyTo ->
+        ChatReplyQuote(
+          reference = replyTo,
+          strings = strings,
+          stickerImageLoader = imageLoader,
+          onTap = onReplyReferenceTap?.let { callback ->
+            { callback(replyTo.messageId, replyTo.imageIndex) }
+          },
+        )
+        Spacer(Modifier.height(4.dp))
       }
       ChatStickerMessageContent(
         reference = reference,
@@ -635,6 +753,8 @@ private fun ChatImageMessageRow(
   multipleImageLayout: ChatMultipleImageLayout,
   imageContent: (@Composable BoxScope.(ChatImage) -> Unit)?,
   transitioningImageContent: (@Composable BoxScope.(ChatImageContentTransition) -> Unit)?,
+  onReplyReferenceTap: ((messageId: String, imageIndex: Int?) -> Unit)?,
+  stickerImageLoader: ChatStickerImageLoader?,
 ) {
   val own = message.isSentBy(currentUserId)
   Row(
@@ -647,6 +767,17 @@ private fun ChatImageMessageRow(
           message.sender?.displayName ?: strings.unknownSender,
           style = MaterialTheme.typography.labelSmall,
         )
+      }
+      message.replyTo?.let { replyTo ->
+        ChatReplyQuote(
+          reference = replyTo,
+          strings = strings,
+          stickerImageLoader = stickerImageLoader,
+          onTap = onReplyReferenceTap?.let { callback ->
+            { callback(replyTo.messageId, replyTo.imageIndex) }
+          },
+        )
+        Spacer(Modifier.height(4.dp))
       }
       ChatImageGrid(
         messageId = message.id,
@@ -715,7 +846,8 @@ fun ChatComposer(
 ) {
   val normalized = draftPolicy.normalizedText(draft)
   val focusManager = LocalFocusManager.current
-  val focusRequester = remember { FocusRequester() }
+  val rememberedFocusRequester = remember { FocusRequester() }
+  val focusRequester = LocalChatComposerFocusRequester.current ?: rememberedFocusRequester
   val keyboardController = LocalSoftwareKeyboardController.current
   Column(modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).padding(horizontal = 16.dp, vertical = 10.dp), horizontalAlignment = Alignment.End) {
     attachmentPreview()

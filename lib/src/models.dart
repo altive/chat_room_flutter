@@ -3,6 +3,7 @@ export 'models/chat_draft_policy.dart';
 export 'models/chat_image_layout.dart';
 export 'models/chat_link_preview.dart';
 export 'models/chat_message.dart';
+export 'models/chat_reply.dart';
 export 'models/chat_user.dart';
 export 'models/message_bottom_widget_builder.dart';
 export 'models/message_input_type.dart';

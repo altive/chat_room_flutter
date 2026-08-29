@@ -10,6 +10,10 @@
 "chat.image.label" = "画像";
 "chat.image.loadingFailed" = "画像を読み込めませんでした";
 "chat.sticker.label" = "ステッカー";
+"chat.reply.action" = "返信";
+"chat.reply.cancel" = "返信を取り消す";
+"chat.reply.to" = "返信先";
+"chat.reply.unavailable" = "このメッセージは表示できません";
 "chat.sticker.loadingFailed" = "ステッカーを読み込めませんでした";
 "chat.timeline.latest" = "最新メッセージへ移動";
 "chat.link.phone.title" = "操作を選択";

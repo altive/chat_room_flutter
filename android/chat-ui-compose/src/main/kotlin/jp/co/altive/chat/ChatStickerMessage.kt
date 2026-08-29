@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.CancellationException
 
 /** consumerが検証済みassetから解決したステッカー画像。 */
@@ -54,6 +55,7 @@ fun ChatStickerMessageContent(
   imageLoader: ChatStickerImageLoader?,
   stickerLabel: String = "Sticker",
   loadingFailureLabel: String = "Failed to load sticker",
+  displayLength: Dp = ChatStickerMessageMetrics.displayLength,
   modifier: Modifier = Modifier,
 ) {
   var retryId by remember(reference) { mutableIntStateOf(0) }
@@ -88,7 +90,7 @@ fun ChatStickerMessageContent(
 
   Box(
     modifier = modifier
-      .size(ChatStickerMessageMetrics.displayLength)
+      .size(displayLength)
       .clickable(enabled = state == ChatStickerImageState.Failed) { retryId += 1 }
       .testTag("AltiveChatUI.StickerMessage")
       .semantics { contentDescription = accessibilityLabel },

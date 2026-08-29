@@ -31,6 +31,7 @@ public struct AltiveChatRoom: View {
   private let onSubmit: ((ChatComposerSubmission) -> Void)?
   private let onTextSend: ((String) -> Void)?
   private let onRetry: ((String) -> Void)?
+  private let replyConfiguration: ChatReplyConfiguration?
 
   @Binding private var draft: String
   @Binding private var imageDrafts: [ChatImageDraft]
@@ -40,6 +41,7 @@ public struct AltiveChatRoom: View {
   @State private var isPreparingPhotoLibraryItem = false
   @State private var hasPresentedMessages = false
   @State private var linkPreviewCoordinator: ChatLinkPreviewDraftCoordinator
+  @State private var selectedReply: ChatReplyReference?
 
   /// テキスト送信だけを利用するチャット画面を作成する。
   ///
@@ -63,6 +65,7 @@ public struct AltiveChatRoom: View {
     latestProximityThreshold: CGFloat = 80,
     onImageTap: ((String, Int) -> Void)? = nil,
     onLinkPreviewTap: ((URL) -> Void)? = nil,
+    replyConfiguration: ChatReplyConfiguration? = nil,
     onRetry: ((String) -> Void)? = nil,
     onSubmit: ((ChatComposerSubmission) -> Void)? = nil,
     onSend: ((String) -> Void)? = nil
@@ -91,12 +94,14 @@ public struct AltiveChatRoom: View {
     onImagePreparationFailure = nil
     self.onImageTap = onImageTap
     self.onLinkPreviewTap = onLinkPreviewTap
+    self.replyConfiguration = replyConfiguration
     self.onSubmit = onSubmit
     onTextSend = onSend
     self.onRetry = onRetry
     _linkPreviewCoordinator = State(
       initialValue: ChatLinkPreviewDraftCoordinator(resolver: linkPreviewResolver)
     )
+    _selectedReply = State(initialValue: nil)
   }
 
   /// テキストと複数画像を送信できるチャット画面を作成する。
@@ -129,6 +134,7 @@ public struct AltiveChatRoom: View {
     onImagePreparationFailure: ((Error) -> Void)? = nil,
     onImageTap: ((String, Int) -> Void)? = nil,
     onLinkPreviewTap: ((URL) -> Void)? = nil,
+    replyConfiguration: ChatReplyConfiguration? = nil,
     onRetry: ((String) -> Void)? = nil,
     onSubmit: @escaping (ChatComposerSubmission) -> Void
   ) {
@@ -156,12 +162,14 @@ public struct AltiveChatRoom: View {
     self.onImagePreparationFailure = onImagePreparationFailure
     self.onImageTap = onImageTap
     self.onLinkPreviewTap = onLinkPreviewTap
+    self.replyConfiguration = replyConfiguration
     self.onSubmit = onSubmit
     onTextSend = nil
     self.onRetry = onRetry
     _linkPreviewCoordinator = State(
       initialValue: ChatLinkPreviewDraftCoordinator(resolver: linkPreviewResolver)
     )
+    _selectedReply = State(initialValue: nil)
   }
 
   public var body: some View {
@@ -205,7 +213,9 @@ public struct AltiveChatRoom: View {
               onLinkPreviewTap: onLinkPreviewTap,
               onRetry: onRetry.map { retry in
                 { retry(message.id) }
-              }
+              },
+              onReply: replyHandler(for: message),
+              onReplyReferenceTap: replyConfiguration?.onReferenceTap
             )
             .id(message.id)
           }
@@ -238,67 +248,102 @@ public struct AltiveChatRoom: View {
 
   @ViewBuilder
   private var composer: some View {
-    if let configuration = imageInputConfiguration {
-      ChatImageComposer(
-        draft: $draft,
-        imageDrafts: $imageDrafts,
-        selectedPhotoItems: $selectedPhotoItems,
-        focus: $isComposerFocused,
-        configuration: configuration,
-        availableImageInputSources: effectiveImageInputSources,
-        maximumPhotoSelectionCount: maximumPhotoSelectionCount,
-        isPhotoLibrarySelectionEnabled: isPhotoLibrarySelectionEnabled,
-        isPreparingImages: isPreparingPhotoLibraryItem || isPreparingCameraImage,
-        isPreparingCameraImage: isPreparingCameraImage,
-        isSending: isSending,
-        strings: strings,
-        draftPolicy: draftPolicy,
-        theme: theme,
-        imageLoader: imageLoader,
-        linkPreview: resolvedDraftLinkPreview,
-        isLinkPreviewLoading: isDraftLinkPreviewLoading,
-        linkPreviewImageLoader: linkPreviewImageLoader,
-        linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
-        linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
-        onLinkPreviewTap: onLinkPreviewTap,
-        onRequestCamera: onRequestCamera,
-        onRemoveImage: removeImageDraft,
-        onSubmit: submitImagesAndText
-      )
-    } else {
-      ChatComposer(
-        draft: $draft,
-        focus: $isComposerFocused,
-        isInputSurfacePresented: false,
-        inputSurfaceHeight: 0,
-        isSending: false,
-        placeholder: strings.messagePlaceholder,
-        sendButtonLabel: strings.sendButtonLabel,
-        showsInputSurfaceButton: false,
-        maximumLength: nil,
-        characterCountWarningThreshold: nil,
-        draftPolicy: draftPolicy,
-        theme: theme,
-        linkPreviewResolver: linkPreviewResolver,
-        linkPreviewImageLoader: linkPreviewImageLoader,
-        linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
-        linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
-        onLinkPreviewTap: onLinkPreviewTap,
-        onToggleInputSurface: {},
-        onSend: { text in
-          onTextSend?(text)
-          draft = ""
-        },
-        onSubmit: onSubmit.map { submit in
-          { submission in
-            submit(submission)
+    VStack(spacing: 0) {
+      if let selectedReply {
+        ChatReplyComposerBar(
+          reference: selectedReply,
+          strings: strings,
+          imageLoader: imageLoader,
+          stickerImageLoader: stickerImageLoader,
+          onCancel: { self.selectedReply = nil }
+        )
+      }
+
+      if let configuration = imageInputConfiguration {
+        ChatImageComposer(
+          draft: $draft,
+          imageDrafts: $imageDrafts,
+          selectedPhotoItems: $selectedPhotoItems,
+          focus: $isComposerFocused,
+          configuration: configuration,
+          availableImageInputSources: effectiveImageInputSources,
+          maximumPhotoSelectionCount: maximumPhotoSelectionCount,
+          isPhotoLibrarySelectionEnabled: isPhotoLibrarySelectionEnabled,
+          isPreparingImages: isPreparingPhotoLibraryItem || isPreparingCameraImage,
+          isPreparingCameraImage: isPreparingCameraImage,
+          isSending: isSending,
+          strings: strings,
+          draftPolicy: draftPolicy,
+          theme: theme,
+          imageLoader: imageLoader,
+          linkPreview: resolvedDraftLinkPreview,
+          isLinkPreviewLoading: isDraftLinkPreviewLoading,
+          linkPreviewImageLoader: linkPreviewImageLoader,
+          linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
+          linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
+          onLinkPreviewTap: onLinkPreviewTap,
+          onRequestCamera: onRequestCamera,
+          onRemoveImage: removeImageDraft,
+          onSubmit: submitImagesAndText
+        )
+      } else {
+        ChatComposer(
+          draft: $draft,
+          focus: $isComposerFocused,
+          isInputSurfacePresented: false,
+          inputSurfaceHeight: 0,
+          isSending: false,
+          placeholder: strings.messagePlaceholder,
+          sendButtonLabel: strings.sendButtonLabel,
+          showsInputSurfaceButton: false,
+          maximumLength: nil,
+          characterCountWarningThreshold: nil,
+          draftPolicy: draftPolicy,
+          theme: theme,
+          linkPreviewResolver: linkPreviewResolver,
+          linkPreviewImageLoader: linkPreviewImageLoader,
+          linkPreviewAccessibilityLabel: strings.linkPreviewLabel,
+          linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
+          onLinkPreviewTap: onLinkPreviewTap,
+          onToggleInputSurface: {},
+          onSend: { text in
+            onTextSend?(text)
             draft = ""
-          }
-        },
-        attachmentPreview: { EmptyView() },
-        inputSurface: { EmptyView() }
-      )
+          },
+          onSubmit: onSubmit.map { submit in
+            { submission in
+              guard let enriched = submissionWithSelectedReply(submission) else { return }
+              submit(enriched)
+              draft = ""
+              selectedReply = nil
+            }
+          },
+          attachmentPreview: { EmptyView() },
+          inputSurface: { EmptyView() }
+        )
+      }
     }
+  }
+
+  private func replyHandler(for message: ChatMessage) -> (() -> Void)? {
+    guard onSubmit != nil,
+      let reference = replyConfiguration?.reference(for: message)
+    else { return nil }
+    return {
+      selectedReply = reference
+      isComposerFocused = true
+    }
+  }
+
+  private func submissionWithSelectedReply(
+    _ submission: ChatComposerSubmission
+  ) -> ChatComposerSubmission? {
+    ChatComposerSubmission(
+      text: submission.text,
+      images: submission.images,
+      linkPreview: submission.linkPreview,
+      replyTo: selectedReply
+    )
   }
 
   private var effectiveImageInputSources: Set<ChatImageInputSource> {
@@ -423,7 +468,8 @@ public struct AltiveChatRoom: View {
         policy: draftPolicy,
         linkPreview: imageDrafts.isEmpty
           ? linkPreviewCoordinator.previewForSubmission(text: draft)
-          : nil
+          : nil,
+        replyTo: selectedReply
       )
     else { return }
 
@@ -432,5 +478,6 @@ public struct AltiveChatRoom: View {
     imageDrafts.removeAll()
     selectedPhotoItems.removeAll()
     photoDraftIDs.removeAll()
+    selectedReply = nil
   }
 }

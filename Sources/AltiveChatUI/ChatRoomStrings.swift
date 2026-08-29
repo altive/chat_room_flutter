@@ -65,6 +65,18 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 入力中リンクプレビューの読み込み中を示す文言。
   public var linkPreviewLoadingLabel: String
 
+  /// 返信actionの文言。
+  public var replyActionLabel: String
+
+  /// 返信選択を取り消す文言。
+  public var cancelReplyLabel: String
+
+  /// 引用の読み上げ接頭辞。
+  public var replyToLabel: String
+
+  /// 内容を表示できない返信元の文言。
+  public var replyUnavailableLabel: String
+
   /// チャット画面で使用する文言を作成する。
   public init(
     emptyMessage: String,
@@ -87,7 +99,11 @@ public struct ChatRoomStrings: Equatable, Sendable {
     messageActionLabel: String = "Send message",
     cancelActionLabel: String = "Cancel",
     linkPreviewLabel: String = "Link preview",
-    linkPreviewLoadingLabel: String = "Loading link preview"
+    linkPreviewLoadingLabel: String = "Loading link preview",
+    replyActionLabel: String = "Reply",
+    cancelReplyLabel: String = "Cancel reply",
+    replyToLabel: String = "Replying to",
+    replyUnavailableLabel: String = "This message is unavailable"
   ) {
     self.emptyMessage = emptyMessage
     self.messagePlaceholder = messagePlaceholder
@@ -110,6 +126,10 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.cancelActionLabel = cancelActionLabel
     self.linkPreviewLabel = linkPreviewLabel
     self.linkPreviewLoadingLabel = linkPreviewLoadingLabel
+    self.replyActionLabel = replyActionLabel
+    self.cancelReplyLabel = cancelReplyLabel
+    self.replyToLabel = replyToLabel
+    self.replyUnavailableLabel = replyUnavailableLabel
   }
 
   /// Package内のローカライズ済み文言。
@@ -144,7 +164,11 @@ public struct ChatRoomStrings: Equatable, Sendable {
       linkPreviewLoadingLabel: String(
         localized: "chat.linkPreview.loading",
         bundle: .module
-      )
+      ),
+      replyActionLabel: String(localized: "chat.reply.action", bundle: .module),
+      cancelReplyLabel: String(localized: "chat.reply.cancel", bundle: .module),
+      replyToLabel: String(localized: "chat.reply.to", bundle: .module),
+      replyUnavailableLabel: String(localized: "chat.reply.unavailable", bundle: .module)
     )
   }
 }

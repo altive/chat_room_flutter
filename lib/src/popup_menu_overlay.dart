@@ -486,7 +486,7 @@ class _PopupMenu extends StatelessWidget {
     final firstItemIndex = row * column;
     final subItems = buttonItems.sublist(
       firstItemIndex,
-      firstItemIndex + column,
+      min(firstItemIndex + column, buttonItems.length),
     );
 
     return [
@@ -496,7 +496,7 @@ class _PopupMenu extends StatelessWidget {
           config: config,
           userMessage: userMessage,
           // 最終列ではない場合、右側の仕切り線を表示する。
-          showRightDivider: i != (column - 1),
+          showRightDivider: i != (subItems.length - 1),
           // 最終行ではない場合、下側の仕切り線を表示する。
           showBottomDivider: showBottomDivider,
           onDismiss: onDismiss,

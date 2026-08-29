@@ -139,6 +139,10 @@ class ChatComposerSubmission extends Equatable {
 Roomは任意の`ChatReplyConfiguration`を受け取る。未指定時は返信actionを表示せず、既存の
 consumerの操作を変えない。
 
+返信参照を渡せない旧式の文字列send callbackだけが接続されている場合も返信actionを
+表示しない。返信を有効化するconsumerは`ChatComposerSubmission`を受ける型付きcallbackを
+接続する。
+
 ```text
 ChatReplyConfiguration
   canReply(message) -> Bool
@@ -200,8 +204,8 @@ URLやbackend pathは渡さない。appは必要なら履歴を取得し、既�
 
 ## 共通fixtureと検証
 
-`contract/fixtures/reply-message-cases.json`を表示modelの共通fixtureとして追加し、少なくとも
-次を3platformで復元する。
+[`reply-message-cases.json`](fixtures/reply-message-cases.json)を表示modelの共通fixtureとし、
+少なくとも次を3platformで復元する。
 
 - 自分・相手のtextへの返信、長文、改行、絵文字
 - 単一画像、複数画像の先頭、特定index、範囲外index、captionあり

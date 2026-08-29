@@ -537,6 +537,7 @@ class _StickerSelectionViewState extends State<_StickerSelectionView> {
                         final isLocked =
                             _selectedStickerPackage?.isLocked ?? false;
                         return GestureDetector(
+                          key: ValueKey('AltiveChatRoom.Sticker.${sticker.id}'),
                           onTap: () {
                             if (isLocked) {
                               widget.onLockedStickerTap?.call();

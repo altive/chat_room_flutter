@@ -67,6 +67,7 @@ public struct ChatStickerMessageContent: View {
   private let imageLoader: ChatStickerImageLoader?
   private let stickerLabel: String
   private let loadingFailureLabel: String
+  private let displayLength: CGFloat
 
   @State private var phase = Phase.loading
   @State private var retryID = 0
@@ -76,12 +77,14 @@ public struct ChatStickerMessageContent: View {
     reference: ChatStickerReference,
     imageLoader: ChatStickerImageLoader?,
     stickerLabel: String = "Sticker",
-    loadingFailureLabel: String = "Failed to load sticker"
+    loadingFailureLabel: String = "Failed to load sticker",
+    displayLength: CGFloat = ChatStickerMessageMetrics.displayLength
   ) {
     self.reference = reference
     self.imageLoader = imageLoader
     self.stickerLabel = stickerLabel
     self.loadingFailureLabel = loadingFailureLabel
+    self.displayLength = displayLength
   }
 
   public var body: some View {
@@ -90,8 +93,8 @@ public struct ChatStickerMessageContent: View {
     } label: {
       phaseContent
         .frame(
-          width: ChatStickerMessageMetrics.displayLength,
-          height: ChatStickerMessageMetrics.displayLength
+          width: displayLength,
+          height: displayLength
         )
         .contentShape(.rect)
     }

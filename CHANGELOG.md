@@ -1,5 +1,10 @@
 ## Unreleased
 
+- Flutter、SwiftUI、Jetpack Composeへ非再帰の軽量な返信参照、長押し返信action、
+  Composerの選択・取消、送信済みメッセージ内の引用表示と型付き送信値を追加した。
+- 返信元の保存、権限、backend再検証、引用tap後の取得とnavigationは利用アプリへ委譲した。
+- Flutterの日付区切りを、利用アプリによるlocale data初期化なしでも表示できるようにした。
+
 ## 1.7.1 - 2026-08-29
 
 - SwiftUIとJetpack Composeで、scheme・hostの大文字小文字、標準port、fragmentだけが

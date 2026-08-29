@@ -99,13 +99,17 @@ public struct ChatComposerSubmission: Hashable, Sendable {
   /// アプリ側は楽観表示にだけ使用し、永続化時はbackendの検証結果を使用する。
   public let linkPreview: ChatLinkPreview?
 
+  /// 送信時に選択されていた任意の返信元。
+  public let replyTo: ChatReplyReference?
+
   /// 正規化済みテキストと画像から送信要求を作成する。
   ///
   /// 両方が空の場合は `nil` を返す。
   public init?(
     text: String?,
     images: [ChatImageDraft],
-    linkPreview: ChatLinkPreview? = nil
+    linkPreview: ChatLinkPreview? = nil,
+    replyTo: ChatReplyReference? = nil
   ) {
     let normalizedText = text?.trimmingCharacters(in: .whitespacesAndNewlines)
     let nonemptyText = normalizedText.flatMap { $0.isEmpty ? nil : $0 }
@@ -113,6 +117,7 @@ public struct ChatComposerSubmission: Hashable, Sendable {
     self.text = nonemptyText
     self.images = images
     self.linkPreview = nonemptyText == nil ? nil : linkPreview
+    self.replyTo = replyTo
   }
 
   /// 入力方針を適用した送信要求を作成する。
@@ -120,12 +125,14 @@ public struct ChatComposerSubmission: Hashable, Sendable {
     draft: String,
     images: [ChatImageDraft],
     policy: ChatDraftPolicy,
-    linkPreview: ChatLinkPreview? = nil
+    linkPreview: ChatLinkPreview? = nil,
+    replyTo: ChatReplyReference? = nil
   ) {
     let text = policy.normalizedText(from: draft)
     guard text != nil || !images.isEmpty else { return nil }
     self.text = text
     self.images = images
     self.linkPreview = text == nil ? nil : linkPreview
+    self.replyTo = replyTo
   }
 }

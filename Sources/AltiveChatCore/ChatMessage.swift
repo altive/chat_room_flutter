@@ -79,6 +79,9 @@ public struct ChatMessage: Hashable, Identifiable, Sendable {
   /// テキスト本文の先頭Web URLに対応する任意のリンクプレビュー。
   public let linkPreview: ChatLinkPreview?
 
+  /// 返信元の軽量な表示snapshot。
+  public let replyTo: ChatReplyReference?
+
   /// チャットへ表示するメッセージを作成する。
   public init(
     id: String,
@@ -86,7 +89,8 @@ public struct ChatMessage: Hashable, Identifiable, Sendable {
     sender: ChatUser?,
     content: ChatMessageContent,
     deliveryState: ChatMessageDeliveryState = .sent,
-    linkPreview: ChatLinkPreview? = nil
+    linkPreview: ChatLinkPreview? = nil,
+    replyTo: ChatReplyReference? = nil
   ) {
     self.id = id
     self.createdAt = createdAt
@@ -94,6 +98,7 @@ public struct ChatMessage: Hashable, Identifiable, Sendable {
     self.content = content
     self.deliveryState = deliveryState
     self.linkPreview = linkPreview
+    self.replyTo = replyTo
   }
 
   /// 指定したユーザーが送信したメッセージかどうかを返す。

@@ -16,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
@@ -47,6 +49,54 @@ class AltiveChatRoomTest {
       assertEquals("Hello", sent)
       assertEquals("", draft)
     }
+  }
+
+  @Test fun `長押しで返信を選びsubmissionへ含めて送信後に消す`() {
+    var submission: ChatComposerSubmission? = null
+    var draft by mutableStateOf("")
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = listOf(
+            ChatMessage(
+              id = "target",
+              createdAtEpochMillis = 1L,
+              sender = ChatUser("user", "送信者"),
+              content = ChatMessageContent.Text("返信元本文"),
+            ),
+          ),
+          currentUserId = "me",
+          draft = draft,
+          onDraftChange = { draft = it },
+          strings = ChatRoomStrings(
+            emptyMessage = "",
+            messagePlaceholder = "Message",
+            sendButtonLabel = "Send",
+            sendingLabel = "",
+            failedLabel = "",
+            unknownSender = "",
+            imageLabel = "Image",
+            replyActionLabel = "Reply",
+            replyToLabel = "Replying to",
+          ),
+          replyConfiguration = ChatReplyConfiguration(),
+          onSubmit = { submission = it },
+          onSend = {},
+        )
+      }
+    }
+
+    compose.onNodeWithText("返信元本文").performTouchInput { longClick() }
+    compose.onNodeWithText("Reply").performClick()
+
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused().performTextInput("返信本文")
+    compose.onNodeWithTag("AltiveChatUI.SendButton").performClick()
+
+    compose.runOnIdle {
+      assertEquals("target", submission?.replyTo?.messageId)
+      assertEquals("返信本文", submission?.text)
+    }
+    compose.onNodeWithContentDescription("Replying to, 送信者, 返信元本文").assertIsNotDisplayed()
   }
 
   @Test fun `送信失敗アイコンから同じメッセージIDで再送する`() {

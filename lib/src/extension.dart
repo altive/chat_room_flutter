@@ -28,7 +28,9 @@ extension DateTimeExtension on DateTime {
       return 'Yesterday';
     }
 
-    return DateFormat('MMM d (E)', 'en').format(dateTime);
+    // `intl`に組み込まれている既定localeを使い、利用アプリへ
+    // `initializeDateFormatting`の事前実行を要求しない。
+    return DateFormat('MMM d (E)', 'en_US').format(dateTime);
   }
 }
 

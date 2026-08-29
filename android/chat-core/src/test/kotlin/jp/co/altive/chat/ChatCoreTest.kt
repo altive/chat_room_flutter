@@ -5,10 +5,93 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ChatCoreTest {
+  @Test
+  fun `返信参照は元メッセージを入れ子にせず本文だけを保持する`() {
+    val nested = ChatReplyReference("older", "user-2", "別の送信者", ChatReplyPreviewContent.Text("古い本文"))
+    val message = ChatMessage(
+      id = "message-1",
+      createdAtEpochMillis = 0,
+      sender = ChatUser("user-1", "送信者"),
+      content = ChatMessageContent.Text("本文"),
+      replyTo = nested,
+    )
+
+    val reference = assertNotNull(ChatReplyReference.from(message))
+
+    assertEquals("message-1", reference.messageId)
+    assertEquals(ChatReplyPreviewContent.Text("本文"), reference.content)
+  }
+
+  @Test
+  fun `画像返信のindexを範囲内へ正規化する`() {
+    val images = listOf(
+      ChatImage("image-1", ChatImageResource.RemoteUrl("https://example.com/1")),
+      ChatImage("image-2", ChatImageResource.RemoteUrl("https://example.com/2")),
+    )
+    val message = ChatMessage(
+      id = "message-1",
+      createdAtEpochMillis = 0,
+      sender = ChatUser("user-1", "送信者"),
+      content = ChatMessageContent.ImagesWithCaption(images, "説明"),
+    )
+
+    val selected = assertNotNull(ChatReplyReference.from(message, 1))
+    assertEquals(1, selected.imageIndex)
+    assertEquals(ChatReplyPreviewContent.Image(images[1], "説明", 2), selected.content)
+
+    val fallback = assertNotNull(ChatReplyReference.from(message, 9))
+    assertNull(fallback.imageIndex)
+    assertEquals(ChatReplyPreviewContent.Image(images[0], "説明", 2), fallback.content)
+  }
+
+  @Test
+  fun `systemと未送信メッセージは返信対象外にする`() {
+    val sender = ChatUser("user-1", "送信者")
+    val system = ChatMessage("system", 0, null, ChatMessageContent.System("参加しました"))
+    val sending = ChatMessage(
+      "sending",
+      0,
+      sender,
+      ChatMessageContent.Text("送信中"),
+      ChatMessageDeliveryState.Sending,
+    )
+
+    assertNull(ChatReplyReference.from(system))
+    assertNull(ChatReplyReference.from(sending))
+  }
+
+  @Test
+  fun `submissionへ返信参照を保持するが返信だけでは送信しない`() {
+    val reference = ChatReplyReference(
+      "target",
+      "user-1",
+      "送信者",
+      ChatReplyPreviewContent.Text("返信元"),
+    )
+
+    val submission = assertNotNull(
+      ChatComposerSubmission.create(
+        "返信",
+        emptyList(),
+        ChatDraftPolicy.Unrestricted,
+        replyTo = reference,
+      ),
+    )
+    assertEquals(reference, submission.replyTo)
+    assertNull(
+      ChatComposerSubmission.create(
+        " ",
+        emptyList(),
+        ChatDraftPolicy.Unrestricted,
+        replyTo = reference,
+      ),
+    )
+  }
   @Test fun retriesOnlyFailedDelivery() {
     val delivery = ChatDeliveryStateMachine(ChatMessageDeliveryState.Failed)
     assertTrue(delivery.beginRetry())

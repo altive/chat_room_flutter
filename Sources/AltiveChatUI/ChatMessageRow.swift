@@ -16,6 +16,8 @@ public struct ChatMessageRow: View {
   private let onImageTap: ((String, Int) -> Void)?
   private let onLinkPreviewTap: ((URL) -> Void)?
   private let onRetry: (() -> Void)?
+  private let onReply: (() -> Void)?
+  private let onReplyReferenceTap: ((String, Int?) -> Void)?
 
   /// 1件分のメッセージ行を作成する。
   public init(
@@ -31,7 +33,9 @@ public struct ChatMessageRow: View {
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     onImageTap: ((String, Int) -> Void)? = nil,
     onLinkPreviewTap: ((URL) -> Void)? = nil,
-    onRetry: (() -> Void)? = nil
+    onRetry: (() -> Void)? = nil,
+    onReply: (() -> Void)? = nil,
+    onReplyReferenceTap: ((String, Int?) -> Void)? = nil
   ) {
     self.message = message
     self.currentUserID = currentUserID
@@ -46,9 +50,26 @@ public struct ChatMessageRow: View {
     self.onImageTap = onImageTap
     self.onLinkPreviewTap = onLinkPreviewTap
     self.onRetry = onRetry
+    self.onReply = onReply
+    self.onReplyReferenceTap = onReplyReferenceTap
   }
 
+  @ViewBuilder
   public var body: some View {
+    if let onReply {
+      messageContent
+        .contextMenu {
+          Button(action: onReply) {
+            Label(strings.replyActionLabel, systemImage: "arrowshape.turn.up.left")
+          }
+        }
+    } else {
+      messageContent
+    }
+  }
+
+  @ViewBuilder
+  private var messageContent: some View {
     switch message.content {
     case .text(let text):
       userMessage(text)
@@ -75,6 +96,8 @@ public struct ChatMessageRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+
+        replyQuote
 
         ChatStickerMessageContent(
           reference: reference,
@@ -106,6 +129,8 @@ public struct ChatMessageRow: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+
+        replyQuote
 
         ChatImageGrid(
           messageID: message.id,
@@ -153,6 +178,8 @@ public struct ChatMessageRow: View {
 
         ChatMessageBubble(isOwnMessage: isOwnMessage, theme: theme) {
           VStack(alignment: .leading, spacing: 8) {
+            replyQuote
+
             ChatLinkedText(text: text, strings: strings)
               .tint(isOwnMessage ? theme.outgoingText : Color.accentColor)
 
@@ -176,6 +203,21 @@ public struct ChatMessageRow: View {
       }
     }
     .frame(maxWidth: .infinity)
+  }
+
+  @ViewBuilder
+  private var replyQuote: some View {
+    if let replyTo = message.replyTo {
+      ChatReplyQuote(
+        reference: replyTo,
+        strings: strings,
+        imageLoader: imageLoader,
+        stickerImageLoader: stickerImageLoader,
+        onTap: onReplyReferenceTap.map { callback in
+          { callback(replyTo.messageID, replyTo.imageIndex) }
+        }
+      )
+    }
   }
 
   private var deliveryMetadata: some View {

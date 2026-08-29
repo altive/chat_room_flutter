@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
 import 'chat_link_preview.dart';
+import 'chat_reply.dart';
 import 'chat_user.dart';
 import 'sticker.dart';
 
@@ -31,6 +32,7 @@ sealed class ChatUserMessage extends ChatMessage {
     this.isRead = false,
     this.replyTo,
     this.replyImageIndex,
+    this.replyReference,
     required this.label,
   });
 
@@ -52,6 +54,15 @@ sealed class ChatUserMessage extends ChatMessage {
   /// 画像への返信でなければNull。
   final int? replyImageIndex;
 
+  /// 返信元の軽量な表示snapshot。
+  ///
+  /// 指定時は互換用の[replyTo]と[replyImageIndex]より優先する。
+  final ChatReplyReference? replyReference;
+
+  /// 表示に使用する返信元。
+  ChatReplyReference? get effectiveReplyReference =>
+      replyReference ?? replyTo?.toReplyReference(imageIndex: replyImageIndex);
+
   /// ラベル。
   ///
   /// リプライ先のメッセージの種類の表示に使用する。
@@ -70,6 +81,7 @@ sealed class ChatUserMessage extends ChatMessage {
     isRead,
     replyTo,
     replyImageIndex,
+    replyReference,
     label,
   ];
 }
@@ -104,6 +116,7 @@ class ChatTextMessage extends ChatUserMessage {
     super.isRead,
     super.replyTo,
     super.replyImageIndex,
+    super.replyReference,
     super.label = 'Text',
   });
 
@@ -137,6 +150,7 @@ class ChatTextMessage extends ChatUserMessage {
     bool? isRead,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
+    ChatReplyReference? replyReference,
     String? label,
   }) {
     return ChatTextMessage(
@@ -151,6 +165,7 @@ class ChatTextMessage extends ChatUserMessage {
       isRead: isRead ?? this.isRead,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
+      replyReference: replyReference ?? this.replyReference,
       label: label ?? this.label,
     );
   }
@@ -225,6 +240,7 @@ class ChatImagesMessage extends ChatUserMessage {
     this.selectedImageIndex,
     super.replyTo,
     super.replyImageIndex,
+    super.replyReference,
     super.label = 'Images',
   }) : imageUrls = List.unmodifiable(imageUrls),
        imageAspectRatios = List.unmodifiable(
@@ -268,6 +284,7 @@ class ChatImagesMessage extends ChatUserMessage {
     int? selectedImageIndex,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
+    ChatReplyReference? replyReference,
     String? label,
   }) {
     return ChatImagesMessage(
@@ -287,6 +304,7 @@ class ChatImagesMessage extends ChatUserMessage {
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
+      replyReference: replyReference ?? this.replyReference,
       label: label ?? this.label,
     );
   }
@@ -339,6 +357,7 @@ class ChatStickerMessage extends ChatUserMessage {
     required this.sticker,
     super.replyTo,
     super.replyImageIndex,
+    super.replyReference,
     super.label = 'Sticker',
   });
 
@@ -355,6 +374,7 @@ class ChatStickerMessage extends ChatUserMessage {
     Sticker? sticker,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
+    ChatReplyReference? replyReference,
     String? label,
   }) {
     return ChatStickerMessage(
@@ -366,6 +386,7 @@ class ChatStickerMessage extends ChatUserMessage {
       sticker: sticker ?? this.sticker,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
+      replyReference: replyReference ?? this.replyReference,
       label: label ?? this.label,
     );
   }
@@ -421,6 +442,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     this.durationSeconds,
     super.replyTo,
     super.replyImageIndex,
+    super.replyReference,
     super.label = 'VoiceCall',
   }) : assert(
          voiceCallType == VoiceCallType.connected
@@ -447,6 +469,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
     int? durationSeconds,
     ChatUserMessage? replyTo,
     int? replyImageIndex,
+    ChatReplyReference? replyReference,
     String? label,
   }) {
     return ChatVoiceCallMessage(
@@ -459,6 +482,7 @@ class ChatVoiceCallMessage extends ChatUserMessage {
       durationSeconds: durationSeconds ?? this.durationSeconds,
       replyTo: replyTo ?? this.replyTo,
       replyImageIndex: replyImageIndex ?? this.replyImageIndex,
+      replyReference: replyReference ?? this.replyReference,
       label: label ?? this.label,
     );
   }
@@ -516,4 +540,44 @@ class ChatSystemMessage extends ChatMessage {
 
   @override
   List<Object?> get props => [...super.props, text];
+}
+
+/// 標準ユーザーメッセージを非再帰の返信参照へ変換する。
+extension ChatUserMessageReplyReference on ChatUserMessage {
+  /// このmessageの本文だけを持つ軽量な返信参照を返す。
+  ChatReplyReference toReplyReference({int? imageIndex}) {
+    final content = switch (this) {
+      ChatTextMessage(:final text) => ChatReplyTextPreview(text),
+      ChatImagesMessage(:final imageUrls, :final caption) =>
+        ChatReplyImagePreview(
+          thumbnailUrl: _replyImageUrl(imageUrls, imageIndex),
+          caption: caption,
+          totalCount: imageUrls.length,
+        ),
+      ChatStickerMessage(:final sticker) => ChatReplyStickerPreview(sticker),
+      ChatVoiceCallMessage(:final label) => ChatReplyLabelPreview(label),
+    };
+    final normalizedImageIndex = switch (this) {
+      ChatImagesMessage(:final imageUrls)
+          when imageIndex != null &&
+              imageIndex >= 0 &&
+              imageIndex < imageUrls.length =>
+        imageIndex,
+      _ => null,
+    };
+    return ChatReplyReference(
+      messageId: id,
+      senderId: sender.id,
+      senderDisplayName: sender.name,
+      content: content,
+      imageIndex: normalizedImageIndex,
+    );
+  }
+}
+
+String _replyImageUrl(List<String> imageUrls, int? imageIndex) {
+  if (imageIndex != null && imageIndex >= 0 && imageIndex < imageUrls.length) {
+    return imageUrls[imageIndex];
+  }
+  return imageUrls.first;
 }

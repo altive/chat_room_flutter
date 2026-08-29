@@ -10,6 +10,10 @@
 "chat.image.label" = "Image";
 "chat.image.loadingFailed" = "Failed to load image";
 "chat.sticker.label" = "Sticker";
+"chat.reply.action" = "Reply";
+"chat.reply.cancel" = "Cancel reply";
+"chat.reply.to" = "Replying to";
+"chat.reply.unavailable" = "This message is unavailable";
 "chat.sticker.loadingFailed" = "Failed to load sticker";
 "chat.timeline.latest" = "Latest messages";
 "chat.link.phone.title" = "Choose an action";

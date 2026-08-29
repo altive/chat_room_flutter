@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'avatar_image.dart';
 import 'chat_link_preview_card.dart';
 import 'chat_link_preview_scope.dart';
+import 'chat_reply_scope.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
@@ -309,7 +309,7 @@ class _TextMessageBubbleContents extends StatelessWidget {
 
     final messageButton = message.button;
     final hasPopupMenu = widgetKey != null;
-    final replyTo = message.replyTo;
+    final replyTo = message.effectiveReplyReference;
 
     final messageLinkSpans = buildMessageLinkSpans(
       text: message.text,
@@ -348,10 +348,6 @@ class _TextMessageBubbleContents extends StatelessWidget {
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
                   isOutgoing: isOutgoing,
-                  isReplyOutgoing: replyTo.isOutgoing(
-                    currentUserId: currentUserId,
-                  ),
-                  replyImageIndex: message.replyImageIndex,
                 ),
               ),
               Divider(
@@ -607,7 +603,7 @@ class _ImagesMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final popupMenuLayout = this.popupMenuLayout;
     final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
-    final replyTo = message.replyTo;
+    final replyTo = message.effectiveReplyReference;
 
     return Column(
       crossAxisAlignment: isOutgoing
@@ -618,8 +614,6 @@ class _ImagesMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isOutgoing: isOutgoing,
-            isReplyOutgoing: replyTo.isOutgoing(currentUserId: currentUserId),
-            replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
         ],
@@ -1210,7 +1204,7 @@ class StickerMessageBubble extends StatelessWidget {
     ).theme.popupMenuConfig;
 
     final isOutgoing = message.isOutgoing(currentUserId: currentUserId);
-    final replyTo = message.replyTo;
+    final replyTo = message.effectiveReplyReference;
 
     return Column(
       crossAxisAlignment: isOutgoing
@@ -1221,8 +1215,6 @@ class StickerMessageBubble extends StatelessWidget {
           _ReplyToMessageBubble(
             replyTo: replyTo,
             isOutgoing: isOutgoing,
-            isReplyOutgoing: replyTo.isOutgoing(currentUserId: currentUserId),
-            replyImageIndex: message.replyImageIndex,
           ),
           const SizedBox(height: 4),
         ],
@@ -1426,21 +1418,13 @@ class _ReplyToMessageBubble extends StatelessWidget {
   const _ReplyToMessageBubble({
     required this.replyTo,
     required this.isOutgoing,
-    required this.isReplyOutgoing,
-    required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
-  final ChatUserMessage replyTo;
+  final ChatReplyReference replyTo;
 
   /// 返信するメッセージがログインユーザーのものかどうか。
   final bool isOutgoing;
-
-  /// 返信先のメッセージがログインユーザーのものかどうか。
-  final bool isReplyOutgoing;
-
-  /// 複数画像の何枚目に対する返信かを示すインデックス。
-  final int? replyImageIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -1479,8 +1463,6 @@ class _ReplyToMessageBubble extends StatelessWidget {
                 child: _ReplyToMessageContents(
                   replyTo: replyTo,
                   isOutgoing: isOutgoing,
-                  isReplyOutgoing: isReplyOutgoing,
-                  replyImageIndex: replyImageIndex,
                 ),
               ),
             ),
@@ -1508,34 +1490,13 @@ class _ReplyToMessageContents extends StatelessWidget {
   const _ReplyToMessageContents({
     required this.replyTo,
     required this.isOutgoing,
-    required this.isReplyOutgoing,
-    required this.replyImageIndex,
   });
 
   /// 返信先のメッセージ。
-  final ChatUserMessage replyTo;
+  final ChatReplyReference replyTo;
 
   /// 返信するメッセージがログインユーザーのものかどうか。
   final bool isOutgoing;
-
-  /// 返信先のメッセージがログインユーザーのものかどうか。
-  final bool isReplyOutgoing;
-
-  /// 複数画像に対する返信のインデックス。
-  final int? replyImageIndex;
-
-  /// 返信先の画像メッセージが複数画像の場合、表示するURLを解決する。
-  String _resolveReplyImageUrl(List<String> imageUrls) {
-    final index = replyImageIndex;
-    // インデックスがnull、または範囲外の場合は先頭のURLを返す。
-    if (index == null) {
-      return imageUrls.first;
-    }
-    if (index < 0 || index >= imageUrls.length) {
-      return imageUrls.first;
-    }
-    return imageUrls[index];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1543,80 +1504,94 @@ class _ReplyToMessageContents extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AvatarImage(user: replyTo.sender, sizeDimension: 25),
-        const SizedBox(width: 10),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                replyTo.sender.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: isOutgoing
-                    ? altiveChatRoomTheme.outgoingReplyToUserNameTextStyle ??
-                          theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                          )
-                    : altiveChatRoomTheme.incomingReplyToUserNameTextStyle ??
-                          theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+    final onReferenceTap = ChatReplyScope.maybeOf(context)?.onReferenceTap;
+    return Semantics(
+      button: onReferenceTap != null,
+      label: 'Reply to ${replyTo.senderDisplayName}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onReferenceTap == null
+            ? null
+            : () => onReferenceTap(replyTo.messageId, replyTo.imageIndex),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    replyTo.senderDisplayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: isOutgoing
+                        ? altiveChatRoomTheme
+                                  .outgoingReplyToUserNameTextStyle ??
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                              )
+                        : altiveChatRoomTheme
+                                  .incomingReplyToUserNameTextStyle ??
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                  ),
+                  Text(
+                    switch (replyTo.content) {
+                      ChatReplyTextPreview(:final value) => value,
+                      ChatReplyImagePreview(
+                        :final caption,
+                        :final totalCount,
+                      ) =>
+                        caption ?? 'Image $totalCount',
+                      ChatReplyStickerPreview() => 'Sticker',
+                      ChatReplyLabelPreview(:final value) => value,
+                      ChatReplyUnavailablePreview() =>
+                        'This message is unavailable',
+                    },
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: isOutgoing
+                        ? altiveChatRoomTheme.outgoingReplyToMessageTextStyle ??
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                              )
+                        : altiveChatRoomTheme.incomingReplyToMessageTextStyle ??
+                              theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                  ),
+                ],
               ),
-              Text(
-                switch (replyTo) {
-                  ChatTextMessage(:final text) => text,
-                  ChatImagesMessage(:final label) => label,
-                  ChatStickerMessage(:final label) => label,
-                  ChatVoiceCallMessage(:final voiceCallType) =>
-                    // 返信先のメッセージがログインユーザーのものかどうかで表示するテキストを変更する。
-                    voiceCallType.text(isOutgoing: isReplyOutgoing),
-                },
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: isOutgoing
-                    ? altiveChatRoomTheme.outgoingReplyToMessageTextStyle ??
-                          theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                          )
-                    : altiveChatRoomTheme.incomingReplyToMessageTextStyle ??
-                          theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-              ),
-            ],
-          ),
+            ),
+            ...switch (replyTo.content) {
+              ChatReplyImagePreview(:final thumbnailUrl?) => [
+                const SizedBox(width: 70),
+                ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: CommonCachedNetworkImage(
+                    imageUrl: thumbnailUrl,
+                    width: 39,
+                    height: 34,
+                  ),
+                ),
+              ],
+              ChatReplyStickerPreview(:final sticker) => [
+                const SizedBox(width: 70),
+                ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: CommonCachedNetworkImage(
+                    imageUrl: sticker.imageUrl,
+                    width: 39,
+                    height: 34,
+                  ),
+                ),
+              ],
+              _ => [const SizedBox.shrink()],
+            },
+          ],
         ),
-        ...switch (replyTo) {
-          ChatTextMessage() => [const SizedBox.shrink()],
-          ChatImagesMessage(:final imageUrls) => [
-            const SizedBox(width: 70),
-            ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
-              child: CommonCachedNetworkImage(
-                imageUrl: _resolveReplyImageUrl(imageUrls),
-                width: 39,
-                height: 34,
-              ),
-            ),
-          ],
-          ChatStickerMessage(:final sticker) => [
-            const SizedBox(width: 70),
-            ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
-              child: CommonCachedNetworkImage(
-                imageUrl: sticker.imageUrl,
-                width: 39,
-                height: 34,
-              ),
-            ),
-          ],
-          ChatVoiceCallMessage() => [const SizedBox.shrink()],
-        },
-      ],
+      ),
     );
   }
 }

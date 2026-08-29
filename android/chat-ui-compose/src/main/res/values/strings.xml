@@ -20,6 +20,10 @@
   <string name="altive_chat_latest">Latest messages</string>
   <string name="altive_chat_link_preview">Link preview</string>
   <string name="altive_chat_link_preview_loading">Loading link preview</string>
+  <string name="altive_chat_reply">Reply</string>
+  <string name="altive_chat_cancel_reply">Cancel reply</string>
+  <string name="altive_chat_reply_to">Replying to</string>
+  <string name="altive_chat_reply_unavailable">This message is unavailable</string>
   <string name="altive_chat_expand">Expand events</string>
   <string name="altive_chat_collapse">Collapse events</string>
 </resources>

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'bottom_widget.dart';
 import 'chat_link_preview_scope.dart';
+import 'chat_reply_scope.dart';
 import 'common_cached_network_image.dart';
 import 'extension.dart';
 import 'inherited_altive_chat_room_theme.dart';
@@ -22,6 +23,45 @@ enum NewMessageScrollPolicy {
 
   /// 自動では移動しない。
   never,
+}
+
+/// Roomで返信を開始・表示するための設定。
+class ChatReplyConfiguration {
+  /// 返信設定を作成する。
+  const ChatReplyConfiguration({
+    this.canReply = _defaultCanReply,
+    this.makeReference = _defaultMakeReference,
+    this.onReferenceTap,
+  });
+
+  /// App固有条件として返信可能か判定する。
+  final bool Function(ChatUserMessage message) canReply;
+
+  /// 標準messageから軽量な返信参照を作る。
+  final ChatReplyReference? Function(ChatUserMessage message, int? imageIndex)
+  makeReference;
+
+  /// 引用をタップしたときの処理。
+  final void Function(String messageId, int? imageIndex)? onReferenceTap;
+
+  /// package標準条件とApp固有条件を満たす返信参照を返す。
+  ChatReplyReference? referenceFor(
+    ChatUserMessage message, {
+    int? imageIndex,
+  }) {
+    if (!_defaultCanReply(message) || !canReply(message)) {
+      return null;
+    }
+    return makeReference(message, imageIndex);
+  }
+
+  static bool _defaultCanReply(ChatUserMessage message) =>
+      message.deliveryState == ChatMessageDeliveryState.sent;
+
+  static ChatReplyReference _defaultMakeReference(
+    ChatUserMessage message,
+    int? imageIndex,
+  ) => message.toReplyReference(imageIndex: imageIndex);
 }
 
 /// 呼び出し側の並び順に依存せず、Flutterの反転ListView向けに新しい順へ正規化する。
@@ -59,6 +99,9 @@ class AltiveChatRoom extends StatefulWidget {
     this.onWebLinkTap,
     this.linkPreviewSemanticLabel = 'Link preview',
     this.linkPreviewLoadingSemanticLabel = 'Loading link preview',
+    this.replyConfiguration,
+    this.replyActionLabel = 'Reply',
+    this.cancelReplyLabel = 'Cancel reply',
     this.textEditingController,
     this.draftPolicy = const ChatDraftPolicy.unrestricted(),
     this.isGroupChat = false,
@@ -150,6 +193,15 @@ class AltiveChatRoom extends StatefulWidget {
 
   /// 読み込み中リンクプレビューの読み上げ文。
   final String linkPreviewLoadingSemanticLabel;
+
+  /// 返信機能を有効化する任意設定。
+  final ChatReplyConfiguration? replyConfiguration;
+
+  /// 長押しメニューへ表示する返信文言。
+  final String replyActionLabel;
+
+  /// 返信選択の取消ボタン文言。
+  final String cancelReplyLabel;
 
   /// グループチャットかどうか。
   final bool isGroupChat;
@@ -348,6 +400,7 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
 
   /// 選択中のステッカー。
   Sticker? _selectedSticker;
+  ChatReplyReference? _selectedReply;
   ScrollController? _scrollController;
   var _isNearLatest = true;
 
@@ -436,6 +489,18 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
         messageBubbleBuilder: widget.messageBubbleBuilder,
         messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
         popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
+        onReplyRequested:
+            widget.replyConfiguration == null || widget.onSubmit == null
+            ? null
+            : (message) {
+                final configuration = widget.replyConfiguration!;
+                final reference = configuration.referenceFor(message);
+                if (reference == null) {
+                  return;
+                }
+                setState(() => _selectedReply = reference);
+              },
+        replyActionLabel: widget.replyActionLabel,
         dateTextBuilder: widget.dateTextBuilder,
         messageTypeNotifier: messageTypeNotifier,
         onAvatarTap: widget.onAvatarTap,
@@ -487,138 +552,227 @@ class _AltiveChatRoomState extends State<AltiveChatRoom> {
     return InheritedAltiveChatRoomTheme(
       theme: widget.theme,
       messageListViewKey: messageListViewKey,
-      child: ChatLinkPreviewScope(
-        resolver: widget.linkPreviewResolver,
-        imageBuilder: widget.linkPreviewImageBuilder,
-        onWebLinkTap: widget.onWebLinkTap,
-        semanticLabel: widget.linkPreviewSemanticLabel,
-        loadingSemanticLabel: widget.linkPreviewLoadingSemanticLabel,
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            primaryColor: widget.theme.primaryColor,
-            scaffoldBackgroundColor: widget.theme.backgroundColor,
-            inputDecorationTheme: widget.theme.inputDecorationTheme,
-            colorScheme: lightThemeData.colorScheme.copyWith(
-              primary: widget.theme.primaryColor,
-              surface: widget.theme.backgroundColor,
+      child: ChatReplyScope(
+        onReferenceTap: widget.replyConfiguration?.onReferenceTap,
+        child: ChatLinkPreviewScope(
+          resolver: widget.linkPreviewResolver,
+          imageBuilder: widget.linkPreviewImageBuilder,
+          onWebLinkTap: widget.onWebLinkTap,
+          semanticLabel: widget.linkPreviewSemanticLabel,
+          loadingSemanticLabel: widget.linkPreviewLoadingSemanticLabel,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              primaryColor: widget.theme.primaryColor,
+              scaffoldBackgroundColor: widget.theme.backgroundColor,
+              inputDecorationTheme: widget.theme.inputDecorationTheme,
+              colorScheme: lightThemeData.colorScheme.copyWith(
+                primary: widget.theme.primaryColor,
+                surface: widget.theme.backgroundColor,
+              ),
             ),
-          ),
-          child: Scaffold(
-            body: SafeArea(
-              // bottom部分は特定のカラーを指定したいのでfalseにする。
-              // trueにすると、Scaffold.backgroundColorのカラーが表示されてしまう。
-              bottom: false,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        if (widget.messages.isEmpty)
-                          // メッセージがない場合
-                          emptyWidget
-                        else
-                          // メッセージがある場合
-                          onRefresh == null
-                              ? child
-                              // NOTE: ListViewを反転させている為、
-                              // 上に引っ張って Pull-to-Refreshを表示させる。
-                              // この際、RefreshIndicatorは使用できないので、
-                              // 代わりにCustomMaterialIndicatorを使用している。
-                              : CustomMaterialIndicator(
-                                  onRefresh: onRefresh,
-                                  trailingScrollIndicatorVisible: false,
-                                  leadingScrollIndicatorVisible: true,
-                                  indicatorBuilder: (_, _) => refreshIndicator,
-                                  child: child,
-                                ),
-                        if (selectedSticker != null)
-                          _StickerPreview(
-                            backgroundColor: widget.theme.backgroundColor
-                                ?.withValues(alpha: 0.5),
-                            sticker: selectedSticker,
-                            onSelected: (sticker) {
-                              widget.onSendIconPressed.call((
-                                text: '',
-                                sticker: sticker,
-                              ));
-                              setState(() {
-                                _selectedSticker = null;
-                              });
-                            },
-                            onClosed: () {
-                              setState(() {
-                                _selectedSticker = null;
-                              });
-                            },
-                          ),
-                        if (widget.showScrollToLatestButton && !_isNearLatest)
-                          Positioned(
-                            right: 16,
-                            bottom: 8,
-                            child:
-                                widget.scrollToLatestButtonBuilder?.call(
-                                  _scrollToLatest,
-                                ) ??
-                                FloatingActionButton.small(
-                                  onPressed: _scrollToLatest,
-                                  child: const Icon(Icons.arrow_downward),
-                                ),
-                          ),
-                      ],
+            child: Scaffold(
+              body: SafeArea(
+                // bottom部分は特定のカラーを指定したいのでfalseにする。
+                // trueにすると、Scaffold.backgroundColorのカラーが表示されてしまう。
+                bottom: false,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          if (widget.messages.isEmpty)
+                            // メッセージがない場合
+                            emptyWidget
+                          else
+                            // メッセージがある場合
+                            onRefresh == null
+                                ? child
+                                // NOTE: ListViewを反転させている為、
+                                // 上に引っ張って Pull-to-Refreshを表示させる。
+                                // この際、RefreshIndicatorは使用できないので、
+                                // 代わりにCustomMaterialIndicatorを使用している。
+                                : CustomMaterialIndicator(
+                                    onRefresh: onRefresh,
+                                    trailingScrollIndicatorVisible: false,
+                                    leadingScrollIndicatorVisible: true,
+                                    indicatorBuilder: (_, _) =>
+                                        refreshIndicator,
+                                    child: child,
+                                  ),
+                          if (selectedSticker != null)
+                            _StickerPreview(
+                              backgroundColor: widget.theme.backgroundColor
+                                  ?.withValues(alpha: 0.5),
+                              sticker: selectedSticker,
+                              onSelected: (sticker) {
+                                final onSubmit = widget.onSubmit;
+                                if (onSubmit != null) {
+                                  onSubmit(
+                                    ChatComposerSubmission(
+                                      text: '',
+                                      sticker: sticker,
+                                      replyTo: _selectedReply,
+                                    ),
+                                  );
+                                } else {
+                                  widget.onSendIconPressed.call((
+                                    text: '',
+                                    sticker: sticker,
+                                  ));
+                                }
+                                setState(() {
+                                  _selectedSticker = null;
+                                  if (onSubmit != null) {
+                                    _selectedReply = null;
+                                  }
+                                });
+                              },
+                              onClosed: () {
+                                setState(() {
+                                  _selectedSticker = null;
+                                });
+                              },
+                            ),
+                          if (widget.showScrollToLatestButton && !_isNearLatest)
+                            Positioned(
+                              right: 16,
+                              bottom: 8,
+                              child:
+                                  widget.scrollToLatestButtonBuilder?.call(
+                                    _scrollToLatest,
+                                  ) ??
+                                  FloatingActionButton.small(
+                                    onPressed: _scrollToLatest,
+                                    child: const Icon(Icons.arrow_downward),
+                                  ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (!widget.hideBottomWidget) ...[
-                    BottomWidget(
-                      textEditingController: widget.textEditingController,
-                      draftPolicy: widget.draftPolicy,
-                      onSubmit: (submission) {
-                        final onSubmit = widget.onSubmit;
-                        if (onSubmit != null) {
-                          onSubmit(submission);
-                        } else {
-                          widget.onSendIconPressed((
+                    const SizedBox(height: 8),
+                    if (!widget.hideBottomWidget) ...[
+                      BottomWidget(
+                        textEditingController: widget.textEditingController,
+                        draftPolicy: widget.draftPolicy,
+                        onSubmit: (submission) {
+                          final enrichedSubmission = ChatComposerSubmission(
                             text: submission.text,
                             sticker: submission.sticker,
-                          ));
-                        }
-                        setState(() {
-                          _selectedSticker = null;
-                        });
-                      },
-                      hintText: widget.hintText,
-                      showSendButtonInTextField:
-                          widget.showSendButtonInTextField,
-                      sendButtonWidget: widget.sendButtonWidget,
-                      expandButtonIcon: widget.expandButtonIcon,
-                      textFieldSuffixBuilder: widget.textFieldSuffixBuilder,
-                      messageTypeNotifier: messageTypeNotifier,
-                      leadingWidgets: widget.bottomLeadingWidgets,
-                      replyToMessageBar: widget.replyToMessageBar,
-                      stickerPackages: widget.stickerPackages,
-                      stickerPickerFooter: widget.stickerPickerFooter,
-                      onLockedStickerTap: widget.onLockedStickerTap,
-                      lockedStickerSemanticLabel:
-                          widget.lockedStickerSemanticLabel,
-                      selectedSticker: _selectedSticker,
-                      onStickerSelected: (sticker) {
-                        setState(() {
-                          _selectedSticker = sticker;
-                        });
-                      },
-                    ),
-                    // SafeAreaのbottomと同じ高さで、入力エリアと同じカラーのWidgetを配置する。
-                    Container(
-                      height: MediaQuery.paddingOf(context).bottom,
-                      color: widget.theme.inputBackgroundColor,
-                    ),
+                            linkPreview: submission.linkPreview,
+                            replyTo: _selectedReply,
+                          );
+                          final onSubmit = widget.onSubmit;
+                          if (onSubmit != null) {
+                            onSubmit(enrichedSubmission);
+                          } else {
+                            widget.onSendIconPressed((
+                              text: submission.text,
+                              sticker: submission.sticker,
+                            ));
+                          }
+                          setState(() {
+                            _selectedSticker = null;
+                            _selectedReply = null;
+                          });
+                        },
+                        hintText: widget.hintText,
+                        showSendButtonInTextField:
+                            widget.showSendButtonInTextField,
+                        sendButtonWidget: widget.sendButtonWidget,
+                        expandButtonIcon: widget.expandButtonIcon,
+                        textFieldSuffixBuilder: widget.textFieldSuffixBuilder,
+                        messageTypeNotifier: messageTypeNotifier,
+                        leadingWidgets: widget.bottomLeadingWidgets,
+                        replyToMessageBar: _selectedReply == null
+                            ? widget.replyToMessageBar
+                            : _ChatReplyComposerBar(
+                                reference: _selectedReply!,
+                                cancelLabel: widget.cancelReplyLabel,
+                                onCancel: () {
+                                  setState(() => _selectedReply = null);
+                                },
+                              ),
+                        stickerPackages: widget.stickerPackages,
+                        stickerPickerFooter: widget.stickerPickerFooter,
+                        onLockedStickerTap: widget.onLockedStickerTap,
+                        lockedStickerSemanticLabel:
+                            widget.lockedStickerSemanticLabel,
+                        selectedSticker: _selectedSticker,
+                        onStickerSelected: (sticker) {
+                          setState(() {
+                            _selectedSticker = sticker;
+                          });
+                        },
+                      ),
+                      // SafeAreaのbottomと同じ高さで、入力エリアと同じカラーのWidgetを配置する。
+                      Container(
+                        height: MediaQuery.paddingOf(context).bottom,
+                        color: widget.theme.inputBackgroundColor,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ChatReplyComposerBar extends StatelessWidget {
+  const _ChatReplyComposerBar({
+    required this.reference,
+    required this.cancelLabel,
+    required this.onCancel,
+  });
+
+  final ChatReplyReference reference;
+  final String cancelLabel;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final preview = switch (reference.content) {
+      ChatReplyTextPreview(:final value) => value,
+      ChatReplyImagePreview(:final caption, :final totalCount) =>
+        caption ?? 'Image $totalCount',
+      ChatReplyStickerPreview() => 'Sticker',
+      ChatReplyLabelPreview(:final value) => value,
+      ChatReplyUnavailablePreview() => 'This message is unavailable',
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 8, 4),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 44,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reference.senderDisplayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+                Text(preview, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: cancelLabel,
+            onPressed: onCancel,
+            icon: const Icon(Icons.close),
+          ),
+        ],
       ),
     );
   }
@@ -651,6 +805,7 @@ class _StickerPreview extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: GestureDetector(
+              key: const ValueKey('AltiveChatRoom.StickerPreview'),
               onTap: () => onSelected(sticker),
               child: CommonCachedNetworkImage(imageUrl: sticker.imageUrl),
             ),
@@ -683,6 +838,8 @@ class _MessageListView extends StatefulWidget {
     required this.messageBubbleBuilder,
     required this.messageBottomWidgetBuilder,
     required this.popupMenuAccessoryBuilder,
+    required this.onReplyRequested,
+    required this.replyActionLabel,
     required this.dateTextBuilder,
     required this.messageTypeNotifier,
     required this.onAvatarTap,
@@ -723,6 +880,8 @@ class _MessageListView extends StatefulWidget {
   messageBubbleBuilder;
   final MessageBottomWidgetBuilder? messageBottomWidgetBuilder;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
+  final ValueChanged<ChatUserMessage>? onReplyRequested;
+  final String replyActionLabel;
   final Widget Function({required String dateText})? dateTextBuilder;
   final ValueNotifier<MessageInputType> messageTypeNotifier;
   final ValueChanged<ChatUser>? onAvatarTap;
@@ -859,6 +1018,8 @@ class _MessageListViewState extends State<_MessageListView> {
               contextMenuBuilder: widget.contextMenuBuilder,
               messageBottomWidgetBuilder: widget.messageBottomWidgetBuilder,
               popupMenuAccessoryBuilder: widget.popupMenuAccessoryBuilder,
+              onReplyRequested: widget.onReplyRequested,
+              replyActionLabel: widget.replyActionLabel,
               onAvatarTap: widget.onAvatarTap,
               onImageMessageTap: widget.onImageMessageTap,
               onImageTap: widget.onImageTap,

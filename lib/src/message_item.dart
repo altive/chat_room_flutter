@@ -23,6 +23,8 @@ class MessageItem extends StatelessWidget {
     required this.contextMenuBuilder,
     required this.messageBottomWidgetBuilder,
     required this.popupMenuAccessoryBuilder,
+    required this.onReplyRequested,
+    required this.replyActionLabel,
     required this.onAvatarTap,
     required this.onImageMessageTap,
     required this.onImageTap,
@@ -69,6 +71,12 @@ class MessageItem extends StatelessWidget {
 
   /// ポップアップメニュー付属領域の構築処理。
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
+
+  /// 返信actionが選択されたときの処理。
+  final ValueChanged<ChatUserMessage>? onReplyRequested;
+
+  /// 返信actionへ表示する文言。
+  final String replyActionLabel;
 
   /// アバタータップ時のコールバック。
   final ValueChanged<ChatUser>? onAvatarTap;
@@ -154,6 +162,8 @@ class MessageItem extends StatelessWidget {
         contextMenuBuilder: contextMenuBuilder,
         messageBottomWidgetBuilder: messageBottomWidgetBuilder,
         popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
+        onReplyRequested: onReplyRequested,
+        replyActionLabel: replyActionLabel,
         onAvatarTap: onAvatarTap,
         onImageMessageTap: onImageMessageTap,
         onImageTap: onImageTap,
@@ -200,6 +210,8 @@ class _UserMessageItem extends StatelessWidget {
     required this.contextMenuBuilder,
     required this.messageBottomWidgetBuilder,
     required this.popupMenuAccessoryBuilder,
+    required this.onReplyRequested,
+    required this.replyActionLabel,
     required this.onAvatarTap,
     required this.onImageMessageTap,
     required this.onImageTap,
@@ -233,6 +245,12 @@ class _UserMessageItem extends StatelessWidget {
   final EditableTextContextMenuBuilder? contextMenuBuilder;
   final MessageBottomWidgetBuilder? messageBottomWidgetBuilder;
   final PopupMenuAccessoryBuilder? popupMenuAccessoryBuilder;
+
+  /// 返信actionが選択されたときの処理。
+  final ValueChanged<ChatUserMessage>? onReplyRequested;
+
+  /// 返信actionへ表示する文言。
+  final String replyActionLabel;
   final ValueChanged<ChatUser>? onAvatarTap;
   final ImageMessageTapCallback? onImageMessageTap;
   final ChatImageTapCallback? onImageTap;
@@ -310,6 +328,23 @@ class _UserMessageItem extends StatelessWidget {
 
     // 楽観的更新中のメッセージではポップアップメニューを表示しない。
     final popupMenuEnabled = !isPending;
+    PopupMenuLayout? withReplyAction(PopupMenuLayout? layout) {
+      final onReplyRequested = this.onReplyRequested;
+      if (onReplyRequested == null ||
+          deliveryState != ChatMessageDeliveryState.sent) {
+        return layout;
+      }
+      final replyItem = PopupMenuButtonItem(
+        title: replyActionLabel,
+        iconWidget: const Icon(Icons.reply),
+        onTap: onReplyRequested,
+      );
+      return PopupMenuLayout(
+        column: layout?.column ?? 1,
+        buttonItems: [replyItem, ...?layout?.buttonItems],
+      );
+    }
+
     final outgoingRow = Row(
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -326,11 +361,18 @@ class _UserMessageItem extends StatelessWidget {
             onImageTap: onImageTap,
             onStickerMessageTap: onStickerMessageTap,
             onActionButtonTap: onActionButtonTap,
-            popupMenuLayoutForText: outgoingTextMessagePopupMenuLayout,
-            popupMenuLayoutForImage: outgoingImageMessagePopupMenuLayout,
-            popupMenuLayoutForSticker: outgoingStickerMessagePopupMenuLayout,
-            popupMenuLayoutForVoiceCall:
-                outgoingVoiceCallMessagePopupMenuLayout,
+            popupMenuLayoutForText: withReplyAction(
+              outgoingTextMessagePopupMenuLayout,
+            ),
+            popupMenuLayoutForImage: withReplyAction(
+              outgoingImageMessagePopupMenuLayout,
+            ),
+            popupMenuLayoutForSticker: withReplyAction(
+              outgoingStickerMessagePopupMenuLayout,
+            ),
+            popupMenuLayoutForVoiceCall: withReplyAction(
+              outgoingVoiceCallMessagePopupMenuLayout,
+            ),
             popupMenuAccessoryBuilder: popupMenuAccessoryBuilder,
             popupMenuEnabled: popupMenuEnabled,
             imageLayoutConfiguration: imageLayoutConfiguration,
@@ -398,14 +440,18 @@ class _UserMessageItem extends StatelessWidget {
                               onImageTap: onImageTap,
                               onStickerMessageTap: onStickerMessageTap,
                               onActionButtonTap: onActionButtonTap,
-                              popupMenuLayoutForText:
-                                  incomingTextMessagePopupMenuLayout,
-                              popupMenuLayoutForImage:
-                                  incomingImageMessagePopupMenuLayout,
-                              popupMenuLayoutForSticker:
-                                  incomingStickerMessagePopupMenuLayout,
-                              popupMenuLayoutForVoiceCall:
-                                  incomingVoiceCallMessagePopupMenuLayout,
+                              popupMenuLayoutForText: withReplyAction(
+                                incomingTextMessagePopupMenuLayout,
+                              ),
+                              popupMenuLayoutForImage: withReplyAction(
+                                incomingImageMessagePopupMenuLayout,
+                              ),
+                              popupMenuLayoutForSticker: withReplyAction(
+                                incomingStickerMessagePopupMenuLayout,
+                              ),
+                              popupMenuLayoutForVoiceCall: withReplyAction(
+                                incomingVoiceCallMessagePopupMenuLayout,
+                              ),
                               popupMenuAccessoryBuilder:
                                   popupMenuAccessoryBuilder,
                               popupMenuEnabled: popupMenuEnabled,

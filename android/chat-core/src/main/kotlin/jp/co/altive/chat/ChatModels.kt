@@ -25,6 +25,8 @@ data class ChatMessage(
   val deliveryState: ChatMessageDeliveryState = ChatMessageDeliveryState.Sent,
   /** テキストメッセージへ任意に表示するWebリンクプレビュー。 */
   val linkPreview: ChatLinkPreview? = null,
+  /** 返信元の軽量な表示snapshot。 */
+  val replyTo: ChatReplyReference? = null,
 ) {
   fun isSentBy(userId: String): Boolean = sender?.id == userId
 }

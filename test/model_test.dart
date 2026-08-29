@@ -242,19 +242,18 @@ void main() {
       );
     });
 
-    test('buttonItems 件数が column で割り切れない場合は assertion になる', () {
-      expect(
-        () => PopupMenuLayout(
-          column: 2,
-          buttonItems: [
-            PopupMenuButtonItem(
-              iconWidget: const SizedBox.shrink(),
-              onTap: (_) {},
-            ),
-          ],
-        ),
-        throwsA(isA<AssertionError>()),
+    test('最終行が列数に満たないレイアウトを生成できる', () {
+      final layout = PopupMenuLayout(
+        column: 2,
+        buttonItems: [
+          PopupMenuButtonItem(
+            iconWidget: const SizedBox.shrink(),
+            onTap: (_) {},
+          ),
+        ],
       );
+
+      expect(layout.buttonItems, hasLength(1));
     });
 
     test('有効な入力で生成できる', () {

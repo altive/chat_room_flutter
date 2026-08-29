@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
+import 'chat_reply.dart';
 import 'sticker.dart';
 
 /// Webリンクプレビューの画像参照。
@@ -93,6 +94,7 @@ class ChatComposerSubmission extends Equatable {
     required this.text,
     this.sticker,
     this.linkPreview,
+    this.replyTo,
   });
 
   /// 正規化済みの本文。
@@ -106,6 +108,9 @@ class ChatComposerSubmission extends Equatable {
   /// 楽観表示用であり、信頼済みの永続化値として扱わない。
   final ChatLinkPreview? linkPreview;
 
+  /// 送信時に選択されていた任意の返信元。
+  final ChatReplyReference? replyTo;
+
   @override
-  List<Object?> get props => [text, sticker, linkPreview];
+  List<Object?> get props => [text, sticker, linkPreview, replyTo];
 }

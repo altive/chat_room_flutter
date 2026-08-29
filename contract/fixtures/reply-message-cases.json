@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "text",
+      "messageId": "message-text",
+      "senderId": "user-1",
+      "senderDisplayName": "送信者",
+      "content": { "kind": "text", "value": "返信元の本文" }
+    },
+    {
+      "name": "long-text-with-newline-and-emoji",
+      "messageId": "message-long-text",
+      "senderId": "user-1",
+      "senderDisplayName": "送信者",
+      "content": {
+        "kind": "text",
+        "value": "1行目の長い返信元です。previewでは2行まで表示します。\n2行目も保持し、model値は切り詰めません🙂"
+      }
+    },
+    {
+      "name": "single-image",
+      "messageId": "message-single-image",
+      "senderId": "user-2",
+      "senderDisplayName": "画像の送信者",
+      "content": {
+        "kind": "image",
+        "thumbnailId": "image-1",
+        "totalCount": 1
+      }
+    },
+    {
+      "name": "multiple-images-first",
+      "messageId": "message-images-first",
+      "senderId": "user-2",
+      "senderDisplayName": "画像の送信者",
+      "content": {
+        "kind": "image",
+        "thumbnailId": "image-1",
+        "totalCount": 3
+      }
+    },
+    {
+      "name": "selected-image",
+      "messageId": "message-images",
+      "senderId": "user-2",
+      "senderDisplayName": "画像の送信者",
+      "imageIndex": 1,
+      "content": {
+        "kind": "image",
+        "thumbnailId": "image-2",
+        "caption": "画像の説明",
+        "totalCount": 3
+      }
+    },
+    {
+      "name": "out-of-range-image-index",
+      "messageId": "message-images-fallback",
+      "senderId": "user-2",
+      "senderDisplayName": "画像の送信者",
+      "requestedImageIndex": 9,
+      "content": {
+        "kind": "image",
+        "thumbnailId": "image-1",
+        "totalCount": 3
+      }
+    },
+    {
+      "name": "sticker",
+      "messageId": "message-sticker",
+      "senderId": "user-3",
+      "senderDisplayName": "ステッカーの送信者",
+      "content": {
+        "kind": "sticker",
+        "packId": "standard",
+        "stickerId": "hello",
+        "locale": "ja",
+        "assetRevision": 1
+      }
+    },
+    {
+      "name": "label",
+      "messageId": "message-card",
+      "senderId": "user-4",
+      "senderDisplayName": "カードの送信者",
+      "content": { "kind": "label", "value": "お知らせ" }
+    },
+    {
+      "name": "unavailable",
+      "messageId": "message-hidden",
+      "senderId": "user-5",
+      "senderDisplayName": "不明な送信者",
+      "content": { "kind": "unavailable" }
+    },
+    {
+      "name": "reply-to-reply-is-not-recursive",
+      "messageId": "message-reply",
+      "senderId": "user-6",
+      "senderDisplayName": "返信者",
+      "sourceReplyMessageId": "message-older",
+      "content": { "kind": "text", "value": "直近の返信本文" }
+    },
+    {
+      "name": "sending-is-not-replyable",
+      "messageId": "message-sending",
+      "senderId": "user-1",
+      "senderDisplayName": "送信者",
+      "deliveryState": "sending",
+      "isReplyable": false,
+      "content": { "kind": "text", "value": "送信中" }
+    },
+    {
+      "name": "failed-is-not-replyable",
+      "messageId": "message-failed",
+      "senderId": "user-1",
+      "senderDisplayName": "送信者",
+      "deliveryState": "failed",
+      "isReplyable": false,
+      "content": { "kind": "text", "value": "送信失敗" }
+    },
+    {
+      "name": "sent-is-replyable",
+      "messageId": "message-sent",
+      "senderId": "user-1",
+      "senderDisplayName": "送信者",
+      "deliveryState": "sent",
+      "isReplyable": true,
+      "content": { "kind": "text", "value": "送信済み" }
+    },
+    {
+      "name": "reference-target-outside-current-page",
+      "messageId": "message-outside-page",
+      "senderId": "user-7",
+      "senderDisplayName": "過去の送信者",
+      "isTargetInCurrentPage": false,
+      "content": { "kind": "text", "value": "page外でも表示するsnapshot" }
+    }
+  ]
+}

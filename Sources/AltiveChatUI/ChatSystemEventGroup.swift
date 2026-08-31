@@ -86,6 +86,7 @@ public struct ChatSystemEventGroup<Summary: View, Actions: View>: View {
                   .foregroundStyle(.secondary)
                 Text(item.message)
                   .font(.caption)
+                  .multilineTextAlignment(.leading)
                   .fixedSize(horizontal: false, vertical: true)
               }
             }
@@ -93,7 +94,7 @@ public struct ChatSystemEventGroup<Summary: View, Actions: View>: View {
           .transition(.opacity.combined(with: .move(edge: .top)))
         }
 
-        actions
+        actions.multilineTextAlignment(.leading)
       }
     }
   }

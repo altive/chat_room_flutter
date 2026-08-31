@@ -19,14 +19,16 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import java.text.DateFormat
 import java.util.Date
@@ -209,12 +211,21 @@ fun ChatSystemEventCard(
   modifier: Modifier = Modifier,
   content: @Composable ColumnScope.() -> Unit,
 ) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    color = theme.systemBubble,
-    shape = RoundedCornerShape(18.dp),
-    border = BorderStroke(1.dp, theme.systemBubbleBorder),
-  ) { Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), content = content) }
+  Box(
+    modifier = Modifier.fillMaxWidth().testTag(CHAT_SYSTEM_EVENT_LANE_TAG),
+    contentAlignment = Alignment.Center,
+  ) {
+    Surface(
+      modifier = modifier.width(IntrinsicSize.Max).testTag(CHAT_SYSTEM_EVENT_CARD_TAG),
+      color = theme.systemBubble,
+      shape = RoundedCornerShape(18.dp),
+      border = BorderStroke(1.dp, theme.systemBubbleBorder),
+    ) {
+      ProvideTextStyle(LocalTextStyle.current.copy(textAlign = TextAlign.Center)) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), content = content)
+      }
+    }
+  }
 }
 
 @Composable
@@ -234,21 +245,30 @@ fun ChatSystemEventGroup(
       summary()
       if (items.size > 1) TextButton(
         onClick = { expanded = !expanded },
-        modifier = Modifier.semantics { contentDescription = expandDescription },
+        modifier = Modifier
+          .heightIn(min = 48.dp)
+          .testTag(CHAT_SYSTEM_EVENT_EXPAND_BUTTON_TAG)
+          .semantics { contentDescription = expandDescription },
       ) { Text("×${items.size} ${if (expanded) "⌃" else "⌄"}") }
     }
     if (expanded) {
-      HorizontalDivider(Modifier.padding(vertical = 8.dp))
-      items.forEach { item ->
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-          Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(item.occurredAtEpochMillis)), style = MaterialTheme.typography.labelSmall)
-          Text(item.message, style = MaterialTheme.typography.bodySmall)
+      ProvideTextStyle(LocalTextStyle.current.copy(textAlign = TextAlign.Start)) {
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        items.forEach { item ->
+          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(item.occurredAtEpochMillis)), style = MaterialTheme.typography.labelSmall)
+            Text(item.message, style = MaterialTheme.typography.bodySmall)
+          }
         }
       }
     }
-    actions()
+    ProvideTextStyle(LocalTextStyle.current.copy(textAlign = TextAlign.Start)) { actions() }
   }
 }
+
+internal const val CHAT_SYSTEM_EVENT_LANE_TAG = "AltiveChatUI.SystemEventLane"
+internal const val CHAT_SYSTEM_EVENT_CARD_TAG = "AltiveChatUI.SystemEventCard"
+internal const val CHAT_SYSTEM_EVENT_EXPAND_BUTTON_TAG = "AltiveChatUI.SystemEventExpandButton"
 
 @Composable
 fun ChatTimelineBoundary(

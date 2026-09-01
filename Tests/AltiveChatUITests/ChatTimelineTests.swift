@@ -1,9 +1,16 @@
+import SwiftUI
 import Testing
 
 @testable import AltiveChatUI
 
 @Suite("チャットタイムライン位置制御")
 struct ChatTimelineTests {
+  @Test("最新位置のanchorは横方向をleadingに固定する")
+  func latestAnchorKeepsLeadingEdge() {
+    #expect(ChatTimelineScrollAnchor.latest.x == UnitPoint.leading.x)
+    #expect(ChatTimelineScrollAnchor.latest.y == UnitPoint.bottom.y)
+  }
+
   @Test("point単位の閾値内を最新付近と判定する")
   func detectsLatestProximityByPoints() {
     #expect(

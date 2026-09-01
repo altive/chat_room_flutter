@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+enum ChatTimelineScrollAnchor {
+  static let latest = UnitPoint.bottomLeading
+}
+
 /// viewportと末尾anchorの距離から最新付近を判定する。
 enum ChatTimelineProximity {
   /// 末尾anchorがviewport末尾から閾値内にあるかを返す。
@@ -48,14 +52,14 @@ public struct ChatTimelineProxy {
   public func scrollToBottom(animation: Animation? = nil) {
     prepareForProxyPositioning()
     perform(animation: animation) {
-      scrollProxy.scrollTo(bottomAnchorID, anchor: .bottom)
+      scrollProxy.scrollTo(bottomAnchorID, anchor: ChatTimelineScrollAnchor.latest)
     }
   }
 
   /// Bindingの末尾目標を維持したまま実ScrollViewへ末尾位置を再適用する。
   fileprivate func enforceBottomPosition(animation: Animation? = nil) {
     perform(animation: animation) {
-      scrollProxy.scrollTo(bottomAnchorID, anchor: .bottom)
+      scrollProxy.scrollTo(bottomAnchorID, anchor: ChatTimelineScrollAnchor.latest)
     }
   }
 
@@ -243,7 +247,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
   @State private var historyTopOffset: CGFloat?
   @State private var isHistoryLoadScheduled = false
   @State private var visiblePosition: AnyHashable?
-  @State private var visiblePositionAnchor: UnitPoint = .bottom
+  @State private var visiblePositionAnchor = ChatTimelineScrollAnchor.latest
   @State private var isNearBottom = true
   @State private var showsLatestControl = false
   @State private var viewportHeight: CGFloat = 0
@@ -378,7 +382,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           )
         }
       }
-      .defaultScrollAnchor(.bottom)
+      .defaultScrollAnchor(ChatTimelineScrollAnchor.latest)
       .scrollPosition(id: $visiblePosition, anchor: visiblePositionAnchor)
       .overlay(alignment: .bottomTrailing) {
         if latestControl.isEnabled, showsLatestControl {
@@ -634,7 +638,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     animation: Animation? = nil
   ) {
     let target = AnyHashable(bottomAnchorID)
-    visiblePositionAnchor = .bottom
+    visiblePositionAnchor = ChatTimelineScrollAnchor.latest
     if let animation {
       withAnimation(animation) {
         visiblePosition = target

@@ -11,6 +11,26 @@ struct ChatTimelineTests {
     #expect(ChatTimelineScrollAnchor.latest.y == UnitPoint.bottom.y)
   }
 
+  @Test("content幅をviewportと左右余白の内側へ制限する")
+  func capsContentWidthWithinViewportInsets() {
+    let insets = EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+
+    #expect(
+      ChatTimelineContentLayout.contentWidth(
+        viewportWidth: 320,
+        contentInsets: insets,
+        maximumContentWidth: 720
+      ) == 288
+    )
+    #expect(
+      ChatTimelineContentLayout.contentWidth(
+        viewportWidth: 1_024,
+        contentInsets: insets,
+        maximumContentWidth: 720
+      ) == 720
+    )
+  }
+
   @Test("point単位の閾値内を最新付近と判定する")
   func detectsLatestProximityByPoints() {
     #expect(

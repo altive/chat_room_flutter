@@ -5,6 +5,21 @@ enum ChatTimelineScrollAnchor {
   static let latest = UnitPoint.bottomLeading
 }
 
+enum ChatTimelineContentLayout {
+  static func contentWidth(
+    viewportWidth: CGFloat,
+    contentInsets: EdgeInsets,
+    maximumContentWidth: CGFloat?
+  ) -> CGFloat {
+    let availableWidth = max(
+      0,
+      viewportWidth - contentInsets.leading - contentInsets.trailing
+    )
+    guard let maximumContentWidth else { return availableWidth }
+    return min(availableWidth, max(0, maximumContentWidth))
+  }
+}
+
 /// viewportと末尾anchorの距離から最新付近を判定する。
 enum ChatTimelineProximity {
   /// 末尾anchorがviewport末尾から閾値内にあるかを返す。
@@ -346,141 +361,148 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         bottomAnchorID: bottomAnchorID,
         prepareForProxyPositioning: { visiblePosition = nil }
       )
-      ScrollView {
-        LazyVStack(spacing: spacing) {
-          historyControl(using: timelineProxy)
-          content(timelineProxy)
-          Color.clear
-            .frame(height: 1)
-            .id(AnyHashable(bottomAnchorID))
-            .background {
-              GeometryReader { geometry in
-                Color.clear.preference(
-                  key: ChatTimelineBottomOffsetKey.self,
-                  value: ChatTimelinePositionMeasurement(
-                    attempt: positioningAttempt,
-                    value: geometry.frame(in: .named(historyCoordinateSpaceID)).maxY
-                  )
-                )
-              }
-            }
-        }
-        .scrollTargetLayout()
-        .frame(maxWidth: maximumContentWidth ?? .infinity)
-        .padding(contentInsets)
-        .frame(maxWidth: .infinity)
-      }
-      .coordinateSpace(name: historyCoordinateSpaceID)
-      .background {
-        GeometryReader { geometry in
-          Color.clear.preference(
-            key: ChatTimelineViewportHeightKey.self,
-            value: ChatTimelinePositionMeasurement(
-              attempt: positioningAttempt,
-              value: geometry.size.height
-            )
-          )
-        }
-      }
-      .defaultScrollAnchor(ChatTimelineScrollAnchor.latest)
-      .scrollPosition(id: $visiblePosition, anchor: visiblePositionAnchor)
-      .overlay(alignment: .bottomTrailing) {
-        if latestControl.isEnabled, showsLatestControl {
-          Button {
-            showsLatestControl = false
-            positionLatest(using: timelineProxy, animation: followLatestAnimation)
-          } label: {
-            Label(latestControl.label, systemImage: latestControl.systemImage)
-              .labelStyle(.iconOnly)
-              .frame(width: 44, height: 44)
-          }
-          .buttonStyle(.borderedProminent)
-          .buttonBorderShape(.circle)
-          .accessibilityLabel(latestControl.label)
-          .padding(12)
-        }
-      }
-      .onPreferenceChange(ChatTimelineHistoryTopOffsetKey.self) { offset in
-        historyTopOffset = offset
-        requestAutomaticHistoryIfNeeded(using: timelineProxy)
-      }
-      .onPreferenceChange(ChatTimelineViewportHeightKey.self) { measurement in
-        guard let measurement else { return }
-        let previousViewportHeight = viewportHeight
-        viewportHeight = measurement.value
-        if measurement.attempt == positioningAttempt {
-          viewportMeasurement = measurement
-        }
-        if previousViewportHeight != measurement.value,
-          isNearBottom,
-          case .latest = initialPosition
-        {
-          // Composerなどでviewportが変わっても、最新付近なら末尾目標を実ScrollViewへ反映する。
-          positionLatest(using: timelineProxy)
-        }
-        updateLatestProximity()
-        completeInitialLatestPositionIfNeeded(using: timelineProxy)
-      }
-      .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { measurement in
-        bottomOffset = measurement?.value
-        if measurement?.attempt == positioningAttempt {
-          bottomMeasurement = measurement
-        }
-        guard measurement != nil else {
-          // LazyVStackが末尾anchorを画面外で破棄した場合は、過去閲覧中として扱う。
-          isNearBottom = false
-          return
-        }
-        updateLatestProximity()
-        completeInitialLatestPositionIfNeeded(using: timelineProxy)
-      }
-      .onChange(of: visiblePosition) { _, position in
-        if position == AnyHashable(bottomAnchorID) {
-          isNearBottom = true
-          showsLatestControl = false
-        } else {
-          updateLatestProximity()
-        }
-      }
-      .onAppear {
-        positionInitiallyIfNeeded(using: timelineProxy)
-      }
-      .onChange(of: positioningScope) { _, _ in
-        positioningState.reset()
-        invalidatePositionMeasurements()
-        positionInitiallyIfNeeded(using: timelineProxy)
-      }
-      .onChange(of: isReadyForInitialPositioning) { _, isReady in
-        guard isReady else {
-          positioningState.cancelInitialPositioning(scope: positioningScope)
-          invalidatePositionMeasurements()
-          return
-        }
-        positionInitiallyIfNeeded(using: timelineProxy)
-      }
-      .onChange(of: followLatestTrigger) { previousTrigger, trigger in
-        guard
-          positioningState.shouldFollowLatest(
-            scope: positioningScope,
-            previousTrigger: previousTrigger,
-            trigger: trigger
-          )
-        else { return }
-        let shouldFollow = positioningState.shouldFollowLatest(
-          isNearBottom: isNearBottom,
-          policy: latestFollowingPolicy,
-          isForced: forceFollowLatest
+      GeometryReader { viewport in
+        let contentWidth = ChatTimelineContentLayout.contentWidth(
+          viewportWidth: viewport.size.width,
+          contentInsets: contentInsets,
+          maximumContentWidth: maximumContentWidth
         )
-        guard shouldFollow else {
-          showsLatestControl = true
-          return
+        ScrollView(.vertical) {
+          LazyVStack(spacing: spacing) {
+            historyControl(using: timelineProxy)
+            content(timelineProxy)
+            Color.clear
+              .frame(height: 1)
+              .id(AnyHashable(bottomAnchorID))
+              .background {
+                GeometryReader { geometry in
+                  Color.clear.preference(
+                    key: ChatTimelineBottomOffsetKey.self,
+                    value: ChatTimelinePositionMeasurement(
+                      attempt: positioningAttempt,
+                      value: geometry.frame(in: .named(historyCoordinateSpaceID)).maxY
+                    )
+                  )
+                }
+              }
+          }
+          .scrollTargetLayout()
+          .frame(width: contentWidth)
+          .padding(contentInsets)
+          .frame(width: viewport.size.width)
         }
-        showsLatestControl = false
-        positionLatest(using: timelineProxy, animation: followLatestAnimation)
-        Task { @MainActor in
-          await Task.yield()
-          guard positioningState.positionedScope == positioningScope else { return }
-          positionLatest(using: timelineProxy)
+        .coordinateSpace(name: historyCoordinateSpaceID)
+        .background {
+          GeometryReader { geometry in
+            Color.clear.preference(
+              key: ChatTimelineViewportHeightKey.self,
+              value: ChatTimelinePositionMeasurement(
+                attempt: positioningAttempt,
+                value: geometry.size.height
+              )
+            )
+          }
+        }
+        .defaultScrollAnchor(ChatTimelineScrollAnchor.latest)
+        .scrollPosition(id: $visiblePosition, anchor: visiblePositionAnchor)
+        .overlay(alignment: .bottomTrailing) {
+          if latestControl.isEnabled, showsLatestControl {
+            Button {
+              showsLatestControl = false
+              positionLatest(using: timelineProxy, animation: followLatestAnimation)
+            } label: {
+              Label(latestControl.label, systemImage: latestControl.systemImage)
+                .labelStyle(.iconOnly)
+                .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.circle)
+            .accessibilityLabel(latestControl.label)
+            .padding(12)
+          }
+        }
+        .onPreferenceChange(ChatTimelineHistoryTopOffsetKey.self) { offset in
+          historyTopOffset = offset
+          requestAutomaticHistoryIfNeeded(using: timelineProxy)
+        }
+        .onPreferenceChange(ChatTimelineViewportHeightKey.self) { measurement in
+          guard let measurement else { return }
+          let previousViewportHeight = viewportHeight
+          viewportHeight = measurement.value
+          if measurement.attempt == positioningAttempt {
+            viewportMeasurement = measurement
+          }
+          if previousViewportHeight != measurement.value,
+            isNearBottom,
+            case .latest = initialPosition
+          {
+            // Composerなどでviewportが変わっても、最新付近なら末尾目標を実ScrollViewへ反映する。
+            positionLatest(using: timelineProxy)
+          }
+          updateLatestProximity()
+          completeInitialLatestPositionIfNeeded(using: timelineProxy)
+        }
+        .onPreferenceChange(ChatTimelineBottomOffsetKey.self) { measurement in
+          bottomOffset = measurement?.value
+          if measurement?.attempt == positioningAttempt {
+            bottomMeasurement = measurement
+          }
+          guard measurement != nil else {
+            // LazyVStackが末尾anchorを画面外で破棄した場合は、過去閲覧中として扱う。
+            isNearBottom = false
+            return
+          }
+          updateLatestProximity()
+          completeInitialLatestPositionIfNeeded(using: timelineProxy)
+        }
+        .onChange(of: visiblePosition) { _, position in
+          if position == AnyHashable(bottomAnchorID) {
+            isNearBottom = true
+            showsLatestControl = false
+          } else {
+            updateLatestProximity()
+          }
+        }
+        .onAppear {
+          positionInitiallyIfNeeded(using: timelineProxy)
+        }
+        .onChange(of: positioningScope) { _, _ in
+          positioningState.reset()
+          invalidatePositionMeasurements()
+          positionInitiallyIfNeeded(using: timelineProxy)
+        }
+        .onChange(of: isReadyForInitialPositioning) { _, isReady in
+          guard isReady else {
+            positioningState.cancelInitialPositioning(scope: positioningScope)
+            invalidatePositionMeasurements()
+            return
+          }
+          positionInitiallyIfNeeded(using: timelineProxy)
+        }
+        .onChange(of: followLatestTrigger) { previousTrigger, trigger in
+          guard
+            positioningState.shouldFollowLatest(
+              scope: positioningScope,
+              previousTrigger: previousTrigger,
+              trigger: trigger
+            )
+          else { return }
+          let shouldFollow = positioningState.shouldFollowLatest(
+            isNearBottom: isNearBottom,
+            policy: latestFollowingPolicy,
+            isForced: forceFollowLatest
+          )
+          guard shouldFollow else {
+            showsLatestControl = true
+            return
+          }
+          showsLatestControl = false
+          positionLatest(using: timelineProxy, animation: followLatestAnimation)
+          Task { @MainActor in
+            await Task.yield()
+            guard positioningState.positionedScope == positioningScope else { return }
+            positionLatest(using: timelineProxy)
+          }
         }
       }
     }

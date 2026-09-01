@@ -21,6 +21,38 @@
       #expect(abs(scrollView.documentVisibleRect.minY - maximumOffset) < 2)
     }
 
+    @Test("幅の広いシステムイベントを含んでも横方向を画面内へ固定する")
+    @MainActor
+    func keepsWideSystemEventWithinViewport() async throws {
+      let timeline = ChatTimeline(
+        timelineID: "wide-system-event-test",
+        isReadyForInitialPositioning: true,
+        initialPosition: ChatTimelineInitialPosition<Int>.latest,
+        followLatestTrigger: 0,
+        followLatestAnimation: nil,
+        contentInsets: EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16),
+        maximumContentWidth: 720
+      ) { _ in
+        ForEach(0..<1, id: \.self) { id in
+          ChatSystemEventCard {
+            Text(verbatim: String(repeating: "新しいクエストが発注されました", count: 8))
+          }
+          .id(id)
+        }
+      }
+      .frame(width: 320, height: 200)
+      let hostedView = NSHostingView(rootView: timeline)
+      let hosted = host(view: hostedView)
+      defer { hosted.window.close() }
+
+      await settleLayout(of: hosted.view)
+      let scrollView = try #require(findScrollView(in: hosted.view))
+      let documentView = try #require(scrollView.documentView)
+
+      #expect(documentView.bounds.width <= scrollView.documentVisibleRect.width + 2)
+      #expect(abs(scrollView.documentVisibleRect.minX) < 2)
+    }
+
     @Test("指定項目を実ScrollViewの中央へ配置する")
     @MainActor
     func positionsSpecifiedItemAtCenter() async throws {

@@ -20,6 +20,15 @@ enum ChatTimelineContentLayout {
   }
 }
 
+enum ChatTimelineViewportLayout {
+  static func isReady(_ size: CGSize) -> Bool {
+    size.width.isFinite
+      && size.height.isFinite
+      && size.width > 0
+      && size.height > 0
+  }
+}
+
 /// viewportと末尾anchorの距離から最新付近を判定する。
 enum ChatTimelineProximity {
   /// 末尾anchorがviewport末尾から閾値内にあるかを返す。
@@ -362,6 +371,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
         prepareForProxyPositioning: { visiblePosition = nil }
       )
       GeometryReader { viewport in
+        let isViewportReady = ChatTimelineViewportLayout.isReady(viewport.size)
         let contentWidth = ChatTimelineContentLayout.contentWidth(
           viewportWidth: viewport.size.width,
           contentInsets: contentInsets,
@@ -393,7 +403,7 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           #if os(iOS)
             .background {
               ChatTimelineHorizontalPositionGuard(
-                isEnabled: isReadyForInitialPositioning
+                isEnabled: isReadyForInitialPositioning && isViewportReady
               )
             }
           #endif
@@ -471,12 +481,12 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           }
         }
         .onAppear {
-          positionInitiallyIfNeeded(using: timelineProxy)
+          positionInitiallyIfNeeded(using: timelineProxy, viewportSize: viewport.size)
         }
         .onChange(of: positioningScope) { _, _ in
           positioningState.reset()
           invalidatePositionMeasurements()
-          positionInitiallyIfNeeded(using: timelineProxy)
+          positionInitiallyIfNeeded(using: timelineProxy, viewportSize: viewport.size)
         }
         .onChange(of: isReadyForInitialPositioning) { _, isReady in
           guard isReady else {
@@ -484,7 +494,14 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
             invalidatePositionMeasurements()
             return
           }
-          positionInitiallyIfNeeded(using: timelineProxy)
+          positionInitiallyIfNeeded(using: timelineProxy, viewportSize: viewport.size)
+        }
+        .onChange(of: viewport.size) { previousSize, size in
+          guard
+            !ChatTimelineViewportLayout.isReady(previousSize),
+            ChatTimelineViewportLayout.isReady(size)
+          else { return }
+          positionInitiallyIfNeeded(using: timelineProxy, viewportSize: size)
         }
         .onChange(of: followLatestTrigger) { previousTrigger, trigger in
           guard
@@ -601,11 +618,15 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
     }
   }
 
-  private func positionInitiallyIfNeeded(using proxy: ChatTimelineProxy) {
+  private func positionInitiallyIfNeeded(
+    using proxy: ChatTimelineProxy,
+    viewportSize: CGSize
+  ) {
     guard
       positioningState.beginInitialPositioning(
         scope: positioningScope,
         isReady: isReadyForInitialPositioning
+          && ChatTimelineViewportLayout.isReady(viewportSize)
       )
     else { return }
 

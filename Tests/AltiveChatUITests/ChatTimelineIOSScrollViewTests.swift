@@ -184,9 +184,9 @@
       #expect(abs(cardFrame.midX - scrollView.frame(in: window).midX) < 2)
     }
 
-    @Test("実ScrollViewの横ずれを次のlayoutで先頭へ戻す")
+    @Test("layout完了後に生じた実ScrollViewの横ずれも先頭へ戻す")
     @MainActor
-    func correctsHorizontalOffsetDuringLayout() async {
+    func correctsHorizontalOffsetAfterLayout() async {
       let guardView = ChatTimelineHorizontalPositionGuardView()
       guardView.isCorrectionEnabled = true
       guardView.frame = CGRect(x: 0, y: 0, width: 440, height: 1_500)
@@ -199,16 +199,27 @@
       window.addSubview(scrollView)
       window.makeKeyAndVisible()
       defer { window.isHidden = true }
-      scrollView.contentOffset = CGPoint(x: 16, y: 200)
-
       guardView.setNeedsLayout()
       guardView.layoutIfNeeded()
       await settleLayout(of: scrollView)
+      scrollView.contentOffset = CGPoint(x: 16, y: 200)
+      await drainMainQueue()
 
       #expect(abs(scrollView.contentOffset.x) < 0.5)
       #expect(abs(scrollView.contentOffset.y - 200) < 0.5)
       #expect(!scrollView.alwaysBounceHorizontal)
       #expect(scrollView.isDirectionalLockEnabled)
+    }
+
+    @MainActor
+    private func drainMainQueue(iterations: Int = 4) async {
+      for _ in 0..<iterations {
+        await withCheckedContinuation { continuation in
+          DispatchQueue.main.async {
+            continuation.resume()
+          }
+        }
+      }
     }
 
     @MainActor

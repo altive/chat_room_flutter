@@ -5,6 +5,13 @@ import Testing
 
 @Suite("チャットタイムライン位置制御")
 struct ChatTimelineTests {
+  @Test("viewportの実寸が確定してから初期位置決めを開始する")
+  func waitsForUsableViewport() {
+    #expect(!ChatTimelineViewportLayout.isReady(.zero))
+    #expect(!ChatTimelineViewportLayout.isReady(CGSize(width: 320, height: 0)))
+    #expect(ChatTimelineViewportLayout.isReady(CGSize(width: 320, height: 640)))
+  }
+
   @Test("最新位置のanchorは横方向を中央に固定する")
   func latestAnchorKeepsHorizontalCenter() {
     #expect(ChatTimelineScrollAnchor.latest.x == UnitPoint.center.x)

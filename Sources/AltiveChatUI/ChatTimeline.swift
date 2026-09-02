@@ -392,7 +392,9 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           .frame(width: viewport.size.width)
           #if os(iOS)
             .background {
-              ChatTimelineHorizontalPositionGuard()
+              ChatTimelineHorizontalPositionGuard(
+                isEnabled: isReadyForInitialPositioning
+              )
             }
           #endif
         }

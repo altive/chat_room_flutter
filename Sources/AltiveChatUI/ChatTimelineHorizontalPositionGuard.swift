@@ -4,6 +4,8 @@
 
   /// SwiftUIの末尾位置決め後に残る横方向のoffsetを先頭へ戻す。
   struct ChatTimelineHorizontalPositionGuard: UIViewRepresentable {
+    let isEnabled: Bool
+
     func makeUIView(context: Context) -> ChatTimelineHorizontalPositionGuardView {
       ChatTimelineHorizontalPositionGuardView()
     }
@@ -12,11 +14,20 @@
       _ uiView: ChatTimelineHorizontalPositionGuardView,
       context: Context
     ) {
+      uiView.isCorrectionEnabled = isEnabled
       uiView.scheduleCorrection()
     }
   }
 
   final class ChatTimelineHorizontalPositionGuardView: UIView {
+    var isCorrectionEnabled = false {
+      didSet {
+        guard isCorrectionEnabled, !oldValue else { return }
+        setNeedsLayout()
+        scheduleCorrection()
+      }
+    }
+
     override func didMoveToWindow() {
       super.didMoveToWindow()
       scheduleCorrection()
@@ -29,6 +40,7 @@
     }
 
     func scheduleCorrection() {
+      guard isCorrectionEnabled else { return }
       DispatchQueue.main.async { [weak self] in
         self?.correctHorizontalPosition()
       }
@@ -36,16 +48,18 @@
 
     func correctHorizontalPosition() {
       guard
+        isCorrectionEnabled,
         let scrollView = enclosingScrollView(),
-        let window = scrollView.window
+        scrollView.window != nil
       else { return }
       scrollView.alwaysBounceHorizontal = false
       scrollView.isDirectionalLockEnabled = true
-      let contentMinX = convert(bounds, to: window).minX
-      let viewportMinX = scrollView.convert(scrollView.bounds, to: window).minX
-      let correction = contentMinX - viewportMinX
-      guard abs(correction) > 0.5 else { return }
-      scrollView.contentOffset.x += correction
+      let leadingOffset = -scrollView.adjustedContentInset.left
+      guard abs(scrollView.contentOffset.x - leadingOffset) > 0.5 else { return }
+      scrollView.setContentOffset(
+        CGPoint(x: leadingOffset, y: scrollView.contentOffset.y),
+        animated: false
+      )
     }
 
     private func enclosingScrollView() -> UIScrollView? {

@@ -148,12 +148,18 @@
     func keepsHorizontalPositionWhenSelectingReadyTab() async throws {
       let model = ChatTimelineIOSTabModel()
       let cardFrameBox = ChatTimelineIOSFrameBox()
-      let content = ChatTimelineIOSTabTestView(model: model, cardFrameBox: cardFrameBox)
-        .frame(width: 320, height: 640)
+      let scrollViewBox = ChatTimelineIOSScrollViewBox()
+      let content = ChatTimelineIOSTabTestView(
+        model: model,
+        cardFrameBox: cardFrameBox,
+        scrollViewBox: scrollViewBox
+      )
+      .frame(width: 320, height: 640)
       let controller = UIHostingController(rootView: content)
       let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 320, height: 640))
       window.rootViewController = controller
       window.makeKeyAndVisible()
+      controller.view.frame = window.bounds
       defer {
         window.isHidden = true
         window.rootViewController = nil
@@ -161,14 +167,14 @@
 
       await settleLayout(of: controller.view)
       model.hasEntries = true
-      model.selectedTab = 1
+      await settleLayout(of: controller.view)
+      model.isVisible = true
       await settleLayout(of: controller.view, iterations: 12)
 
       let scrollViews = findScrollViews(in: controller.view)
       let scrollView = try #require(
-        scrollViews.first {
-          $0.contentSize.height > $0.bounds.height + 2 && $0.bounds.width > 300
-        }
+        scrollViewBox.scrollView,
+        "実ScrollView一覧: \(scrollViews.map { "\(type(of: $0)) bounds=\($0.bounds) content=\($0.contentSize)" })"
       )
       let cardFrame = try #require(cardFrameBox.frame)
       let leadingOffset = -scrollView.adjustedContentInset.left
@@ -182,6 +188,7 @@
     @MainActor
     func correctsHorizontalOffsetDuringLayout() async {
       let guardView = ChatTimelineHorizontalPositionGuardView()
+      guardView.isCorrectionEnabled = true
       guardView.frame = CGRect(x: 0, y: 0, width: 440, height: 1_500)
       let contentView = UIView(frame: CGRect(x: 0, y: 0, width: 440, height: 1_500))
       contentView.addSubview(guardView)
@@ -243,59 +250,88 @@
   }
 
   @MainActor
+  private final class ChatTimelineIOSScrollViewBox {
+    weak var scrollView: UIScrollView?
+  }
+
+  @MainActor
   private final class ChatTimelineIOSTabModel: ObservableObject {
-    @Published var selectedTab = 0
     @Published var hasEntries = false
+    @Published var isVisible = false
   }
 
   private struct ChatTimelineIOSTabTestView: View {
     @ObservedObject var model: ChatTimelineIOSTabModel
     let cardFrameBox: ChatTimelineIOSFrameBox
+    let scrollViewBox: ChatTimelineIOSScrollViewBox
 
     var body: some View {
-      Group {
-        if model.selectedTab == 0 {
-          Color.clear
-        } else {
-          NavigationStack {
-            ChatTimeline(
-              timelineID: "ios-tab-horizontal-layout-test",
-              isReadyForInitialPositioning: model.selectedTab == 1 && model.hasEntries,
-              initialPosition: ChatTimelineInitialPosition<Int>.latest,
-              followLatestTrigger: 0,
-              followLatestAnimation: nil,
-              contentInsets: EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16),
-              maximumContentWidth: 720
-            ) { _ in
-              if model.hasEntries {
-                ForEach(0..<20, id: \.self) { id in
-                  VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                      Spacer()
-                      Text(verbatim: "1日前")
-                    }
-                    ChatSystemEventCard {
-                      Text(verbatim: String(repeating: "新しいクエストが発注されました", count: 4))
-                    }
-                    .background {
-                      if id == 19 {
-                        GeometryReader { geometry in
+      ZStack {
+        Color.clear
+        NavigationStack {
+          ChatTimeline(
+            timelineID: "ios-tab-horizontal-layout-test",
+            isReadyForInitialPositioning: model.isVisible && model.hasEntries,
+            initialPosition: ChatTimelineInitialPosition<Int>.latest,
+            followLatestTrigger: 0,
+            followLatestAnimation: nil,
+            contentInsets: EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16),
+            maximumContentWidth: 720
+          ) { _ in
+            if model.hasEntries {
+              ForEach(0..<20, id: \.self) { id in
+                VStack(alignment: .leading, spacing: 6) {
+                  HStack {
+                    Spacer()
+                    Text(verbatim: "1日前")
+                  }
+                  ChatSystemEventCard {
+                    Text(verbatim: String(repeating: "新しいクエストが発注されました", count: 4))
+                  }
+                  .background {
+                    if id == 19 {
+                      GeometryReader { geometry in
+                        ZStack {
                           Color.clear
                             .onAppear { cardFrameBox.frame = geometry.frame(in: .global) }
                             .onChange(of: geometry.size) { _, _ in
                               cardFrameBox.frame = geometry.frame(in: .global)
                             }
+                          ChatTimelineIOSScrollViewCapture(box: scrollViewBox)
                         }
                       }
                     }
                   }
-                  .frame(maxWidth: .infinity, alignment: .leading)
-                  .id(id)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .id(id)
               }
             }
-            .navigationTitle("タイムライン")
           }
+          .navigationTitle("タイムライン")
+        }
+        .opacity(model.isVisible ? 1 : 0)
+        .allowsHitTesting(model.isVisible)
+      }
+    }
+  }
+
+  private struct ChatTimelineIOSScrollViewCapture: UIViewRepresentable {
+    let box: ChatTimelineIOSScrollViewBox
+
+    func makeUIView(context: Context) -> UIView {
+      UIView()
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+      DispatchQueue.main.async {
+        var ancestor = uiView.superview
+        while let view = ancestor {
+          if let scrollView = view as? UIScrollView {
+            box.scrollView = scrollView
+            return
+          }
+          ancestor = view.superview
         }
       }
     }

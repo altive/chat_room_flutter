@@ -7,6 +7,86 @@
 
   @Suite("iOS実ScrollViewのタイムライン横位置", .serialized)
   struct ChatTimelineIOSScrollViewTests {
+    @Test("受信メッセージのAvatarを左余白の内側へ配置する")
+    @MainActor
+    func keepsIncomingAvatarInsideLeadingInset() async throws {
+      let avatarFrameBox = ChatTimelineIOSFrameBox()
+      let content = NavigationStack {
+        ChatRoomLayout(
+          timeline: {
+            ChatTimeline(
+              timelineID: "ios-incoming-avatar-inset-test",
+              isReadyForInitialPositioning: true,
+              initialPosition: ChatTimelineInitialPosition<Int>.latest,
+              followLatestTrigger: 0,
+              followLatestAnimation: nil,
+              contentInsets: EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16),
+              maximumContentWidth: 720
+            ) { _ in
+              ForEach(0..<20, id: \.self) { id in
+                ChatInteractionPopover(
+                  isPresented: .constant(false),
+                  isEnabled: true
+                ) {
+                  Group {
+                    VStack(alignment: .leading, spacing: 2) {
+                      HStack(alignment: .bottom, spacing: 8) {
+                        Circle()
+                          .frame(width: 34, height: 34)
+                          .onGeometryChange(for: CGRect.self) { geometry in
+                            geometry.frame(in: .global)
+                          } action: { frame in
+                            if id == 19 {
+                              avatarFrameBox.frame = frame
+                            }
+                          }
+                        VStack(alignment: .leading, spacing: 5) {
+                          Text(verbatim: "Aoi")
+                          RoundedRectangle(cornerRadius: 16)
+                            .frame(width: 267, height: 80)
+                        }
+                        .frame(maxWidth: 520, alignment: .leading)
+                        Spacer(minLength: 52)
+                      }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                  }
+                  .frame(maxWidth: .infinity, alignment: .leading)
+                } actions: {
+                  Text(verbatim: "Actions")
+                }
+                .id(id)
+              }
+            }
+          },
+          composer: {
+            RoundedRectangle(cornerRadius: 20)
+              .frame(height: 72)
+          }
+        )
+        .navigationTitle("Timeline")
+      }
+      .frame(width: 420, height: 480)
+      let controller = UIHostingController(rootView: content)
+      let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 420, height: 480))
+      window.rootViewController = controller
+      window.makeKeyAndVisible()
+      defer {
+        window.isHidden = true
+        window.rootViewController = nil
+      }
+
+      await settleLayout(of: controller.view)
+      try await Task.sleep(for: .milliseconds(500))
+      await settleLayout(of: controller.view)
+      let scrollView = try #require(findScrollView(in: controller.view))
+      let avatarFrame = try #require(avatarFrameBox.frame)
+      #expect(
+        abs(avatarFrame.minX - 16) < 2,
+        "Avatar minX=\(avatarFrame.minX), contentOffset.x=\(scrollView.contentOffset.x)"
+      )
+    }
+
     @Test("システムイベントを含む初期表示で横方向をviewport内へ固定する")
     @MainActor
     func keepsSystemEventWithinViewportOnInitialDisplay() async throws {
@@ -96,6 +176,32 @@
       #expect(scrollView.contentSize.width <= scrollView.bounds.width + 2)
       #expect(abs(scrollView.contentOffset.x - leadingOffset) < 2)
       #expect(abs(cardFrame.midX - scrollView.frame(in: window).midX) < 2)
+    }
+
+    @Test("実ScrollViewの横ずれを次のlayoutで先頭へ戻す")
+    @MainActor
+    func correctsHorizontalOffsetDuringLayout() async {
+      let guardView = ChatTimelineHorizontalPositionGuardView()
+      guardView.frame = CGRect(x: 0, y: 0, width: 440, height: 1_500)
+      let contentView = UIView(frame: CGRect(x: 0, y: 0, width: 440, height: 1_500))
+      contentView.addSubview(guardView)
+      let scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: 440, height: 956))
+      scrollView.addSubview(contentView)
+      scrollView.contentSize = CGSize(width: 440, height: 1_500)
+      let window = UIWindow(frame: scrollView.bounds)
+      window.addSubview(scrollView)
+      window.makeKeyAndVisible()
+      defer { window.isHidden = true }
+      scrollView.contentOffset = CGPoint(x: 16, y: 200)
+
+      guardView.setNeedsLayout()
+      guardView.layoutIfNeeded()
+      await settleLayout(of: scrollView)
+
+      #expect(abs(scrollView.contentOffset.x) < 0.5)
+      #expect(abs(scrollView.contentOffset.y - 200) < 0.5)
+      #expect(!scrollView.alwaysBounceHorizontal)
+      #expect(scrollView.isDirectionalLockEnabled)
     }
 
     @MainActor

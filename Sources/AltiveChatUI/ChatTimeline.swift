@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 enum ChatTimelineScrollAnchor {
-  static let latest = UnitPoint.bottomLeading
+  static let latest = UnitPoint.bottom
 }
 
 enum ChatTimelineContentLayout {
@@ -390,6 +390,11 @@ public struct ChatTimeline<ID: Hashable, FollowTrigger: Equatable, Content: View
           .frame(width: contentWidth)
           .padding(contentInsets)
           .frame(width: viewport.size.width)
+          #if os(iOS)
+            .background {
+              ChatTimelineHorizontalPositionGuard()
+            }
+          #endif
         }
         .coordinateSpace(name: historyCoordinateSpaceID)
         .background {

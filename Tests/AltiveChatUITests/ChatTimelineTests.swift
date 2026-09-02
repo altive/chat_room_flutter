@@ -5,9 +5,9 @@ import Testing
 
 @Suite("チャットタイムライン位置制御")
 struct ChatTimelineTests {
-  @Test("最新位置のanchorは横方向をleadingに固定する")
-  func latestAnchorKeepsLeadingEdge() {
-    #expect(ChatTimelineScrollAnchor.latest.x == UnitPoint.leading.x)
+  @Test("最新位置のanchorは横方向を中央に固定する")
+  func latestAnchorKeepsHorizontalCenter() {
+    #expect(ChatTimelineScrollAnchor.latest.x == UnitPoint.center.x)
     #expect(ChatTimelineScrollAnchor.latest.y == UnitPoint.bottom.y)
   }
 

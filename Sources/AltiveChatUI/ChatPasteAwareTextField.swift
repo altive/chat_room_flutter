@@ -115,9 +115,13 @@ struct ChatPasteAwareTextField: View {
         if !textView.isFirstResponder {
           textView.becomeFirstResponder()
         }
-      } else if textView.isFirstResponder {
+      } else if context.coordinator.lastRequestedFocus, textView.isFirstResponder {
+        // UIKitのタップでfirst responderになった直後は、FocusStateの更新が
+        // updateUIViewより遅れることがある。古いfalseで即座に解除せず、
+        // SwiftUI側でtrueを観測した後のtrue→falseだけを解除として扱う。
         textView.resignFirstResponder()
       }
+      context.coordinator.lastRequestedFocus = focus.wrappedValue
     }
 
     func sizeThatFits(
@@ -152,6 +156,7 @@ struct ChatPasteAwareTextField: View {
     @MainActor
     final class Coordinator: NSObject, UITextViewDelegate {
       var parent: ChatPasteAwareTextView
+      var lastRequestedFocus = false
 
       init(parent: ChatPasteAwareTextView) {
         self.parent = parent

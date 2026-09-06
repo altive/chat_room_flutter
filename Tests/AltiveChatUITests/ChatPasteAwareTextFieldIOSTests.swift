@@ -7,7 +7,7 @@
 
   @Suite("iOSメッセージ入力欄", .serialized)
   struct ChatPasteAwareTextFieldIOSTests {
-    @Test("空の入力欄にもタップ可能な高さがありfirst responderになれる")
+    @Test("装飾された空の入力欄がSwiftUI更新後もfirst responderを維持する")
     @MainActor
     func emptyFieldCanBecomeFirstResponder() async throws {
       let textBox = ChatPasteAwareTextBox()
@@ -32,7 +32,7 @@
       let textView = try #require(findTextView(in: controller.view))
 
       #expect(textView.bounds.height >= 22)
-      #expect(textView.bounds.width >= 270)
+      #expect(textView.bounds.width >= 240)
       let textViewCenter = CGPoint(x: textView.bounds.midX, y: textView.bounds.midY)
       let hitPoint = textView.convert(textViewCenter, to: controller.view)
       let hitView = controller.view.hitTest(hitPoint, with: nil)
@@ -44,7 +44,7 @@
       textView.insertText("test")
       await settleLayout(of: controller.view)
       #expect(textBox.text == "test")
-      #expect(textView.bounds.width >= 270)
+      #expect(textView.bounds.width >= 240)
       #expect(textView.isFirstResponder)
     }
 
@@ -90,6 +90,14 @@
         isImagePasteEnabled: true,
         onPasteImages: { _ in }
       )
+      .padding(.horizontal, 14)
+      .padding(.vertical, 11)
+      .background(.background, in: RoundedRectangle(cornerRadius: 22))
+      .overlay {
+        RoundedRectangle(cornerRadius: 22)
+          .stroke(.separator, lineWidth: 0.5)
+      }
+      .accessibilityIdentifier("AltiveChatUI.Composer")
     }
   }
 #endif

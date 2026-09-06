@@ -1,4 +1,4 @@
-.PHONY: android_publish_local android_verify flutter_golden_test flutter_verify push_main push_main_test swift_format_lint swift_ios_build swift_test swift_verify verify
+.PHONY: android_publish_local android_verify flutter_golden_test flutter_verify push_main push_main_test swift_format_lint swift_ios_build swift_ios_test swift_test swift_verify verify
 
 verify: flutter_verify swift_verify android_verify
 
@@ -22,7 +22,7 @@ flutter_verify:
 flutter_golden_test:
 	flutter test --tags=golden
 
-swift_verify: swift_format_lint swift_test swift_ios_build
+swift_verify: swift_format_lint swift_test swift_ios_build swift_ios_test
 
 swift_format_lint:
 	xcrun swift-format lint --recursive --strict Package.swift Sources Tests
@@ -38,3 +38,6 @@ swift_test:
 
 swift_ios_build:
 	xcodebuild -scheme AltiveChat-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/altive-chat-derived CODE_SIGNING_ALLOWED=NO build
+
+swift_ios_test:
+	xcodebuild -scheme AltiveChat-Package -destination 'platform=iOS Simulator,name=iPhone 17' -derivedDataPath /tmp/altive-chat-ios-test-derived CODE_SIGNING_ALLOWED=NO test -only-testing:AltiveChatUITests/ChatPasteAwareTextFieldIOSTests

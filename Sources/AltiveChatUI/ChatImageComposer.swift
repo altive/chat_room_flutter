@@ -45,6 +45,7 @@ public enum ChatComposerSendPolicy {
 
 @MainActor
 public struct ChatImageComposer: View {
+  @State private var isPhotoLibraryPresented = false
   @Binding var draft: String
   @Binding var imageDrafts: [ChatImageDraft]
   @Binding var selectedPhotoItems: [PhotosPickerItem]
@@ -273,12 +274,10 @@ public struct ChatImageComposer: View {
       if hasImageSourceMenu {
         Menu {
           if imageMenuSources.contains(.photoLibrary) {
-            PhotosPicker(
-              selection: $selectedPhotoItems,
-              maxSelectionCount: maximumPhotoSelectionCount,
-              selectionBehavior: .ordered,
-              matching: .images
-            ) {
+            Button {
+              focus.wrappedValue = false
+              isPhotoLibraryPresented = true
+            } label: {
               Label(strings.photoLibraryButtonLabel, systemImage: "photo.on.rectangle")
             }
             .disabled(!isPhotoLibrarySelectionEnabled)
@@ -309,6 +308,13 @@ public struct ChatImageComposer: View {
         .buttonStyle(.plain)
         .accessibilityLabel(strings.imageSourceMenuLabel)
         .accessibilityIdentifier("AltiveChatUI.ImageSourceMenu")
+        .photosPicker(
+          isPresented: $isPhotoLibraryPresented,
+          selection: $selectedPhotoItems,
+          maxSelectionCount: maximumPhotoSelectionCount,
+          selectionBehavior: .ordered,
+          matching: .images
+        )
         .simultaneousGesture(
           TapGesture().onEnded {
             focus.wrappedValue = false

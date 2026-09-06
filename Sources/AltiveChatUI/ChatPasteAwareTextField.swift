@@ -40,6 +40,13 @@ struct ChatPasteAwareTextField: View {
           onPasteImages: onPasteImages
         )
       }
+      .frame(maxWidth: .infinity, minHeight: 22, alignment: .topLeading)
+      .contentShape(Rectangle())
+      .simultaneousGesture(
+        TapGesture().onEnded {
+          focus.wrappedValue = true
+        }
+      )
     #else
       TextField(placeholder, text: limitedText, axis: .vertical)
         .lineLimit(lineLimit)
@@ -84,6 +91,7 @@ struct ChatPasteAwareTextField: View {
       textView.adjustsFontForContentSizeCategory = true
       textView.textContainerInset = .zero
       textView.textContainer.lineFragmentPadding = 0
+      textView.isScrollEnabled = false
       textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
       textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
       updatePasteHandling(of: textView)

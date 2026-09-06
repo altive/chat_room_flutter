@@ -7,6 +7,9 @@
   <string name="altive_chat_unknown_sender">不明な送信者</string>
   <string name="altive_chat_camera">カメラで撮影</string>
   <string name="altive_chat_photo_library">写真ライブラリ</string>
+  <string name="altive_chat_file">ファイル</string>
+  <string name="altive_chat_clipboard">クリップボード</string>
+  <string name="altive_chat_image_sources">画像の追加方法を選択</string>
   <string name="altive_chat_expand_source_buttons">添付ボタンを表示</string>
   <string name="altive_chat_remove_image">選択画像を削除</string>
   <string name="altive_chat_image">画像</string>

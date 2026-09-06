@@ -1,9 +1,13 @@
 package jp.co.altive.chat
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -15,9 +19,11 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
+import androidx.test.platform.app.InstrumentationRegistry
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
@@ -199,6 +205,91 @@ class AltiveChatRoomTest {
 
     compose.onNodeWithTag("AltiveChatUI.Composer").assertIsFocused().performTextInput("世界")
     compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("こんにちは世界")
+  }
+
+  @Test fun `写真アイコンから画像取得元を選べる`() {
+    var requestedSource: ChatImageInputSource? = null
+    compose.setContent {
+      MaterialTheme {
+        ChatImageComposer(
+          draft = "",
+          onDraftChange = {},
+          imageDrafts = emptyList(),
+          configuration = ChatImageInputConfiguration(),
+          availableImageInputSources = setOf(
+            ChatImageInputSource.Camera,
+            ChatImageInputSource.PhotoLibrary,
+            ChatImageInputSource.File,
+            ChatImageInputSource.Clipboard,
+          ),
+          isPreparingImages = false,
+          isPreparingCameraImage = false,
+          isSending = false,
+          strings = ChatRoomStrings(
+            emptyMessage = "",
+            messagePlaceholder = "メッセージ",
+            sendButtonLabel = "送信",
+            sendingLabel = "",
+            failedLabel = "",
+            unknownSender = "",
+            cameraButtonLabel = "カメラで撮影",
+            photoLibraryButtonLabel = "写真ライブラリ",
+            fileButtonLabel = "ファイル",
+            clipboardButtonLabel = "クリップボード",
+            imageSourceMenuButtonLabel = "画像の追加方法を選択",
+          ),
+          draftPolicy = ChatDraftPolicy.Unrestricted,
+          theme = ChatRoomTheme.standard(),
+          onRequestCamera = { requestedSource = ChatImageInputSource.Camera },
+          onRequestPhotoLibrary = { requestedSource = ChatImageInputSource.PhotoLibrary },
+          onRemoveImage = {},
+          onSubmit = {},
+          imageContent = {},
+          onRequestFile = { requestedSource = ChatImageInputSource.File },
+          onRequestClipboard = { requestedSource = ChatImageInputSource.Clipboard },
+        )
+      }
+    }
+
+    compose.onNodeWithContentDescription("カメラで撮影").assertIsDisplayed()
+    compose.onNodeWithTag("AltiveChatUI.ImageSourceMenuButton").performClick()
+    compose.onNodeWithText("写真ライブラリ").assertIsDisplayed()
+    compose.onNodeWithText("ファイル").assertIsDisplayed()
+    compose.onNodeWithText("クリップボード").assertIsDisplayed().performClick()
+    compose.runOnIdle { assertEquals(ChatImageInputSource.Clipboard, requestedSource) }
+
+    compose.onNodeWithTag("AltiveChatUI.ImageSourceMenuButton").performClick()
+    compose.onNodeWithText("ファイル").performClick()
+    compose.runOnIdle { assertEquals(ChatImageInputSource.File, requestedSource) }
+  }
+
+  @Test fun `入力欄へのテキストペーストを維持する`() {
+    val context = InstrumentationRegistry.getInstrumentation().targetContext
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    var draft by mutableStateOf("")
+    compose.setContent {
+      MaterialTheme {
+        AltiveChatRoom(
+          messages = emptyList(),
+          currentUserId = "me",
+          draft = draft,
+          onDraftChange = { draft = it },
+          imageDrafts = emptyList(),
+          onImageDraftsChange = {},
+          resolvePhotoLibraryUri = { uri -> ChatImageDraft(uri, uri) },
+          availableImageInputSources = emptySet(),
+          onSubmit = {},
+        )
+      }
+    }
+
+    compose.onNodeWithTag("AltiveChatUI.Composer").performClick()
+    compose.runOnIdle {
+      clipboard.setPrimaryClip(ClipData.newPlainText("text", "本文"))
+    }
+    compose.onNodeWithTag("AltiveChatUI.Composer").performPasteShortcut()
+    compose.onNodeWithTag("AltiveChatUI.Composer").assertTextEquals("本文")
+
   }
 
   @Test fun displaysImagesAndCaptionAsOneMessage() {
@@ -524,5 +615,14 @@ class AltiveChatRoomTest {
       assertEquals("https://example.com", submission?.text)
       assertEquals(null, submission?.linkPreview)
     }
+  }
+}
+
+private fun androidx.compose.ui.test.SemanticsNodeInteraction.performPasteShortcut() {
+  performKeyInput {
+    keyDown(Key.CtrlLeft)
+    keyDown(Key.V)
+    keyUp(Key.V)
+    keyUp(Key.CtrlLeft)
   }
 }

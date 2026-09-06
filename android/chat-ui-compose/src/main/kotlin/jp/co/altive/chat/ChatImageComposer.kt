@@ -1,6 +1,12 @@
 package jp.co.altive.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.content.MediaType
+import androidx.compose.foundation.content.TransferableContent
+import androidx.compose.foundation.content.consume
+import androidx.compose.foundation.content.contentReceiver
+import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +26,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +60,7 @@ internal fun shouldShowChatComposerSourceButtons(
 ): Boolean = !isFocused
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun ChatImageComposer(
   draft: String,
   onDraftChange: (String) -> Unit,
@@ -71,6 +82,9 @@ fun ChatImageComposer(
   focusRequester: FocusRequester = remember { FocusRequester() },
   /** 選択画像と入力欄の間へ表示するdraftリンクプレビュー。 */
   linkPreviewContent: @Composable () -> Unit = {},
+  onRequestFile: (() -> Unit)? = null,
+  onRequestClipboard: (() -> Unit)? = null,
+  onReceiveImageUris: ((List<String>) -> Unit)? = null,
 ) {
   val canSend = ChatComposerSendPolicy.canSend(
     draft = draft,
@@ -83,6 +97,11 @@ fun ChatImageComposer(
   var isComposerFocused by remember { mutableStateOf(false) }
   val focusManager = LocalFocusManager.current
   val keyboardController = LocalSoftwareKeyboardController.current
+  val menuImageInputSources = menuImageInputSources(
+    availableSources = availableImageInputSources,
+    hasFileHandler = onRequestFile != null,
+    hasClipboardHandler = onRequestClipboard != null,
+  )
   val hasSourceButtons = additionalSourceContent != null || availableImageInputSources.isNotEmpty()
   val showsSourceButtons = shouldShowChatComposerSourceButtons(
     isFocused = isComposerFocused,
@@ -150,15 +169,15 @@ fun ChatImageComposer(
                 else Icon(Icons.Default.CameraAlt, contentDescription = null)
               }
             }
-            if (ChatImageInputSource.PhotoLibrary in availableImageInputSources) {
-              IconButton(
-                onClick = onRequestPhotoLibrary,
+            if (menuImageInputSources.isNotEmpty()) {
+              ChatImageSourceMenu(
+                availableImageInputSources = menuImageInputSources,
                 enabled = imageDrafts.size < configuration.maximumSelectionCount,
-                modifier = Modifier.size(44.dp)
-                  .semantics { contentDescription = strings.photoLibraryButtonLabel },
-              ) {
-                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-              }
+                strings = strings,
+                onRequestPhotoLibrary = onRequestPhotoLibrary,
+                onRequestFile = onRequestFile,
+                onRequestClipboard = onRequestClipboard,
+              )
             }
           }
         } else {
@@ -186,6 +205,9 @@ fun ChatImageComposer(
           .focusRequester(focusRequester)
           .onFocusChanged { focusState ->
             isComposerFocused = focusState.isFocused
+          }
+          .contentReceiver { content ->
+            content.consumeImageUris(onReceiveImageUris)
           }
           .padding(horizontal = 14.dp, vertical = 12.dp),
         textStyle = MaterialTheme.typography.bodyLarge.copy(
@@ -229,4 +251,75 @@ fun ChatImageComposer(
     }
 
   }
+}
+
+@Composable
+private fun ChatImageSourceMenu(
+  availableImageInputSources: Set<ChatImageInputSource>,
+  enabled: Boolean,
+  strings: ChatRoomStrings,
+  onRequestPhotoLibrary: () -> Unit,
+  onRequestFile: (() -> Unit)?,
+  onRequestClipboard: (() -> Unit)?,
+) {
+  var expanded by remember { mutableStateOf(false) }
+  Box {
+    IconButton(
+      onClick = { expanded = true },
+      enabled = enabled,
+      modifier = Modifier.size(44.dp)
+        .testTag("AltiveChatUI.ImageSourceMenuButton")
+        .semantics { contentDescription = strings.imageSourceMenuButtonLabel },
+    ) {
+      Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+    }
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+      if (ChatImageInputSource.PhotoLibrary in availableImageInputSources) {
+        DropdownMenuItem(
+          text = { Text(strings.photoLibraryButtonLabel) },
+          leadingIcon = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+          onClick = {
+            expanded = false
+            onRequestPhotoLibrary()
+          },
+        )
+      }
+      if (ChatImageInputSource.File in availableImageInputSources) {
+        DropdownMenuItem(
+          text = { Text(strings.fileButtonLabel) },
+          leadingIcon = { Icon(Icons.Default.Folder, contentDescription = null) },
+          onClick = {
+            expanded = false
+            onRequestFile?.invoke()
+          },
+        )
+      }
+      if (ChatImageInputSource.Clipboard in availableImageInputSources) {
+        DropdownMenuItem(
+          text = { Text(strings.clipboardButtonLabel) },
+          leadingIcon = { Icon(Icons.Default.ContentPaste, contentDescription = null) },
+          onClick = {
+            expanded = false
+            onRequestClipboard?.invoke()
+          },
+        )
+      }
+    }
+  }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun TransferableContent.consumeImageUris(
+  onReceiveImageUris: ((List<String>) -> Unit)?,
+): TransferableContent? {
+  if (onReceiveImageUris == null || !hasMediaType(MediaType.Image)) return this
+
+  val imageUris = mutableListOf<String>()
+  val remainingContent = consume { item ->
+    val uri = item.uri ?: return@consume false
+    imageUris += uri.toString()
+    true
+  }
+  if (imageUris.isNotEmpty()) onReceiveImageUris(imageUris)
+  return remainingContent
 }

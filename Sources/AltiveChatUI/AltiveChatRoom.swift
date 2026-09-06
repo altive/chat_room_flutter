@@ -23,6 +23,8 @@ public struct AltiveChatRoom: View {
   private let multipleImageLayout: ChatMultipleImageLayout
   private let latestProximityThreshold: CGFloat
   private let onRequestCamera: (() -> Void)?
+  private let onRequestImageFiles: (() -> Void)?
+  private let onPasteImages: (([NSItemProvider]) -> Void)?
   private let resolvePhotoLibraryItem:
     (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)?
   private let onImagePreparationFailure: ((Error) -> Void)?
@@ -90,6 +92,8 @@ public struct AltiveChatRoom: View {
     self.multipleImageLayout = multipleImageLayout
     self.latestProximityThreshold = max(0, latestProximityThreshold)
     onRequestCamera = nil
+    onRequestImageFiles = nil
+    onPasteImages = nil
     resolvePhotoLibraryItem = nil
     onImagePreparationFailure = nil
     self.onImageTap = onImageTap
@@ -129,6 +133,8 @@ public struct AltiveChatRoom: View {
     multipleImageLayout: ChatMultipleImageLayout = .mosaic,
     latestProximityThreshold: CGFloat = 80,
     onRequestCamera: (() -> Void)? = nil,
+    onRequestImageFiles: (() -> Void)? = nil,
+    onPasteImages: (([NSItemProvider]) -> Void)? = nil,
     resolvePhotoLibraryItem:
       (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)? = nil,
     onImagePreparationFailure: ((Error) -> Void)? = nil,
@@ -158,6 +164,8 @@ public struct AltiveChatRoom: View {
     self.multipleImageLayout = multipleImageLayout
     self.latestProximityThreshold = max(0, latestProximityThreshold)
     self.onRequestCamera = onRequestCamera
+    self.onRequestImageFiles = onRequestImageFiles
+    self.onPasteImages = onPasteImages
     self.resolvePhotoLibraryItem = resolvePhotoLibraryItem
     self.onImagePreparationFailure = onImagePreparationFailure
     self.onImageTap = onImageTap
@@ -283,6 +291,8 @@ public struct AltiveChatRoom: View {
           linkPreviewLoadingLabel: strings.linkPreviewLoadingLabel,
           onLinkPreviewTap: onLinkPreviewTap,
           onRequestCamera: onRequestCamera,
+          onRequestImageFiles: onRequestImageFiles,
+          onPasteImages: onPasteImages,
           onRemoveImage: removeImageDraft,
           onSubmit: submitImagesAndText
         )
@@ -353,6 +363,10 @@ public struct AltiveChatRoom: View {
         onRequestCamera != nil
       case .photoLibrary:
         resolvePhotoLibraryItem != nil
+      case .file:
+        onRequestImageFiles != nil
+      case .clipboard:
+        onPasteImages != nil
       }
     }
   }

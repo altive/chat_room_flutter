@@ -8,12 +8,18 @@ public enum ChatImageInputSource: Hashable, Identifiable, Sendable {
   /// システムの写真ライブラリから選択する。
   case photoLibrary
 
+  /// システムのファイル選択UIから選択する。
+  case file
+
+  /// システムの貼り付けUIまたは入力欄から追加する。
+  case clipboard
+
   public var id: Self { self }
 }
 
 /// 画像入力機能の設定。
 public struct ChatImageInputConfiguration: Hashable, Sendable {
-  /// カメラと写真ライブラリを合わせた最大添付枚数。
+  /// すべての取得元を合わせた最大添付枚数。
   public var maximumSelectionCount: Int {
     didSet {
       precondition(maximumSelectionCount > 0, "maximumSelectionCount must be greater than zero")

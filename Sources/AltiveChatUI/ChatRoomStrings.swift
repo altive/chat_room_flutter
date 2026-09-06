@@ -26,6 +26,15 @@ public struct ChatRoomStrings: Equatable, Sendable {
   /// 写真ライブラリボタンのアクセシビリティラベル。
   public var photoLibraryButtonLabel: String
 
+  /// 画像取得元メニューボタンのアクセシビリティラベル。
+  public var imageSourceMenuLabel: String
+
+  /// ファイル選択操作の文言。
+  public var fileButtonLabel: String
+
+  /// クリップボードから追加する操作の文言。
+  public var clipboardButtonLabel: String
+
   /// 添付ボタン群を展開するボタンのアクセシビリティラベル。
   public var expandSourceButtonsLabel: String
 
@@ -87,6 +96,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
     unknownSender: String,
     cameraButtonLabel: String = "Camera",
     photoLibraryButtonLabel: String = "Photo library",
+    imageSourceMenuLabel: String = "Add image",
+    fileButtonLabel: String = "Files",
+    clipboardButtonLabel: String = "Clipboard",
     expandSourceButtonsLabel: String = "Show attachment buttons",
     removeImageButtonLabel: String = "Remove image",
     imageLabel: String = "Image",
@@ -113,6 +125,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
     self.unknownSender = unknownSender
     self.cameraButtonLabel = cameraButtonLabel
     self.photoLibraryButtonLabel = photoLibraryButtonLabel
+    self.imageSourceMenuLabel = imageSourceMenuLabel
+    self.fileButtonLabel = fileButtonLabel
+    self.clipboardButtonLabel = clipboardButtonLabel
     self.expandSourceButtonsLabel = expandSourceButtonsLabel
     self.removeImageButtonLabel = removeImageButtonLabel
     self.imageLabel = imageLabel
@@ -143,6 +158,9 @@ public struct ChatRoomStrings: Equatable, Sendable {
       unknownSender: String(localized: "chat.sender.unknown", bundle: .module),
       cameraButtonLabel: String(localized: "chat.composer.camera", bundle: .module),
       photoLibraryButtonLabel: String(localized: "chat.composer.photoLibrary", bundle: .module),
+      imageSourceMenuLabel: String(localized: "chat.composer.imageSourceMenu", bundle: .module),
+      fileButtonLabel: String(localized: "chat.composer.file", bundle: .module),
+      clipboardButtonLabel: String(localized: "chat.composer.clipboard", bundle: .module),
       expandSourceButtonsLabel: String(
         localized: "chat.composer.expandSourceButtons",
         bundle: .module

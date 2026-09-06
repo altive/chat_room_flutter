@@ -1,9 +1,29 @@
 import AltiveChatCore
 import PhotosUI
 import SwiftUI
+import UniformTypeIdentifiers
 
 func showsChatComposerSourceButtons(isFocused: Bool) -> Bool {
   !isFocused
+}
+
+func chatImageMenuSources(
+  from sources: Set<ChatImageInputSource>,
+  canRequestImageFiles: Bool,
+  canPasteImages: Bool
+) -> Set<ChatImageInputSource> {
+  sources.filter { source in
+    switch source {
+    case .camera:
+      false
+    case .photoLibrary:
+      true
+    case .file:
+      canRequestImageFiles
+    case .clipboard:
+      canPasteImages
+    }
+  }
 }
 
 /// テキストまたは画像を送信できるかを判定する純粋な方針。
@@ -47,6 +67,8 @@ public struct ChatImageComposer: View {
   let linkPreviewLoadingLabel: String
   let onLinkPreviewTap: ((URL) -> Void)?
   let onRequestCamera: (() -> Void)?
+  let onRequestImageFiles: (() -> Void)?
+  let onPasteImages: (([NSItemProvider]) -> Void)?
   let onRemoveImage: (String) -> Void
   let onSubmit: () -> Void
   private let additionalSourceButton: AnyView?
@@ -75,6 +97,8 @@ public struct ChatImageComposer: View {
     linkPreviewLoadingLabel: String = "Loading link preview",
     onLinkPreviewTap: ((URL) -> Void)? = nil,
     onRequestCamera: (() -> Void)?,
+    onRequestImageFiles: (() -> Void)? = nil,
+    onPasteImages: (([NSItemProvider]) -> Void)? = nil,
     onRemoveImage: @escaping (String) -> Void,
     onSubmit: @escaping () -> Void,
     additionalSourceButton: AnyView? = nil
@@ -101,6 +125,8 @@ public struct ChatImageComposer: View {
     self.linkPreviewLoadingLabel = linkPreviewLoadingLabel
     self.onLinkPreviewTap = onLinkPreviewTap
     self.onRequestCamera = onRequestCamera
+    self.onRequestImageFiles = onRequestImageFiles
+    self.onPasteImages = onPasteImages
     self.onRemoveImage = onRemoveImage
     self.onSubmit = onSubmit
     self.additionalSourceButton = additionalSourceButton
@@ -131,27 +157,33 @@ public struct ChatImageComposer: View {
           }
         }
 
-        TextField(strings.messagePlaceholder, text: limitedDraft, axis: .vertical)
-          .lineLimit(1...5)
-          .focused(focus)
-          .textFieldStyle(.plain)
-          .padding(.horizontal, 14)
-          .padding(.vertical, 11)
-          .background(
-            theme.composerField,
-            in: RoundedRectangle(
-              cornerRadius: chatComposerCornerRadius,
-              style: .continuous
-            )
+        ChatPasteAwareTextField(
+          text: limitedDraft,
+          focus: focus,
+          placeholder: strings.messagePlaceholder,
+          lineLimit: 1...5,
+          draftPolicy: draftPolicy,
+          isImagePasteEnabled: isImagePasteEnabled,
+          onPasteImages: handlePastedImages
+        )
+        .textFieldStyle(.plain)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .background(
+          theme.composerField,
+          in: RoundedRectangle(
+            cornerRadius: chatComposerCornerRadius,
+            style: .continuous
           )
-          .overlay {
-            RoundedRectangle(
-              cornerRadius: chatComposerCornerRadius,
-              style: .continuous
-            )
-            .stroke(theme.composerFieldBorder, lineWidth: 0.5)
-          }
-          .accessibilityIdentifier("AltiveChatUI.Composer")
+        )
+        .overlay {
+          RoundedRectangle(
+            cornerRadius: chatComposerCornerRadius,
+            style: .continuous
+          )
+          .stroke(theme.composerFieldBorder, lineWidth: 0.5)
+        }
+        .accessibilityIdentifier("AltiveChatUI.Composer")
 
         Button(action: onSubmit) {
           if isPreparingImages || isSending {
@@ -238,19 +270,45 @@ public struct ChatImageComposer: View {
         .accessibilityLabel(strings.cameraButtonLabel)
       }
 
-      if availableImageInputSources.contains(.photoLibrary) {
-        PhotosPicker(
-          selection: $selectedPhotoItems,
-          maxSelectionCount: maximumPhotoSelectionCount,
-          selectionBehavior: .ordered,
-          matching: .images
-        ) {
+      if hasImageSourceMenu {
+        Menu {
+          if imageMenuSources.contains(.photoLibrary) {
+            PhotosPicker(
+              selection: $selectedPhotoItems,
+              maxSelectionCount: maximumPhotoSelectionCount,
+              selectionBehavior: .ordered,
+              matching: .images
+            ) {
+              Label(strings.photoLibraryButtonLabel, systemImage: "photo.on.rectangle")
+            }
+            .disabled(!isPhotoLibrarySelectionEnabled)
+          }
+
+          if imageMenuSources.contains(.file) {
+            Button {
+              focus.wrappedValue = false
+              onRequestImageFiles?()
+            } label: {
+              Label(strings.fileButtonLabel, systemImage: "folder")
+            }
+            .disabled(!isImageAdditionEnabled)
+          }
+
+          if imageMenuSources.contains(.clipboard) {
+            PasteButton(supportedContentTypes: [.image]) { providers in
+              focus.wrappedValue = false
+              handlePastedImages(providers)
+            }
+            .disabled(!isImageAdditionEnabled)
+            .accessibilityLabel(strings.clipboardButtonLabel)
+          }
+        } label: {
           Image(systemName: "photo.on.rectangle")
             .frame(width: 44, height: 44)
         }
         .buttonStyle(.plain)
-        .disabled(!isPhotoLibrarySelectionEnabled)
-        .accessibilityLabel(strings.photoLibraryButtonLabel)
+        .accessibilityLabel(strings.imageSourceMenuLabel)
+        .accessibilityIdentifier("AltiveChatUI.ImageSourceMenu")
         .simultaneousGesture(
           TapGesture().onEnded {
             focus.wrappedValue = false
@@ -320,7 +378,37 @@ public struct ChatImageComposer: View {
   }
 
   private var hasSourceButtons: Bool {
-    additionalSourceButton != nil || !availableImageInputSources.isEmpty
+    additionalSourceButton != nil
+      || availableImageInputSources.contains(.camera)
+      || hasImageSourceMenu
+  }
+
+  private var hasImageSourceMenu: Bool {
+    !imageMenuSources.isEmpty
+  }
+
+  private var imageMenuSources: Set<ChatImageInputSource> {
+    chatImageMenuSources(
+      from: availableImageInputSources,
+      canRequestImageFiles: onRequestImageFiles != nil,
+      canPasteImages: onPasteImages != nil
+    )
+  }
+
+  private var isImageAdditionEnabled: Bool {
+    imageDrafts.count < configuration.maximumSelectionCount && !isPreparingImages
+  }
+
+  private var isImagePasteEnabled: Bool {
+    availableImageInputSources.contains(.clipboard)
+      && onPasteImages != nil
+      && isImageAdditionEnabled
+  }
+
+  private func handlePastedImages(_ providers: [NSItemProvider]) {
+    let images = chatImageProviders(from: providers, isEnabled: isImagePasteEnabled)
+    guard !images.isEmpty else { return }
+    onPasteImages?(images)
   }
 
   private var showsSourceButtons: Bool {

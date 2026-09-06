@@ -3,6 +3,9 @@
 "chat.composer.send" = "Send";
 "chat.composer.camera" = "Take a photo";
 "chat.composer.photoLibrary" = "Photo library";
+"chat.composer.imageSourceMenu" = "Add image";
+"chat.composer.file" = "Files";
+"chat.composer.clipboard" = "Clipboard";
 "chat.composer.expandSourceButtons" = "Show attachment buttons";
 "chat.composer.removeImage" = "Remove selected image";
 "chat.delivery.sending" = "Sending";

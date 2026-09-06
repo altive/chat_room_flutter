@@ -3,6 +3,9 @@
 "chat.composer.send" = "送信";
 "chat.composer.camera" = "カメラで撮影";
 "chat.composer.photoLibrary" = "写真ライブラリ";
+"chat.composer.imageSourceMenu" = "画像を追加";
+"chat.composer.file" = "ファイル";
+"chat.composer.clipboard" = "クリップボード";
 "chat.composer.expandSourceButtons" = "添付ボタンを表示";
 "chat.composer.removeImage" = "選択画像を削除";
 "chat.delivery.sending" = "送信中";

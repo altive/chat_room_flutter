@@ -32,6 +32,29 @@ class ChatImageInputTest {
     assertEquals(3, multiplePhotoPickerLimit(remainingCapacity = 4, platformMaximum = 3))
   }
 
+  @Test fun `残り枠がある場合だけペースト画像を受け取る`() {
+    assertFalse(canReceivePastedImages(remainingCapacity = 0))
+    assertFalse(canReceivePastedImages(remainingCapacity = -1))
+    assertTrue(canReceivePastedImages(remainingCapacity = 1))
+  }
+
+  @Test fun `handlerがある取得元だけを画像メニューへ表示する`() {
+    val sources = setOf(
+      ChatImageInputSource.Camera,
+      ChatImageInputSource.PhotoLibrary,
+      ChatImageInputSource.File,
+      ChatImageInputSource.Clipboard,
+    )
+    assertEquals(
+      setOf(ChatImageInputSource.PhotoLibrary, ChatImageInputSource.Clipboard),
+      menuImageInputSources(
+        availableSources = sources,
+        hasFileHandler = false,
+        hasClipboardHandler = true,
+      ),
+    )
+  }
+
   @Test fun allowsTextImagesAndBothButRejectsBusyOrOverLimit() {
     assertTrue(canSend("hello", 0))
     assertTrue(canSend("", 1))

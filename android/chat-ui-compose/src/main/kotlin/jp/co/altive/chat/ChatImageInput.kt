@@ -1,7 +1,7 @@
 package jp.co.altive.chat
 
 /** 入力欄へ表示できる画像取得元。 */
-enum class ChatImageInputSource { Camera, PhotoLibrary }
+enum class ChatImageInputSource { Camera, PhotoLibrary, File, Clipboard }
 
 /** 複数画像入力の表示設定。 */
 data class ChatImageInputConfiguration(
@@ -37,3 +37,18 @@ object ChatComposerSendPolicy {
 
 internal fun multiplePhotoPickerLimit(remainingCapacity: Int, platformMaximum: Int): Int =
   remainingCapacity.coerceAtLeast(2).coerceAtMost(platformMaximum.coerceAtLeast(2))
+
+internal fun canReceivePastedImages(remainingCapacity: Int): Boolean = remainingCapacity > 0
+
+internal fun menuImageInputSources(
+  availableSources: Set<ChatImageInputSource>,
+  hasFileHandler: Boolean,
+  hasClipboardHandler: Boolean,
+): Set<ChatImageInputSource> = availableSources.filterTo(mutableSetOf()) { source ->
+  when (source) {
+    ChatImageInputSource.Camera -> false
+    ChatImageInputSource.PhotoLibrary -> true
+    ChatImageInputSource.File -> hasFileHandler
+    ChatImageInputSource.Clipboard -> hasClipboardHandler
+  }
+}

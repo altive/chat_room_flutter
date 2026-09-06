@@ -4,8 +4,8 @@
 
 ## 目的
 
-SwiftUI版のチャット入力欄で、テキストフィールドの左にカメラと写真ライブラリの
-ボタンを表示し、取得した画像を確認して送信できるようにする。また、送信中、送信済み、
+SwiftUI版のチャット入力欄で、テキストフィールドの左にカメラボタンと写真取得元menuを
+表示し、取得した画像を確認して送信できるようにする。また、送信中、送信済み、
 送信失敗の画像メッセージをテキストメッセージと同じタイムラインへ表示する。
 
 本設計では、チャットUIの再利用性を保つため、画像取得と外部I/Oを分離する。
@@ -16,8 +16,9 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 
 最初のリリースでは次を対象とする。
 
-- カメラ、写真ライブラリの2ボタン
+- カメラの独立ボタンと、写真ライブラリ・file・clipboardをまとめる写真menu
 - 写真ライブラリのOS標準シート表示
+- 入力欄の標準paste操作による画像添付とplain text pasteの維持
 - 複数画像の選択、プレビュー、個別取り消し、送信
 - 1回の送信操作で指定できる最大画像数をアプリから注入し、既定値は4枚
 - テキストだけ、画像だけ、テキストと画像の同時送信
@@ -32,7 +33,8 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 
 ## 写真ライブラリの表示方式
 
-写真ボタンを`PhotosPicker`のlabelとして使用し、iOS標準のPickerを画面上へ表示する。
+写真menu内の「写真ライブラリ」を`PhotosPicker`のlabelとして使用し、iOS標準のPickerを
+画面上へ表示する。
 OS標準の検索、アルバム、複数選択、プライバシー保護をそのまま利用でき、実装と保守が
 最も小さい。選択順を保持するため`selectionBehavior: .ordered`を使う。
 
@@ -43,7 +45,8 @@ OS標準の検索、アルバム、複数選択、プライバシー保護をそ
 
 | AltiveChatが所有する | アプリが所有する |
 | --- | --- |
-| カメラ・写真ボタンの配置、見た目、アクセシビリティ | カメラ画面の表示とdismiss |
+| カメラ・写真menuの配置、見た目、アクセシビリティ | カメラ画面の表示とdismiss |
+| 写真menuと入力欄からの画像paste検出 | file pickerのpresentationと取得画像の読み出し |
 | `PhotosPicker`の標準シート表示と一時的な選択状態 | カメラ利用可否と権限状態の判定 |
 | 最大選択数、選択順、残り選択可能数の制御 | `PhotosPickerItem`と撮影結果の正規化 |
 | 複数画像プレビュー、個別削除、送信導線 | EXIF orientationの正規化、縮小、圧縮、形式変換 |
@@ -66,6 +69,8 @@ OS標準の検索、アルバム、複数選択、プライバシー保護をそ
 public enum ChatImageInputSource: Hashable, Identifiable, Sendable {
   case camera
   case photoLibrary
+  case file
+  case clipboard
 
   public var id: Self { self }
 }
@@ -80,7 +85,8 @@ public struct ChatImageInputConfiguration: Hashable, Sendable {
 }
 ```
 
-写真ライブラリはPackageが表示する。アプリは`onRequestCamera`を受け、カメラ画面を表示する。
+写真ライブラリとclipboardの標準paste controlはPackageが表示する。アプリは
+`onRequestCamera`と`onRequestImageFiles`を受け、カメラ画面と標準file pickerを表示する。
 カメラを利用できない端末などでは、
 `availableImageInputSources`から`.camera`を除外する。
 
@@ -165,6 +171,12 @@ AltiveChatRoom(
   onRequestCamera: {
     presentedImagePicker = .camera
   },
+  onRequestImageFiles: {
+    isShowingImageFileImporter = true
+  },
+  onPasteImages: { providers in
+    imageDraftFactory.appendPastedImages(from: providers)
+  },
   resolvePhotoLibraryItem: { item in
     try await imageDraftFactory.makeDraft(from: item)
   },
@@ -191,6 +203,8 @@ isPreparingCameraImage: Bool = false
 isSending: Bool = false
 imageLoader: ChatImageLoader = .standard
 onRequestCamera: (() -> Void)? = nil
+onRequestImageFiles: (() -> Void)? = nil
+onPasteImages: (([NSItemProvider]) -> Void)? = nil
 resolvePhotoLibraryItem: (@Sendable (PhotosPickerItem) async throws -> ChatImageDraft)? = nil
 onImagePreparationFailure: ((Error) -> Void)? = nil
 onImageTap: ((_ messageID: String, _ imageIndex: Int) -> Void)? = nil

@@ -1,5 +1,7 @@
 package jp.co.altive.chat
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -22,6 +24,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -64,6 +67,9 @@ data class ChatRoomStrings(
   val cancelReplyLabel: String = "Cancel reply",
   val replyToLabel: String = "Replying to",
   val replyUnavailableLabel: String = "This message is unavailable",
+  val fileButtonLabel: String = "File",
+  val clipboardButtonLabel: String = "Clipboard",
+  val imageSourceMenuButtonLabel: String = "Choose image source",
 ) {
   companion object {
     @Composable fun localized(): ChatRoomStrings {
@@ -93,6 +99,9 @@ data class ChatRoomStrings(
         stringResource(R.string.altive_chat_cancel_reply),
         stringResource(R.string.altive_chat_reply_to),
         stringResource(R.string.altive_chat_reply_unavailable),
+        stringResource(R.string.altive_chat_file),
+        stringResource(R.string.altive_chat_clipboard),
+        stringResource(R.string.altive_chat_image_sources),
       )
     }
   }
@@ -252,6 +261,8 @@ fun AltiveChatRoom(
   availableImageInputSources: Set<ChatImageInputSource> = setOf(
     ChatImageInputSource.Camera,
     ChatImageInputSource.PhotoLibrary,
+    ChatImageInputSource.File,
+    ChatImageInputSource.Clipboard,
   ),
   isPreparingCameraImage: Boolean = false,
   isSending: Boolean = false,
@@ -281,6 +292,7 @@ fun AltiveChatRoom(
   onSubmit: (ChatComposerSubmission) -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
+  val context = LocalContext.current
   val focusManager = LocalFocusManager.current
   var photoUris by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
   var photoDraftIdValues by rememberSaveable { mutableStateOf(arrayListOf<String>()) }
@@ -369,11 +381,27 @@ fun AltiveChatRoom(
   ) { uris ->
     resolveUris(uris)
   }
+  val singleFilePicker = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocument(),
+  ) { uri ->
+    if (uri != null) resolveUris(listOf(uri))
+  }
+  val multipleFilePicker = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenMultipleDocuments(),
+  ) { uris ->
+    resolveUris(uris)
+  }
 
   fun launchClassicPhotoPicker() {
     val request = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
     if (remainingCapacity <= 1) singlePhotoPicker.launch(request)
     else multiplePhotoPicker.launch(request)
+  }
+
+  fun launchFilePicker() {
+    val mimeTypes = arrayOf("image/*")
+    if (remainingCapacity <= 1) singleFilePicker.launch(mimeTypes)
+    else multipleFilePicker.launch(mimeTypes)
   }
 
   val effectiveImageInputSources = availableImageInputSources.filterTo(mutableSetOf()) { source ->
@@ -484,6 +512,19 @@ fun AltiveChatRoom(
           focusManager.clearFocus()
           launchClassicPhotoPicker()
         },
+        onRequestFile = {
+          focusManager.clearFocus()
+          launchFilePicker()
+        },
+        onRequestClipboard = {
+          val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+          resolveUris(clipboardManager.imageUris())
+        },
+        onReceiveImageUris = if (canReceivePastedImages(remainingCapacity)) {
+          { uris -> resolveUris(uris.map(Uri::parse)) }
+        } else {
+          null
+        },
         onRemoveImage = { imageId ->
           latestOnImageDraftsChange(latestImageDrafts.filterNot { it.id == imageId })
           val currentMappings = photoUris.zip(photoDraftIdValues).toMap()
@@ -517,6 +558,16 @@ fun AltiveChatRoom(
           )
         },
       )
+    }
+  }
+}
+
+private fun ClipboardManager.imageUris(): List<Uri> {
+  val clip = primaryClip ?: return emptyList()
+  if (!clip.description.hasMimeType("image/*")) return emptyList()
+  return buildList {
+    for (index in 0 until clip.itemCount) {
+      clip.getItemAt(index).uri?.let(::add)
     }
   }
 }

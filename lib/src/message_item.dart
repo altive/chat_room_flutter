@@ -300,16 +300,7 @@ class _UserMessageItem extends StatelessWidget {
       dateTime: message.createdAt,
       isRead: isOutgoing && message.isRead,
       readStatusWidget: readStatusWidget,
-      pendingIndicator: isPending
-          ? pendingIndicator ??
-                Icon(
-                  Icons.timelapse,
-                  size: 14,
-                  color:
-                      altiveChatRoomTheme.timeTextStyle?.color ??
-                      colorScheme.onSurfaceVariant,
-                )
-          : null,
+      pendingIndicator: isPending ? pendingIndicator : null,
       failedIndicator: isFailed
           ? IconButton(
               tooltip: 'Retry',

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 送信中と失敗時の再送導線を共通表示する部品。
+/// 楽観的に表示したメッセージの失敗時に再送導線を表示する部品。
 @MainActor
 public struct ChatDeliveryIndicator: View {
   private let state: ChatMessageDeliveryState?
@@ -39,11 +39,6 @@ public struct ChatDeliveryIndicator: View {
   public var body: some View {
     Group {
       switch state {
-      case .sending:
-        ProgressView()
-          .controlSize(controlSize)
-          .accessibilityLabel(sendingLabel)
-          .applyAccessibilityIdentifier(sendingAccessibilityIdentifier)
       case .failed:
         if let onRetry {
           Button(action: onRetry) {
@@ -57,7 +52,7 @@ public struct ChatDeliveryIndicator: View {
             .accessibilityLabel(retryLabel)
             .applyAccessibilityIdentifier(retryAccessibilityIdentifier)
         }
-      case .sent, nil:
+      case .sending, .sent, nil:
         if reservesSpace {
           Color.clear
         } else {

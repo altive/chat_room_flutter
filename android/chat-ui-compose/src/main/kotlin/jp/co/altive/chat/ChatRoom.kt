@@ -239,7 +239,6 @@ fun AltiveChatRoom(
             replyTo = selectedReply,
           )
           if (submission != null && onSubmit != null) onSubmit(submission) else onSend(text)
-          onDraftChange("")
           selectedReply = null
         },
       )
@@ -930,7 +929,12 @@ fun ChatComposer(
         ) { Text(if (isInputSurfacePresented) "⌨" else "☺") }
       }
       IconButton(
-        onClick = { normalized?.let(onSend) },
+        onClick = {
+          normalized?.let { text ->
+            onSend(text)
+            onDraftChange("")
+          }
+        },
         enabled = normalized != null && !isSending,
         modifier = Modifier.size(42.dp).testTag("AltiveChatUI.SendButton").clip(CircleShape).background(theme.sendButtonBackground).semantics { contentDescription = sendButtonLabel },
       ) {
@@ -979,7 +983,6 @@ fun ChatDeliveryIndicator(
   onRetry: (() -> Unit)? = null,
 ) {
   when (state) {
-    ChatMessageDeliveryState.Sending -> CircularProgressIndicator(Modifier.size(12.dp).semantics { contentDescription = sendingLabel }, strokeWidth = 1.5.dp)
     ChatMessageDeliveryState.Failed -> IconButton(onClick = { onRetry?.invoke() }, enabled = onRetry != null, modifier = Modifier.size(24.dp).semantics { contentDescription = retryLabel }) {
       Text("!", color = theme.deliveryFailure, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
     }

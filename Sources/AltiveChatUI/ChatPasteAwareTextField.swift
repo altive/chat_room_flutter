@@ -102,7 +102,9 @@ struct ChatPasteAwareTextField: View {
       context.coordinator.parent = self
       updatePasteHandling(of: textView)
 
-      if textView.markedTextRange == nil, textView.text != text {
+      // 変換中の文字列は通常の再描画で上書きしない。ただし送信後などの
+      // 明示的なクリアは未確定文字も破棄して入力欄へ即座に反映する。
+      if textView.markedTextRange == nil || text.isEmpty, textView.text != text {
         let selection = textView.selectedRange
         textView.text = text
         textView.selectedRange = NSRange(

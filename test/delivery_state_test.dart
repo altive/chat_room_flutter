@@ -62,6 +62,32 @@ void main() {
     expect(find.byIcon(Icons.timelapse), findsNothing);
   });
 
+  testWidgets('送信中メッセージは送信中アイコンなしで楽観的に表示する', (tester) async {
+    final message = ChatTextMessage(
+      id: 'sending-message',
+      createdAt: DateTime(2026, 8, 26, 12),
+      sender: const ChatUser(id: 'me', name: 'Me', avatarImageUrl: 'data:'),
+      text: '送信中のメッセージ',
+      deliveryState: ChatMessageDeliveryState.sending,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AltiveChatRoom(
+          theme: const AltiveChatRoomTheme(),
+          currentUserId: 'me',
+          messages: [message],
+          onSendIconPressed: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('送信中のメッセージ'), findsOneWidget);
+    expect(find.byIcon(Icons.timelapse), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byIcon(Icons.error_outline), findsNothing);
+  });
+
   testWidgets('新しい画像タップAPIへメッセージIDと位置を渡す', (tester) async {
     ({String messageId, int index})? tapped;
     final message = ChatImagesMessage(

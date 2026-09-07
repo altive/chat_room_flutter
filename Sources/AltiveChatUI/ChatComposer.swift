@@ -6,8 +6,7 @@ let chatComposerCornerRadius: CGFloat = 22
 /// ファネリーの Family Room を基準にしたチャット入力欄。
 ///
 /// 入力値の永続化や送信状態はアプリ側が所有します。`onSend` には前後の空白と
-/// 改行を除いた文字列だけを渡し、送信後に入力値を消すタイミングは呼び出し側が
-/// 決定します。
+/// 改行を除いた文字列だけを渡し、コールバックの直後に入力値を空にします。
 @MainActor
 public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
   @Binding private var draft: String
@@ -224,8 +223,10 @@ public struct ChatComposer<AttachmentPreview: View, InputSurface: View>: View {
     {
       onSubmit(submission)
     } else {
-      onSend?(text)
+      guard let onSend else { return }
+      onSend(text)
     }
+    draft = ""
   }
 }
 

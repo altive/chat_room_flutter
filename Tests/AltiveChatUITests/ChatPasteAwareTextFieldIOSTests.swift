@@ -32,7 +32,7 @@
       let textView = try #require(findTextView(in: controller.view))
 
       #expect(textView.bounds.height >= 22)
-      #expect(textView.bounds.width >= 240)
+      #expect(textView.bounds.width >= 100)
       let textViewCenter = CGPoint(x: textView.bounds.midX, y: textView.bounds.midY)
       let hitPoint = textView.convert(textViewCenter, to: controller.view)
       let hitView = controller.view.hitTest(hitPoint, with: nil)
@@ -41,10 +41,25 @@
       await settleLayout(of: controller.view)
       #expect(textView.isFirstResponder)
 
-      textView.insertText("test")
-      await settleLayout(of: controller.view)
+      for character in "test" {
+        textView.insertText(String(character))
+        await settleLayout(of: controller.view)
+        #expect(textView.isFirstResponder)
+        #expect(findTextView(in: controller.view) === textView)
+      }
       #expect(textBox.text == "test")
-      #expect(textView.bounds.width >= 240)
+      textBox.text = ""
+      await settleLayout(of: controller.view)
+      #expect(textView.text == "")
+      textView.setMarkedText("にほんご", selectedRange: NSRange(location: 4, length: 0))
+      textView.delegate?.textViewDidChange?(textView)
+      await settleLayout(of: controller.view)
+      #expect(textView.markedTextRange != nil)
+      textBox.text = ""
+      await settleLayout(of: controller.view)
+      #expect(textView.text == "")
+      #expect(textView.markedTextRange == nil)
+      #expect(textView.bounds.width >= 100)
       #expect(textView.isFirstResponder)
     }
 
@@ -72,6 +87,7 @@
   }
 
   @MainActor
+  @Observable
   private final class ChatPasteAwareTextBox {
     var text = ""
   }
@@ -81,23 +97,22 @@
     @FocusState private var isFocused: Bool
 
     var body: some View {
-      ChatPasteAwareTextField(
-        text: $text,
+      ChatImageComposer(
+        draft: $text,
+        imageDrafts: .constant([]),
+        selectedPhotoItems: .constant([]),
         focus: $isFocused,
-        placeholder: "Message",
-        lineLimit: 1...5,
-        draftPolicy: .unrestricted,
-        isImagePasteEnabled: true,
-        onPasteImages: { _ in }
+        configuration: .init(),
+        availableImageInputSources: [.photoLibrary],
+        maximumPhotoSelectionCount: 4,
+        isPhotoLibrarySelectionEnabled: true,
+        isPreparingImages: false,
+        isPreparingCameraImage: false,
+        isSending: false,
+        onRequestCamera: nil,
+        onRemoveImage: { _ in },
+        onSubmit: {}
       )
-      .padding(.horizontal, 14)
-      .padding(.vertical, 11)
-      .background(.background, in: RoundedRectangle(cornerRadius: 22))
-      .overlay {
-        RoundedRectangle(cornerRadius: 22)
-          .stroke(.separator, lineWidth: 0.5)
-      }
-      .accessibilityIdentifier("AltiveChatUI.Composer")
     }
   }
 #endif

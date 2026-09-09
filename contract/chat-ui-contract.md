@@ -40,7 +40,7 @@ SwiftUI、Flutter、Jetpack Composeで揃える。
 - Character / UTF-16を選択できる入力長方針
 - 文言を受け取り、実際の削除処理を呼び出し側へ委ねる汎用削除確認UI
 - テーマとアクセシビリティ上の意味付け
-- ファネリーのFamily Roomを正本とする吹き出し、システムイベントカード、入力欄
+- 公開themeと共通契約に従う吹き出し、システムイベントカード、入力欄
 - アプリ固有の用途や永続化schemaに依存しない汎用メッセージカード
 - キーボードとスタンプ入力面を切り替える際の共通レイアウト計算
 - リアクション候補、件数、長押しpopoverと競合を壊さない楽観的更新
@@ -181,10 +181,9 @@ Store、Repository、Entityへ依存させない。
 - 取得中・失敗中も送信を妨げず、previewなしの通常リンクへfallbackする。
 - AltiveChatは外部URL、Firebase、Storageへ直接接続せず、利用アプリが返す表示値と
   画像resourceだけを描画する。
-- 公開model、resolver、表示、後方互換性の正本は
+- 公開model、resolver、表示、後方互換性、呼び出し側の安全条件の正本は
   [`link-preview-contract.md`](link-preview-contract.md)とする。
-- backend、保存、SSRF、画像変換、Storage方針の正本はAltive Specsの
-  `integrations/chat-link-preview.md`とする。
+- backend、保存、SSRF、画像変換、cache・保持方針の具体的な実装は利用アプリが管理する。
 
 ## リプライ契約
 
@@ -201,9 +200,9 @@ Store、Repository、Entityへ依存させない。
 状態、操作結果、アクセシビリティ上の意味を揃える。コンテキストメニュー、触覚、
 キーボード挙動などは各OSの標準体験を優先し、ピクセル単位の一致を要求しない。
 SwiftUIの入力欄を`UIViewRepresentable`で実装する場合、iOS Simulator上で実際の装飾を含む
-first responder回帰testをCIの必須gateとして実行する。focusまたは画像paste処理を変更したreleaseは、
-少なくとも1つのconsumer実画面で入力欄をtapし、keyboard表示、文字入力、画面外tapによるkeyboard
-dismissを確認する。
+first responder回帰testをCIの必須gateとして実行する。focusまたは画像paste処理を変更した場合は、
+ライブラリのhostで入力欄のtap、keyboard表示、文字入力、画面外tapによるkeyboard dismissを
+検証する。利用アプリも統合時に自身の画面で同じ操作を確認する。
 
 ## 汎用メッセージカード
 
@@ -219,9 +218,10 @@ Firestoreの`messageKind`や`card.kind`など、利用アプリの保存値をAl
 
 ## SwiftUIデザインの正本
 
-SwiftUIコンポーネントの形状、余白、配色、入力操作はファネリーのFamily Roomを
-正本とする。ノコリスを含む利用アプリが独自に改善する場合は、先に
-`AltiveChatUI`へ反映してからアプリへ適用し、実装の再分岐を避ける。
+SwiftUIコンポーネントの形状、余白、配色、入力操作は本契約、公開theme、Preview、testを
+正本とする。標準部品は`Sources/AltiveChatUI/`、回帰検証は`Tests/AltiveChatUITests/`に置く。
+特定の利用アプリや非公開画面へのアクセスを仕様理解や貢献の前提にしない。
+共通UIの改善はライブラリのcontractと実装へ反映し、利用アプリは公開APIやthemeで適用する。
 
 システムイベントカードは短い内容に合わせた幅で水平中央へ配置し、本文も中央寄せにする。
 長い内容は利用可能幅を上限として折り返し、画面外へはみ出させない。この表示は

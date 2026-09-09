@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// ファネリーの Family Room を基準にしたユーザーメッセージの吹き出し。
+/// 共通UI契約に従うユーザーメッセージの吹き出し。
 @MainActor
 public struct ChatMessageBubble<Content: View>: View {
   private let isOwnMessage: Bool
@@ -38,7 +38,7 @@ public struct ChatMessageBubble<Content: View>: View {
   }
 }
 
-/// 投稿者のアバター側へ尻尾を伸ばす、ファネリー基準のメッセージ形状。
+/// 投稿者のアバター側へ尻尾を伸ばすメッセージ形状。
 public struct ChatMessageBubbleShape: Shape {
   /// 自分が送信したメッセージかどうか。
   public let isOwnMessage: Bool

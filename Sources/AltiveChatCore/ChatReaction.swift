@@ -37,7 +37,7 @@ public struct ChatReaction: Hashable, Identifiable, Sendable {
   /// 応援。
   public static let cheer = ChatReaction(id: "cheer", symbol: "👏", accessibilityLabel: "👏")
 
-  /// ファネリーとノコリスで共通利用する標準候補。
+  /// ライブラリが提供する標準のリアクション候補。
   public static let standard: [ChatReaction] = [.heart, .like, .celebrate, .thanks, .cheer]
 }
 

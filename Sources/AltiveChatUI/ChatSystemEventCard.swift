@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// ファネリーの Family Room を基準にしたシステムイベントカード。
+/// 共通UI契約に従い、内容を水平中央へ配置するシステムイベントカード。
 @MainActor
 public struct ChatSystemEventCard<Content: View>: View {
   private let theme: ChatRoomTheme

@@ -2,9 +2,8 @@
 
 ## 目的
 
-Flutter版にだけ存在するリプライ表示を、SwiftUI、Jetpack Compose、Flutterで同じ状態と
-操作結果を持つpackage機能として提供する。AltiveChatは返信先の取得や永続化を行わず、
-利用アプリが検証して渡した軽量な返信参照を表示する。
+SwiftUI、Jetpack Compose、Flutterで同じ状態と操作結果を持つリプライ機能を提供する。
+AltiveChatは返信先の取得や永続化を行わず、利用アプリが検証して渡した軽量な返信参照を表示する。
 
 本書はAltiveChat内の公開model、Composer、表示、操作契約の正本とする。Firestoreなどの
 保存schemaは対象外とし、利用アプリごとに本書の表示modelへ変換する。
@@ -218,10 +217,11 @@ Core testではmodel変換、標準返信可否、入れ子除去、submission�
 選択、置換、取消、空送信抑止、callback直後のclear、長押し競合、文字拡大、light / dark、
 画像失敗を検証する。fixtureとvisual testは外部networkへ接続しない。
 
-## 実装順
+## 利用アプリへの導入
 
-1. 本契約、Core model、共通fixtureと変換testを追加する。
-2. SwiftUI / Composeへ引用表示とComposerの返信選択を実装する。
-3. Flutterを軽量snapshotとpackage標準barへ移行し、deprecated互換helperを追加する。
-4. Fanely / Nokorisの保存model、reader、writer、権限、引用tap navigationを両OSで接続する。
-5. 3platformのvisual / interaction test後に同一releaseとして公開する。
+1. 保存済みデータを軽量な返信参照へ変換し、欠損fieldと未知kindのfallbackを確認する。
+2. 返信を有効化する画面で型付きsubmission callbackと`ChatReplyConfiguration`を接続する。
+3. 権限・保存・対象messageの再検証、引用tap後の取得とnavigationを利用アプリ側で実装する。
+4. 対象platformで選択・取消・引用表示・再送・対象がpage外にある状態を統合検証する。
+
+公開API・互換性の判断は本書に従い、製品固有の導入順と承認は利用側で管理する。

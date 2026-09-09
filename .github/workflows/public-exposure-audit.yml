@@ -1,0 +1,60 @@
+name: One-time public exposure audit
+
+on:
+  push:
+    branches: [audit/public-exposure-20260909]
+
+permissions:
+  contents: read
+  actions: read
+  issues: read
+  pull-requests: read
+  discussions: read
+
+jobs:
+  audit:
+    if: github.repository == 'altive/altive-chat'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 監査スクリプトを取得
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: 公開ファイル・履歴・GitHubメタデータを読み取り専用で検査
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TERMINAL_PROMPT: '0'
+          AUDIT_REPORT_CERTIFICATE: |
+            -----BEGIN CERTIFICATE-----
+            MIIEKzCCApOgAwIBAgIUajtK9ozodk3YBM6r7eXaL+NZ6wkwDQYJKoZIhvcNAQEL
+            BQAwJTEjMCEGA1UEAwwab25lLXRpbWUtYWx0aXZlLWNoYXQtYXVkaXQwHhcNMjYw
+            OTA5MDYwNDU2WhcNMjYwOTExMDYwNDU2WjAlMSMwIQYDVQQDDBpvbmUtdGltZS1h
+            bHRpdmUtY2hhdC1hdWRpdDCCAaIwDQYJKoZIhvcNAQEBBQADggGPADCCAYoCggGB
+            AIXFr6/VJVzYoRzvqyKeVPvzAS5G/yPeIr4k2CGjshAvIi8x2xQ65vQWe4ehT+LX
+            IzocDBcuIMtWp8gpOil9GFrKpGrda9iD7pGdGArDy+M++6y1+pN/F1z7uJm0Iq5c
+            9V2im2t7ZkQLnMr6XWxgXSf6Hw6EHLQBsLcQ7FJKTymhEl38YulXa95qaTaHpmCi
+            wWUvG0LcBSaLZSdrDnDyLQAGx+RGq+5NFcFtg9yYC60Z9Q5F0vbk3bw4Ll+qNpR5
+            7IWZCFHg4QSRKa3/l4KNT4FfNkw5oV1LE2idKvLIPuhfiuNhL3BTA7MIIjA9ErRg
+            b82PIW5wjip8c7X2xFmfoe4yCTZvCgk57KPT30WxhaUIFju3gLaGbzPwX0ssR3vK
+            ajDpYnlPclQ1ZTr5xo8wB0Wij/jCH6e2l8bLAjL6oC7T65iaZ+ovZolXq98KmG8x
+            WEfZVEdUa5vln1YYRSiB3ueqYDQzC/p4727rJPWu0HCzZ5ET1ijZIs7ZU+sOPb9i
+            NwIDAQABo1MwUTAdBgNVHQ4EFgQUMskLsSM7KyPhYVwa2VJRGXvOcR4wHwYDVR0j
+            BBgwFoAUMskLsSM7KyPhYVwa2VJRGXvOcR4wDwYDVR0TAQH/BAUwAwEB/zANBgkq
+            hkiG9w0BAQsFAAOCAYEAXiyeq520YDtvc5ho1A9VTXCvF8GHKUCMt/0DC7uHhUPW
+            mLH4A3PUNPNAh3OhvPi00oATlikWlHQH9OC7J0yftkZqIu/idVOEu1Vpm/UfYUSp
+            JHotmyfbJimyNe5uKY1BfG5gfDrkiGnZro0KXDMIICZ5I8w0Q9UQeN9pDFVF2cOd
+            l1fjHT75mSu9VW+Vyhc+B41SJw3OMpvevyDPnDc1LlNgnDlb8LJW7toeSQsYfLA0
+            3A7ea/tpnS721D+Yzzn1Vs6qW3wiVIVKJYZ+TlzBPu3h8N1cEobCMraIMcZTRyCX
+            VMSg3AzJio2xCoOTAy9EqUVwZSI6dSTpr+55Z+wQcfmV+74ko8M1AMuovufscL+i
+            PN/3TGsrx3Nn3oit7Uqyjn/SL0Zmw2hnPt1UxGBbmdQYE37oDOYSypJMeYpZ3YIB
+            +PYxJBuORpTN5BKECDUf4QB+ct77u6zOjmCbcPUgyPakYJtkZQcSbI+hDt0oyt6n
+            sXfC+FF5m3AyjS5iFO0K
+            -----END CERTIFICATE-----
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 .github/public_exposure_audit.py

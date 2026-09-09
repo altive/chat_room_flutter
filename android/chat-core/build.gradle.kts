@@ -20,11 +20,18 @@ publishing {
       artifactId = "chat-core"
       pom {
         name.set("Altive Chat Core")
-        description.set("AltiveChatのプラットフォーム非依存モデルと状態契約")
-        url.set("https://github.com/altive/chat_room_flutter")
+        description.set("Altive Chatのプラットフォーム非依存モデルと状態契約")
+        url.set("https://github.com/altive/altive-chat")
+        licenses {
+          license {
+            name.set("MIT License")
+            url.set("https://opensource.org/license/mit")
+            distribution.set("repo")
+          }
+        }
         scm {
-          url.set("https://github.com/altive/chat_room_flutter")
-          connection.set("scm:git:https://github.com/altive/chat_room_flutter.git")
+          url.set("https://github.com/altive/altive-chat")
+          connection.set("scm:git:https://github.com/altive/altive-chat.git")
         }
       }
     }

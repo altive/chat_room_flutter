@@ -59,11 +59,18 @@ afterEvaluate {
         artifactId = "chat-ui-compose"
         pom {
           name.set("Altive Chat UI Compose")
-          description.set("AltiveChatのJetpack Compose UIコンポーネント")
-          url.set("https://github.com/altive/chat_room_flutter")
+          description.set("Altive ChatのJetpack Compose UIコンポーネント")
+          url.set("https://github.com/altive/altive-chat")
+          licenses {
+            license {
+              name.set("MIT License")
+              url.set("https://opensource.org/license/mit")
+              distribution.set("repo")
+            }
+          }
           scm {
-            url.set("https://github.com/altive/chat_room_flutter")
-            connection.set("scm:git:https://github.com/altive/chat_room_flutter.git")
+            url.set("https://github.com/altive/altive-chat")
+            connection.set("scm:git:https://github.com/altive/altive-chat.git")
           }
         }
       }

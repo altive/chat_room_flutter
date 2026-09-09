@@ -39,3 +39,9 @@ migrate_working_dir/
 /android/.gradle/
 /android/**/build/
 /android/local.properties
+
+# ルートAndroidプロジェクトに誤生成されたアプリ（example/android/app/は対象外）
+/android/app/
+
+# ローカルエミュレーターの実行ログ
+/firepit-log.txt

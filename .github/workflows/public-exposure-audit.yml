@@ -3,6 +3,9 @@ name: One-time public exposure audit
 on:
   push:
     branches: [audit/public-exposure-20260909]
+    paths:
+      - .github/public_exposure_audit.py
+      - .github/workflows/public-exposure-audit.yml
 
 permissions:
   contents: read
@@ -58,3 +61,47 @@ jobs:
           set -euo pipefail
           umask 077
           python3 .github/public_exposure_audit.py
+
+      - name: 検査範囲と未取得範囲だけを公開サマリーへ記録
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, urllib.request
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'public-exposure-audit'
+          report = root / 'private-report.json'
+          if not report.exists():
+              print('AUDIT_REPORT_UNAVAILABLE')
+              raise SystemExit(1)
+          data = json.loads(report.read_text())
+          # 値、発見箇所、個人情報は出さず、取得失敗の識別子と種類だけを記録する。
+          print('AUDIT_SCOPE_GAPS=' + json.dumps(data['details']['limitations'], separators=(',', ':')))
+          mirror = root / 'repository.git'
+          refs = subprocess.check_output(['git', '-C', str(mirror), 'for-each-ref', '--format=%(refname)']).decode().splitlines()
+          refs = [r for r in refs if r != 'refs/heads/audit/public-exposure-20260909']
+          baseline_count = int(subprocess.check_output(['git', '-C', str(mirror), 'rev-list', '--count', *refs]))
+          print('AUDIT_EXISTING_REPOSITORY_COMMITS=' + str(baseline_count))
+          # 元の大きなGraphQL queryと分け、少数ノードのqueryで存在件数を再確認する。
+          check = {}
+          query = 'query { repository(owner:"altive",name:"altive-chat") { discussions(first:1) { totalCount } } }'
+          request = urllib.request.Request('https://api.github.com/graphql', data=json.dumps({'query':query}).encode(), headers={'Content-Type':'application/json','User-Agent':'Altive-public-exposure-audit'})
+          request.add_unredirected_header('Authorization', 'Bearer ' + os.environ['GH_TOKEN'])
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              if payload.get('errors'):
+                  check = {'status':'unavailable','error':'GraphQL errors'}
+              else:
+                  check = {'status':'checked','total_count':payload['data']['repository']['discussions']['totalCount']}
+          except Exception as exc:
+              check = {'status':'unavailable','error':type(exc).__name__,'http_status':getattr(exc,'code',None)}
+          print('AUDIT_DISCUSSIONS_COUNT=' + json.dumps(check, separators=(',', ':')))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('# 公開情報の監査結果\n\n')
+              summary.write('検出値・検出箇所・個人情報は公開しません。未取得範囲がある場合、検出0件でも完全確認済みとは扱いません。\n\n')
+              summary.write('```json\n' + json.dumps({'scan':data['summary'],'scope_gaps':data['details']['limitations'],'existing_repository_commits':baseline_count,'discussions':check},ensure_ascii=False,indent=2) + '\n```\n')
+          PY

@@ -6,10 +6,9 @@
 表示する。AltiveChatはFirebaseや外部サイトへ接続せず、利用アプリが検証した表示値と
 画像loaderだけを受け取る。
 
-プロダクト横断の取得、保存、安全要件はAltive Specsの
-[`chat-link-preview.md`](https://github.com/altive/specs/blob/main/integrations/chat-link-preview.md)
-を正本とし、本書は
-AltiveChat内の公開モデルとUI契約だけを定義する。
+本書は公開モデル、UI契約、resolverと画像loaderを実装する呼び出し側の前提を定義する。
+取得・保存の具体的なbackend構成は利用アプリが管理し、非公開の仕様へのアクセスを
+本ライブラリの利用条件にしない。
 
 ## 対象
 
@@ -33,15 +32,29 @@ AltiveChatが所有する。
 
 利用アプリが所有する。
 
-- resolver callbackから認証済みbackendを呼ぶ処理
-- Firebase Auth / App Check、scope所属、rate limit、SSRF対策
-- OGP取得、cache、画像変換、Storage保存、Firestore永続化
+- resolver callbackからデータ取得処理を呼ぶことと、必要な認証・認可
+- scope所属、rate limit、外部URL取得時のSSRF対策
+- OGP等のmetadata取得、cache、画像変換、保存と永続化
 - app固有schemaとAltiveChat表示モデルの変換
-- Storage画像handleの解決と端末cache
+- 画像resourceの解決、アクセス権の検証、端末cache
 - URLを開くnavigation方針と失敗処理
 
 AltiveChatはHTTP client、HTML parser、Firebase SDK、product固有IDを依存へ追加しない。
-Flutterに残る端末直接のOGP取得は新契約へ移行後に削除する。
+端末からの直接OGP取得は提供せず、previewを利用アプリから受け取る。
+
+## 呼び出し側の安全条件
+
+- resolverへ渡される本文URLと取得metadataは信頼しない。HTTP(S)のURL、文字数、画像寸法などを
+  検証し、未対応・破損データはpreviewなし、または画像なしへ変換する。
+- backendで外部URLを取得する場合、内部・ローカル宛先へのアクセス、redirect、応答量、
+  timeoutを含む取得制限とSSRF対策を呼び出し側で実施する。UIのURL検出は安全性の保証ではない。
+- 認証情報や保存先の内部構造を表示modelへ含めない。画像resourceは不透明な参照として渡し、
+  読み取り権限や認証付き取得は画像loader側で解決する。
+- draft previewは楽観表示用であり、保存可能な信頼済みmetadataとして扱わない。
+  永続化時の再検証、cacheの共有範囲、保持・削除方針は利用アプリが決定する。
+- 取得不能・拒否・検証失敗ではpreviewなしへfallbackし、通常の本文送信と表示を継続する。
+
+これらはライブラリと呼び出し側の境界であり、特定backendの実装手順や安全性監査の代替ではない。
 
 ## 表示モデル
 
@@ -91,7 +104,7 @@ property、Flutterでは`ChatTextMessage`の任意propertyとして表現する�
 
 ## 共通fixture
 
-`contract/fixtures/link-preview-cases.json`を追加し、少なくとも次を3platformで共有する。
+[`fixtures/link-preview-cases.json`](fixtures/link-preview-cases.json)を使い、少なくとも次を3platformで共有する。
 
 - 先頭1件だけを選ぶ複数URL本文
 - URL変更中のstale結果
@@ -108,7 +121,7 @@ Preview / screenshot / goldenでは固定resolverとlocal fixture imageを使用
 - 既存message initializer、Room initializer、送信callbackは維持する。
 - resolverを接続しないconsumerの表示・送信・リンク遷移は変更しない。
 - 新しいmessage propertyを追加しても`ChatMessageContent`の網羅的switchを壊さない。
-- Flutterの端末直接取得を削除した後は、appからpreviewが渡されない限りcardを表示しない。
+- appからpreviewが渡されない限りcardを表示しない。
 
 ## 検証
 
@@ -118,9 +131,11 @@ Preview / screenshot / goldenでは固定resolverとlocal fixture imageを使用
 - card tapと本文linkが同じURLを通知し、長押し・reaction・replyと競合しないことをtestする。
 - Flutter testで外部HTTP requestが発生しないことを保証する。
 
-## 展開
+## 利用アプリへの導入
 
-1. 任意model、resolver、fixture、UIを加算し、Flutterの直接取得はまだ利用しない経路へ移す。
-2. Fanely / Nokorisのreaderと画像loaderを接続する。
-3. consumer backendがpreviewを供給できる状態で対応versionをpinする。
-4. Flutterの端末直接OGP実装と`html` / `http`依存を削除する。
+1. 使用するreleaseの表示modelとresolver契約を確認する。
+2. 利用アプリの取得処理、保存済みmetadataのreader、画像loaderを接続する。
+3. resolverなし・取得失敗・権限不足・未知データでも本文を表示・送信できることを確認する。
+4. 対応versionまたはrevisionを固定し、利用アプリ側で統合を検証する。
+
+製品固有のbackend配置、導入順、リリース承認は利用アプリ側で管理する。

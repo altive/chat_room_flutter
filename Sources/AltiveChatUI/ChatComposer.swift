@@ -3,7 +3,7 @@ import SwiftUI
 
 let chatComposerCornerRadius: CGFloat = 22
 
-/// ファネリーの Family Room を基準にしたチャット入力欄。
+/// 共通UI契約に従うチャット入力欄。
 ///
 /// 入力値の永続化や送信状態はアプリ側が所有します。`onSend` には前後の空白と
 /// 改行を除いた文字列だけを渡し、コールバックの直後に入力値を空にします。

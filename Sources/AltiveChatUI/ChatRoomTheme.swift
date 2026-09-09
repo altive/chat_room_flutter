@@ -133,7 +133,7 @@ public struct ChatRoomTheme {
     self.celebrationCardAccent = celebrationCardAccent
   }
 
-  /// ファネリーの Family Room を正本とする標準テーマ。
+  /// 共通UI契約に従う標準テーマ。名前は既存APIとの互換性のため維持する。
   public static var fanely: Self {
     .init(
       incomingBubble: platformSecondaryGroupedBackground,

@@ -1,19 +1,20 @@
 # Altive Chat
 
-Altive Chat は、Altive のアプリ間でチャット UI とその表示契約を共有するための
-マルチプラットフォームライブラリです。
+Altive Chat は、チャットの表示モデル、UIコンポーネントと操作契約を提供する
+マルチプラットフォームライブラリです。認証・送信・永続化は利用アプリが担当します。
 
 現在は次のパッケージを提供します。
 
 - Flutter: `altive_chat_room`。既存アプリとの互換性を維持します。
 - Swift: `AltiveChatCore` と `AltiveChatUI`。iOS 17 以降に対応します。
-- Jetpack Compose: `chat-core` と `chat-ui-compose`。Fanely Android と同じ
+- Jetpack Compose: `chat-core` と `chat-ui-compose`。
   minSdk 26、compileSdk 37の構成です。
 
+仕様の入口は[`contract/README.md`](contract/README.md)です。
 プラットフォーム間で共有する責務と機能差は、
 [`contract/chat-ui-contract.md`](contract/chat-ui-contract.md) と
 [`contract/feature-matrix.md`](contract/feature-matrix.md) を正本とします。
-リンクプレビューの予定APIとUI境界は
+リンクプレビューの公開APIとUI境界は
 [`contract/link-preview-contract.md`](contract/link-preview-contract.md)に定義しています。
 リプライの公開model、UI状態、appとの責務境界は
 [`contract/reply-message-contract.md`](contract/reply-message-contract.md)に定義しています。
@@ -164,7 +165,8 @@ Swift Package Manager は次の2製品を提供します。
   楽観的更新、最近使った項目の純粋な状態遷移。
 - `AltiveChatUI`: `AltiveChatCore`を利用するSwiftUIコンポーネント。
 
-SwiftUI版の見た目と操作感は、ファネリーの Family Room をデザイン上の正本とします。
+見た目と操作感は公開contract、theme、Previewとtestを基準とします。
+特定の利用アプリの画面や非公開仕様へのアクセスは不要です。
 
 アプリ固有の行を表示するRoomでは、`ChatRoomLayout`と`ChatTimeline`を組み合わせます。
 通常起動の末尾表示、指定項目の中央表示、末尾追従、手動／自動の履歴追加、履歴追加時の
@@ -351,7 +353,7 @@ val stickerLoader = ChatStickerImageLoader { reference ->
 }
 ```
 
-開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
+開発中にソースから利用する場合は、利用アプリ側の`settings.gradle.kts`で
 composite buildとして追加し、`jp.co.altive.chat:chat-core`と
 `jp.co.altive.chat:chat-ui-compose`をprojectへ置換します。絶対pathは
 local property等から注入し、リポジトリへcommitしません。
@@ -376,10 +378,10 @@ AltiveChatRoom(
 )
 ```
 
-画像入力では、classic Photo Pickerと、対応端末のEmbedded Photo Pickerを選べます。
-Embedded版はAndroid 14（API 34）かつSDK Extensions 15以上で利用され、非対応端末では
-classic Photo Pickerへフォールバックします。カメラ、URIの正規化・圧縮、アップロード、
-永続化、画像ローダーはアプリ側が担当します。
+画像入力はOS標準Photo Pickerを使用し、写真一覧を入力欄内へ埋め込む設定は公開しません。
+非対応端末でのフォールバックを含む契約は
+[`contract/android-image-message-design.md`](contract/android-image-message-design.md)を参照してください。
+カメラ、URIの正規化・圧縮、アップロード、永続化、画像ローダーはアプリ側が担当します。
 
 ```kotlin
 var draft by remember { mutableStateOf("") }

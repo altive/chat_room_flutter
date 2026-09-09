@@ -187,5 +187,5 @@ baselineは意図した表示を目視確認した場合だけ更新する。
 
 - Flutter、SwiftUI、Composeの公開APIとtestが同一releaseで揃う。
 - SemVer minorとしてreleaseし、利用アプリが依存revision / versionを明示更新する。
-- FanelyとNokorisの利用箇所を確認し、非該当platformも既存チャットの回帰testを行う。
+- 利用アプリは対象platformのカード表示と既存チャットへの影響を確認する。
 - 利用アプリの永続化やbackend変更をAltiveChat releaseへ含めない。

@@ -14,7 +14,7 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 
 ## 対象範囲
 
-最初のリリースでは次を対象とする。
+本仕様では次を対象とする。
 
 - カメラの独立ボタンと、写真ライブラリ・file・clipboardをまとめる写真menu
 - 写真ライブラリのOS標準シート表示
@@ -27,9 +27,9 @@ SwiftUI版のチャット入力欄で、テキストフィールドの左にカ�
 - 画像タップのコールバック
 - 既存の送信中、送信失敗、再送UIとの統合
 
-画像は当初から複数選択と複数表示へ対応する。アプリが指定する最大数にPackage固有の
+画像は複数選択と複数表示へ対応する。アプリが指定する最大数にPackage固有の
 上限は設けないが、1以上を要求する。動画、Live Photos、画像編集、選択後の並び替え、
-全画面ビューアは初回の対象外とする。
+全画面ビューアは本仕様の対象外とする。
 
 ## 写真ライブラリの表示方式
 
@@ -63,7 +63,7 @@ OS標準の検索、アルバム、複数選択、プライバシー保護をそ
 
 ### 画像取得元
 
-`AltiveChatUI`に入力元と最大選択数の設定を追加する。
+`AltiveChatUI`に入力元と最大選択数の設定を提供する。
 
 ```swift
 public enum ChatImageInputSource: Hashable, Identifiable, Sendable {
@@ -154,7 +154,7 @@ public enum ChatMessageContent: Hashable, Sendable {
 `.images`は1件以上を前提とする。送信前後でメッセージIDと画像IDを維持し、アプリが
 `resource`と`deliveryState`を差し替える。
 
-## AltiveChatUIの公開API案
+## AltiveChatUIの公開API
 
 既存のテキスト専用initializerは維持する。画像機能を使う場合だけ、次の引数を指定する。
 
@@ -193,7 +193,7 @@ AltiveChatRoom(
 )
 ```
 
-追加する入力は次のとおりとする。
+入力は次のとおりとする。
 
 ```swift
 imageDrafts: Binding<[ChatImageDraft]> = .constant([])
@@ -217,7 +217,6 @@ UI targetだけの契約とし、CoreやアプリのStore／Entityへ保存し�
 正規化規則を使う。
 
 `ChatImageLoader`は画像resourceからデータを非同期取得する軽量なclosure clientとする。
-
 ```swift
 public struct ChatImageLoader: Sendable {
   public init(loadData: @escaping @Sendable (ChatImageResource) async throws -> Data)
@@ -307,17 +306,14 @@ iCloud上の画像読み込みが失敗する可能性があるため、`loadTra
 - `AltiveChatRoom`の既存initializerは残し、画像関連引数は既定値で無効にする。
 - 画像ボタンは取得元が空の場合に表示しない。カメラは`onRequestCamera`、写真ライブラリは
   resolverがない場合にも対応するボタンを表示しないため、既存画面の見た目と余白は変わらない。
-- Flutterの公開APIは変更しない。SwiftUI実装後にfeature matrixだけを`implemented`へ更新する。
+- Flutterの公開APIは変更しない。各platformの対応状況はfeature matrixを参照する。
 
-## 実装順序
+## ライブラリと利用アプリの検証
 
-1. `AltiveChatCore`へ画像値モデルと単体テストを追加する。
-2. 画像ローダー、複数画像バブル、読み込み状態、画像タップを`AltiveChatUI`へ追加する。
-3. OS標準`PhotosPicker`と項目resolverを`AltiveChatUI`へ追加する。
-4. `ChatComposer`へ先頭アクション、複数プレビュー、統合submissionを追加する。
-5. `AltiveChatRoom`から画像APIを公開し、Previewとアクセシビリティ文言を追加する。
-6. Swift Packageの単体テスト、iOS build、Family Room相当の画面確認を行う。
-7. 利用アプリでカメラ、resolver、一時ファイル、アップロード、永続化を接続する。
+公開model、画像loader、画像表示、Picker、Composer、Roomの回帰は、このリポジトリの
+単体test、iOS build、Previewとホスト画面で確認する。特定の製品画面を必須参照にしない。
+利用アプリはcamera、resolver、一時ファイル、アップロード、永続化を接続し、自身の画面で
+選択・送信・失敗・再送を統合検証する。製品固有の導入順とリリース承認は利用側で管理する。
 
 ## テスト観点
 

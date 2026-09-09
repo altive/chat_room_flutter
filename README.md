@@ -18,6 +18,24 @@ Altive Chat は、Altive のアプリ間でチャット UI とその表示契約
 リプライの公開model、UI状態、appとの責務境界は
 [`contract/reply-message-contract.md`](contract/reply-message-contract.md)に定義しています。
 
+## 配布方法と識別子
+
+ソースコードの正規リポジトリは
+[`altive/altive-chat`](https://github.com/altive/altive-chat)です。
+リポジトリ名と各プラットフォームのパッケージ名は別の識別子です。
+既存利用との互換性のため、パッケージ名・import名・Maven coordinatesは変更しません。
+
+| プラットフォーム | パッケージ・製品 | 導入方法 |
+| --- | --- | --- |
+| Flutter | `altive_chat_room` | このリポジトリへのGit依存、またはローカルpath依存 |
+| Swift | `AltiveChatCore` / `AltiveChatUI` | このリポジトリへのSwift Package Manager依存 |
+| Android | `jp.co.altive.chat:chat-core` / `jp.co.altive.chat:chat-ui-compose` | ソースから生成したローカルMaven成果物、またはcomposite build |
+
+Flutterは`publish_to: none`を維持し、pub.devへは公開しません。
+AndroidのMaven公開先は固定していません。ソースコードの公開とMaven成果物の公開は別であり、
+Maven Central等から取得できることを前提にしないでください。
+ビルド・配布手順は[`android/README.md`](android/README.md)を参照してください。
+
 ## Flutter
 
 Flutter パッケージは従来どおりリポジトリルートの `lib/`、`test/`、`example/` に
@@ -30,12 +48,29 @@ Flutter パッケージは従来どおりリポジトリルートの `lib/`、`t
 - `AltiveChatRoomTheme` によるテーマカスタマイズ
 - メッセージバブル、汎用メッセージカード、ポップアップメニュー、アクションの拡張コールバック
 
-### ローカル参照
+### Git依存
 
 ```yaml
 dependencies:
   altive_chat_room:
-    path: ../chat_room_flutter
+    git:
+      url: https://github.com/altive/altive-chat.git
+      ref: main
+```
+
+`main`は導入確認用の例です。継続利用では`LICENSE`を含むリリースタグまたは
+コミットSHAへ`ref`を固定し、利用アプリの`pubspec.lock`も管理してください。
+リポジトリがPrivateの間はGitHubへの読み取り認証が必要です。
+
+### ローカル参照
+
+リポジトリを隣の`altive-chat/`へcloneした場合の例です。
+既存checkoutを改名する必要はなく、`path`は手元の配置に合わせてください。
+
+```yaml
+dependencies:
+  altive_chat_room:
+    path: ../altive-chat
 ```
 
 ### 使い方
@@ -165,19 +200,26 @@ ChatRoomLayout {
 共通コンポーネントとして提供します。各アプリ固有のStore、権限、外部I/O、課金、
 画面遷移はパッケージへ持ち込みません。
 
-リポジトリ名変更と最初の SemVer tag 公開後は、次のURLから追加します。
+Swift Package Managerから正規リポジトリURLを指定します。
+次は開発ブランチで導入を確認する例です。
 
 ```swift
 .package(
   url: "https://github.com/altive/altive-chat.git",
-  from: "1.2.0"
+  branch: "main"
 )
 ```
 
-リリース前にローカルで統合する場合は、利用側の `Package.swift` から参照します。
+継続利用では`LICENSE`を含むリリースタグを選び、`branch`を`from`または`exact`の
+バージョン指定へ変更してください。コミットSHAを固定する場合は`revision`を指定します。
+`Package.resolved`も利用アプリ側で管理してください。
+リポジトリがPrivateの間はGitHubへの読み取り認証が必要です。
+
+ローカルで統合する場合は、利用側の `Package.swift` から参照します。
+パスはclone先に合わせてください。
 
 ```swift
-.package(path: "../chat_room_flutter")
+.package(path: "../altive-chat")
 ```
 
 最小構成では、表示するメッセージと入力中テキストをアプリ側が所有します。
@@ -312,8 +354,9 @@ val stickerLoader = ChatStickerImageLoader { reference ->
 開発中にFanely Androidから利用する場合は、Fanely側の`settings.gradle.kts`で
 composite buildとして追加し、`jp.co.altive.chat:chat-core`と
 `jp.co.altive.chat:chat-ui-compose`をprojectへ置換します。絶対pathは
-local property等から注入し、リポジトリへcommitしません。正式配布時はMaven
-repositoryへ`chat-core`と`chat-ui-compose`を公開します。
+local property等から注入し、リポジトリへcommitしません。
+ローカルMaven成果物の生成と任意のリモートMavenへの公開手順は
+[`android/README.md`](android/README.md)を参照してください。
 
 ```kotlin
 var draft by remember { mutableStateOf("") }
@@ -373,7 +416,7 @@ AltiveChatRoom(
 
 ## 開発
 
-両方をまとめて検証:
+全プラットフォームをまとめて検証:
 
 ```bash
 make verify
@@ -404,3 +447,10 @@ cd example
 flutter pub get
 flutter run
 ```
+
+## ライセンス
+
+Altive Chatは[MIT License](LICENSE)で提供します。
+利用・改変・再配布時は著作権表示とライセンス文を保持してください。
+依存する第三者ライブラリや、利用アプリが用意する画像・データには、それぞれの
+ライセンスと権利条件が適用されます。

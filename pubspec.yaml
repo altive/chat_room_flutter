@@ -1,9 +1,11 @@
 name: altive_chat_room
-description: |
-  altive_chat_room provides the UI used for chatting.
-  One-to-one chats like DM and group chats are possible.
-  Text and image messages can also be sent.
+description: >-
+  Altive Chat の Flutter パッケージ。チャットの表示モデル、メッセージ、
+  入力欄、テーマを提供し、認証・送信・永続化は利用アプリが担当します。
+repository: https://github.com/altive/altive-chat
+issue_tracker: https://github.com/altive/altive-chat/issues
 version: 1.8.10
+# pub.devには公開せず、Git依存またはローカルpath依存で提供する。
 publish_to: none
 workspace:
   - example
